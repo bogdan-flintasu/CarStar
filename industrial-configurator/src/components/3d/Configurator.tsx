@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls, useGLTF } from '@react-three/drei';
+import { Environment, OrbitControls, useGLTF, Sky, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 
 // ─── Constants (same as original) ────────────────────────────────────────────
@@ -23,15 +23,56 @@ interface ConfiguratorProps {
   height: number;
   width:  number;
   length: number;
+  showFoundation: boolean;
+  isIsolated: boolean;
+  insulation: number;
 }
 
 // ─── Inner R3F scene component ────────────────────────────────────────────────
 // Lives inside <Canvas> so it has access to useThree / useGLTF
-function ConfiguratorScene({ height, width, length }: ConfiguratorProps) {
+function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, insulation }: ConfiguratorProps) {
+
+  
+
   const { camera, controls } = useThree();
+  const metalTextures = useTexture({
+    map: 'metal/metal_color.jpg',
+    normalMap: 'metal/metal_normal.jpg',
+    roughnessMap: 'metal/metal_roughness.jpg',
+    metalnessMap: 'metal/metal_metal.jpg',
+  });
+
+  // Industrial metal shouldn't repeat as much as grass
+  Object.values(metalTextures).forEach(t => {
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(1, 1); 
+  });
+
+  const wallTextures = useTexture({
+    map: 'wall/wall_color.jpg',
+    normalMap: 'wall/wall_normal.jpg',
+    roughnessMap: 'wall/wall_roughness.jpg',
+  });
+
+  const foundationTextures = useTexture({
+    map: 'concrete/concrete_color.jpg',
+    normalMap: 'concrete/concrete_normal.jpg',
+    roughnessMap: 'concrete/concrete_roughness.jpg',
+  });
+
+  // Walls repeat a lot to create the corrugated rib effect
+  Object.values(wallTextures).forEach(t => {
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.center.set(0.5, 0.5);
+    t.rotation = Math.PI / 2;
+    // Adjust these numbers until the ribs look like the right size
+    t.repeat.set(1, 20); 
+  });
+
+  // (clipPlanes removed – gable panels now use custom geometry instead of clipping)
 
   // GLTF loader (replaces: loader.load(window.MODEL_URL, ...))
-  const { scene: gltfScene } = useGLTF('/models/pula.gltf');
+  const { scene: gltfScene } = useGLTF('/models/jgheaburi.gltf');
 
   // ── Imperative state refs  (mirrors original module-level variables) ───────
   const resize_height     = useRef<THREE.Mesh[]>([]);
@@ -97,13 +138,15 @@ function ConfiguratorScene({ height, width, length }: ConfiguratorProps) {
     }
   }
 
+  /** Hide grinzi + end wall panels on the last length segment (same rule as original beams). */
   function updateLastFrameBeams() {
     const mg = modelsGroup.current;
     if (!mg || mg.children.length === 0) return;
     const lastIndex = mg.children.length - 1;
     mg.children.forEach((frame, i) => {
       frame.traverse(child => {
-        if (!child.userData.isGrinda) return;
+        const hideOnLastFrame = child.userData.isGrinda || child.userData.isLastFrameWall;
+        if (!hideOnLastFrame) return;
         child.visible = i !== lastIndex;
       });
     });
@@ -222,6 +265,86 @@ function ConfiguratorScene({ height, width, length }: ConfiguratorProps) {
       if (!(child instanceof THREE.Mesh)) return;
       child.castShadow    = true;
       child.receiveShadow = true;
+      
+      // const material = new THREE.MeshStandardMaterial({
+      //   ...metalTextures,
+      //   metalness: 0.8, // Force it to look like real metal
+      //   roughness: 0.7, // Adjust this to make it shinier (0.1) or duller (0.9)
+      // });
+
+      // child.geometry.computeBoundingBox();
+      // const box = child.geometry.boundingBox!;
+      // const size = new THREE.Vector3();
+      // box.getSize(size);
+
+      // size.multiply(child.scale);
+
+      // const maxDim = Math.max(size.x, size.y, size.z);
+      
+      // // Calculate how many times to repeat. Increase the multiplier (e.g., 3 or 4) if the scratches look too big.
+      // const repeatValue = maxDim * 5; 
+
+      // // FIX: Clone ALL maps so Color, Normal, Roughness, and Metalness stay perfectly synced
+      // const textureMaps = ['map', 'normalMap', 'roughnessMap', 'metalnessMap'];
+      // textureMaps.forEach((mapName) => {
+      //   // We have to use 'as any' here briefly to bypass TypeScript's strict indexing on materials
+      //   if ((material as any)[mapName]) {
+      //     (material as any)[mapName] = (material as any)[mapName].clone();
+      //     // Uniform tiling stops stretching regardless of which way the UVs are rotated
+      //     (material as any)[mapName].repeat.set(repeatValue, repeatValue);
+      //     (material as any)[mapName].needsUpdate = true;
+      //   }
+      // });
+
+      // child.material = material;
+
+      // if (child.name === 'Plane002' || child.name === 'Plane003') {
+      //   child.material = new THREE.MeshStandardMaterial({
+      //     ...wallTextures,
+      //     color: new THREE.Color('#9ca3af'),
+      //     normalScale: new THREE.Vector2(1.5, 1.5), // Default grey, can be changed later
+      //     metalness: 0.6,
+      //     roughness: 0.4,
+      //   });
+        
+      //   // Ensure the wall texture scales with the height of the building
+      //   // heightRef.current / 6 ensures the texture doesn't stretch when the wall grows
+      //   const scaleY = heightRef.current / 6;
+      //   child.material.map.repeat.set(10, 1 * scaleY);
+      //   child.material.normalMap.repeat.set(10, 1 * scaleY);
+      // }
+
+      if (child.name === 'beton') {
+        // 1. Ensure the material actually uses the textures from your foundationTextures object
+        child.userData.initialScaleX = child.scale.x;
+        child.material = new THREE.MeshStandardMaterial({
+            map: foundationTextures.map, // Make sure these property names match your loader
+            normalMap: foundationTextures.normalMap,
+            roughnessMap: foundationTextures.roughnessMap,
+            color: new THREE.Color('#8a8a8a'), // Slightly darker concrete looks more realistic
+            roughness: 0.9,
+            metalness: 0.0,
+            normalScale: new THREE.Vector2(1.5, 1.5) // Bumped up for more grit
+        });
+    
+        // 2. Tiling logic
+        // If the floor is 12x12 (as per your screenshot), we want it to tile in BOTH directions
+        const repeatX = (width || 12) / 2;  // Repeat every 2 meters
+        const repeatY = (length || 12) / 2; 
+    
+        // 3. APPLY TO ALL MAPS
+        // This is the most common point of failure: all maps must share the same tiling
+        const activeMaps = ['map', 'normalMap', 'roughnessMap'];
+        activeMaps.forEach(mapName => {
+            const texture = child.material[mapName];
+            if (texture) {
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.RepeatWrapping;
+                texture.repeat.set(repeatX, repeatY);
+                texture.needsUpdate = true;
+            }
+        });
+    }
 
       if (child.name === 'suruburi_laterale008') {
         lastGrindaLeft.current          = child;
@@ -252,8 +375,11 @@ function ConfiguratorScene({ height, width, length }: ConfiguratorProps) {
         child.userData.initialY = child.position.y;
       }
 
-      if (child.name === 'stalp_1' || child.name === 'stalp_2') {
+      if (child.name === 'stalp_1' || child.name === 'stalp_2' ) {
         resize_height.current.push(child);
+        child.children.forEach(subChild => {
+          subChild.userData.initialLocalY = subChild.position.y;
+        });
       }
 
       if ([
@@ -313,17 +439,43 @@ function ConfiguratorScene({ height, width, length }: ConfiguratorProps) {
         child.userData.isGrinda = true;
         grinzi.current.push(child);
       }
+      // End-closure wall meshes (one per side); hidden on the last frame like grinzi
+      if (child.name === 'PereteSTG' || child.name === 'PereteDR' || child.name === 'AcoperisSTG' || child.name === 'AcoperisDR' || child.name === 'beton' || child.name === 'jgheab') {
+        child.userData.isLastFrameWall = true;
+      }
+
+      if (['PereteSTG', 'PereteDR', 'AcoperisSTG', 'AcoperisDR'].includes(child.name)) {
+        // Create a duplicate mesh using the exact same geometry and material
+        const innerSkin = new THREE.Mesh(child.geometry, child.material);
+        innerSkin.name = child.name + '_inner';
+        
+        // Attach it to the main wall so it moves/scales exactly when the hall resizes
+        child.add(innerSkin);
+      }
     });
+
+    
 
     // Apply initial height = 3
     const initial_height = 3;
     const scale = initial_height / model_height;
     initial_scale.current = scale;
 
-    resize_height.current.forEach(mesh => { mesh.scale.y = scale; });
+    resize_height.current.forEach(mesh => { 
+      mesh.scale.y = scale; 
+      mesh.children.forEach(subChild => {
+        if (subChild.userData.initialLocalY !== undefined) {
+          const TWEAK_LATERAL_Y = 0.03; // Increase this if the gap is still visible
+          subChild.position.y = (subChild.userData.initialLocalY / scale) + TWEAK_LATERAL_Y;
+        }
+      });
+    });
     lowered.current.forEach(obj => {
+
       obj.position.y = -initial_height;
+
       obj.userData.initialY = obj.position.y;
+
     });
     resize_width.current.forEach(obj => {
       obj.position.y = obj.userData.initialY / 2 + 0.0386;
@@ -360,8 +512,16 @@ function ConfiguratorScene({ height, width, length }: ConfiguratorProps) {
 
     const new_height = height;
     const scale = new_height / model_height;
-    resize_height.current.forEach(mesh => { mesh.scale.y = scale; });
-
+    resize_height.current.forEach(mesh => { 
+      mesh.scale.y = scale; 
+      // Counteract the parent scale shift on the child's local position
+      mesh.children.forEach(subChild => {
+        if (subChild.userData.initialLocalY !== undefined) {
+          // Inverse scale so the wall's anchor position doesn't move relative to the floor
+          subChild.position.y = subChild.userData.initialLocalY / scale;
+        }
+      });
+    });
     const deltaHeight = (scale - initial_scale.current) * model_height;
     lowered.current.forEach(obj => { obj.position.y = obj.userData.initialY + deltaHeight; });
     resize_width.current.forEach(obj => { obj.position.y = obj.userData.initialY + deltaHeight; });
@@ -407,7 +567,9 @@ function ConfiguratorScene({ height, width, length }: ConfiguratorProps) {
               mesh.scale.copy(baseMesh.scale);
               mesh.rotation.copy(baseMesh.rotation);
               mesh.position.copy(baseMesh.position);
-              if (!mesh.userData.isGrinda) mesh.visible = baseMesh.visible;
+              if (!mesh.userData.isGrinda && !mesh.userData.isLastFrameWall) {
+                mesh.visible = baseMesh.visible;
+              }
             }
           }
         });
@@ -454,10 +616,24 @@ function ConfiguratorScene({ height, width, length }: ConfiguratorProps) {
     const delta        = half_new - half_initial;
     const widthDelta   = new_width - initial_width;
 
+    const THRESHOLD = 12;
+    let pullMain  = 0;
+    let pullStalp = 0;
+    if (new_width > THRESHOLD) {
+      const excess = new_width - THRESHOLD;
+      pullMain  = excess * 0.484;
+      pullStalp = pullMain;
+    } else {
+      const deficit = THRESHOLD - new_width;
+      pullMain  = -deficit * 0.487;
+      pullStalp = pullMain * 0.987;
+    }
+
     const bs  = baza_stalp.current;
     const bs1 = baza_stalp001.current;
     const ss1 = suruburi_sus001.current;
     const ss2 = suruburi_sus002.current;
+
     if (bs && bs1 && ss1 && ss2) {
       bs.position.x  = bs.userData.initialX  - delta;
       ss1.position.x = ss1.userData.initialX - delta;
@@ -518,7 +694,7 @@ function ConfiguratorScene({ height, width, length }: ConfiguratorProps) {
     if ([8, 9, 10, 11].includes(new_width)) {
       const move = widthDelta / 8.3;
       let moveFactor      = move;
-      let riseFactorRight = rise * 0.252;
+      let riseFactorRight = rise * 0.255;
       let riseFactorLeft  = rise * 0.255;
       if (new_width === 9) {
         moveFactor = move * -0.09; riseFactorRight = rise * -0.0295; riseFactorLeft = rise * -0.026;
@@ -645,7 +821,7 @@ function ConfiguratorScene({ height, width, length }: ConfiguratorProps) {
 
       if (new_width > initial_width && new_width <= 14) {
         moveFactor      = move;
-        riseFactorRight = rise * 0.252;
+        riseFactorRight = rise * 0.255;
         riseFactorLeft  = rise * 0.255;
       } else if (new_width >= 19 && new_width <= 20) {
         moveFactor      = (new_width - 18) / 12.4;
@@ -670,13 +846,13 @@ function ConfiguratorScene({ height, width, length }: ConfiguratorProps) {
     grinziLeft.current.forEach(mesh => {
       if (new_width === 15 || new_width === 12 || new_width === 18) {
         mesh.position.x = mesh.userData.initialX;
-        mesh.position.y = mesh.userData.initialY + rise * 0.006;
+        mesh.position.y = mesh.userData.initialY + rise * 0.01;
       }
     });
     grinziRight.current.forEach(mesh => {
       if (new_width === 15 || new_width === 12 || new_width === 18) {
         mesh.position.x = mesh.userData.initialX;
-        mesh.position.y = mesh.userData.initialY + rise * 0.006;
+        mesh.position.y = mesh.userData.initialY + rise * 0.01;
       }
     });
 
@@ -685,6 +861,7 @@ function ConfiguratorScene({ height, width, length }: ConfiguratorProps) {
       mesh.scale.x = scaleX;
       const localLen = (mesh.userData.localLength || 1) * mesh.scale.x;
       const angle    = Math.atan2(rise, localLen);
+
       if (mesh.name.includes('stalp_sus_1')) {
         mesh.position.x = mesh.userData.initialX - delta;
         mesh.rotation.z = angle;
@@ -694,8 +871,6 @@ function ConfiguratorScene({ height, width, length }: ConfiguratorProps) {
       }
       const p1 = plane_sus_1.current;
       const p2 = plane_sus_2.current;
-      // Use heightRef.current (not the stale 'height' closure) to match
-      // the original's live DOM read: parseInt(heightSlider.value, 10)
       const sc = heightRef.current / model_height;
       const dh = (sc - initial_scale.current) * model_height;
       if (p1 && p2) {
@@ -704,18 +879,20 @@ function ConfiguratorScene({ height, width, length }: ConfiguratorProps) {
       }
     });
 
-    // Pull left/right column groups
-    const THRESHOLD = 12;
-    let pullMain  = 0;
-    let pullStalp = 0;
-    if (new_width > THRESHOLD) {
-      const excess = new_width - THRESHOLD;
-      pullMain  = excess * 0.484;
-      pullStalp = pullMain;
-    } else {
-      const deficit = THRESHOLD - new_width;
-      pullMain  = -deficit * 0.487;
-      pullStalp = pullMain * 0.987;
+    const betonBase = baseModel.current.getObjectByName('beton') as THREE.Mesh;
+    if (betonBase) {
+      // FIX: Multiply our slider ratio by the mesh's original starting scale
+      betonBase.scale.x = betonBase.userData.initialScaleX * scaleX;
+
+      // 2. Adjust the texture tiling immediately so it doesn't stretch
+      const activeMaps = ['map', 'normalMap', 'roughnessMap'];
+      activeMaps.forEach(mapName => {
+        const texture = (betonBase.material as any)[mapName];
+        if (texture) {
+          texture.repeat.set(new_width / 2, length / 2);
+          texture.needsUpdate = true;
+        }
+      });
     }
 
     left.current.forEach(mesh => {
@@ -739,58 +916,375 @@ function ConfiguratorScene({ height, width, length }: ConfiguratorProps) {
               mesh.scale.copy(baseMesh.scale);
               mesh.rotation.copy(baseMesh.rotation);
               mesh.position.copy(baseMesh.position);
-              if (!mesh.userData.isGrinda) mesh.visible = baseMesh.visible;
+              if (!mesh.userData.isGrinda && !mesh.userData.isLastFrameWall) {
+                mesh.visible = baseMesh.visible;
+              }
             }
           }
         });
       }
     });
-    updateLastFrameBeams();
+
     updateLastFrameBeams();
   }, [width]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  
+  // ── Clipping planes for front/back gable panels (LOCAL space) ─────────────
+  const clipPlanes = useRef<THREE.Plane[]>([
+    new THREE.Plane(),
+    new THREE.Plane(),
+    new THREE.Plane(),
+    new THREE.Plane(),
+  ]);
+
+  /**
+   * Update clipping planes using PURE world geometry.
+   * No mesh positions are read. It relies entirely on the slider values.
+   */
+  useEffect(() => {
+    const mg = modelsGroup.current;
+    if (!mg) return;
+
+    // ── 1. The Mathematical Truth of the Hall ──
+    const THRESHOLD = 12;
+    let pullMain = 0;
+    if (width > THRESHOLD) {
+      pullMain = (width - THRESHOLD) * 0.484;
+    } else {
+      pullMain = -(THRESHOLD - width) * 0.487;
+    }
+    
+    // The columns start at 6m half-width, plus the offset
+    const structuralHalfW = 6 + pullMain;
+    
+    // The base roof pitch derived directly from your Blender model (7389mm - 6104mm)
+    const baseRise = 1.285; 
+    
+    const cornerLiftOffset = 0.23;
+
+    const eaveY = height + cornerLiftOffset;
+    const peakY = height + baseRise + currentRise.current;
+
+    // Small buffers so the cut sits slightly outside the steel beams
+    const extraWidth = 0.4;
+    const extraHeight = 0.26;
+
+    const planes = clipPlanes.current;
+    const limitX = structuralHalfW + extraWidth;
+
+    // ── 2. Build the 4 clipping planes ──
+    
+    // Plane 0 – Left vertical cut
+    planes[0].setComponents(1, 0, 0, limitX);
+
+    // Plane 1 – Right vertical cut
+    planes[1].setComponents(-1, 0, 0, limitX);
+
+    // Plane 2 – Left Roof Slope
+    const dxL = structuralHalfW; 
+    const dyL = peakY - eaveY;
+    // Normal pointing down and right (into the hall)
+    const normalL = new THREE.Vector3(dyL, -dxL, 0).normalize();
+    const planePointL = new THREE.Vector3(0, peakY + extraHeight, 0);
+    planes[2].set(normalL, -normalL.dot(planePointL));
+
+    // Plane 3 – Right Roof Slope
+    const dxR = -structuralHalfW;
+    const dyR = peakY - eaveY;
+    // Normal pointing down and left (into the hall)
+    const normalR = new THREE.Vector3(-dyR, dxR, 0).normalize();
+    const planePointR = new THREE.Vector3(0, peakY + extraHeight, 0);
+    planes[3].set(normalR, -normalR.dot(planePointR));
+
+    // ── 3. Apply these planes and handle visibility ──
+    // ── 3. Apply these planes and handle visibility ──
+    const totalFrames = mg.children.length;
+    mg.children.forEach((frame, index) => {
+      const isFirst = index === 0;
+      const isLast  = index === totalFrames - 1;
+
+      const pf = frame.getObjectByName('PereteFata') as THREE.Mesh | undefined;
+      if (pf) {
+        pf.visible = isFirst;
+        if (pf.visible) {
+
+          // ── REAL FIX: PRESERVE BLENDER SCALE WHILE UN-SQUASHING ──
+          if (pf.userData.initialScaleY === undefined) {
+            pf.userData.initialScaleX = pf.scale.x;
+            pf.userData.initialScaleY = pf.scale.y; // Saves your 1.195!
+            pf.userData.initialScaleZ = pf.scale.z;
+          }
+          const pScaleY = pf.parent ? pf.parent.scale.y : 1;
+          pf.scale.set(
+            pf.userData.initialScaleX, 
+            pf.userData.initialScaleY / pScaleY, 
+            pf.userData.initialScaleZ
+          );
+          // ─────────────────────────────────────────────────────────
+
+          if (!pf.userData.clipMatCloned) {
+            pf.material = (pf.material as THREE.Material).clone();
+            pf.userData.clipMatCloned = true;
+          }
+          const mat = pf.material as THREE.MeshStandardMaterial;
+          mat.clippingPlanes = planes;
+          mat.clipShadows = true;
+          mat.side = THREE.DoubleSide;
+          mat.needsUpdate = true;
+        }
+      }
+
+      const ps = frame.getObjectByName('PereteSpate') as THREE.Mesh | undefined;
+      if (ps) {
+        ps.visible = isLast;
+        if (ps.visible) {
+
+          // ── REAL FIX: PRESERVE BLENDER SCALE WHILE UN-SQUASHING ──
+          if (ps.userData.initialScaleY === undefined) {
+            ps.userData.initialScaleX = ps.scale.x;
+            ps.userData.initialScaleY = ps.scale.y;
+            ps.userData.initialScaleZ = ps.scale.z;
+          }
+          const pScaleY = ps.parent ? ps.parent.scale.y : 1;
+          ps.scale.set(
+            ps.userData.initialScaleX, 
+            ps.userData.initialScaleY / pScaleY, 
+            ps.userData.initialScaleZ
+          );
+          // ─────────────────────────────────────────────────────────
+
+          if (!ps.userData.clipMatCloned) {
+            ps.material = (ps.material as THREE.Material).clone();
+            ps.userData.clipMatCloned = true;
+          }
+          const mat = ps.material as THREE.MeshStandardMaterial;
+          mat.clippingPlanes = planes;
+          mat.clipShadows = true;
+          mat.side = THREE.DoubleSide;
+          mat.needsUpdate = true;
+        }
+      }
+    });
+
+  }, [width, height, length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+
+
+
+  useEffect(() => {
+    if (!baseModel.current || !modelsGroup.current) return;
+
+    const toggleConcrete = (modelTarget: THREE.Object3D) => {
+      modelTarget.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          if (child.name.includes('beton')) {
+            child.visible = showFoundation;
+          }
+        }
+      });
+    };
+
+    toggleConcrete(baseModel.current);
+    modelsGroup.current.children.forEach(toggleConcrete);
+  }, [showFoundation]); 
+
+  useEffect(() => {
+    if (!baseModel.current || !modelsGroup.current) return;
+
+    // Convert your slider (mm) to Three.js world units (meters) -> 250mm = 0.25
+    const gapDistance = isIsolated ? (-insulation / 1000) : 0;
+
+    const applySandwichGap = (modelTarget: THREE.Object3D) => {
+      modelTarget.traverse((child) => {
+        
+        // Target the duplicates we created in the setup
+        if (child.name.endsWith('_inner')) {
+          
+          // Hide the inner skin entirely if insulation is toggled off
+          child.visible = isIsolated;
+
+          // Push the inner skin inward to create the thickness.
+          // IMPORTANT: If the inner wall moves sideways or up instead of inward towards the center of the hall, 
+          // change 'x' to 'y' or 'z' below to match your Blender local axes!
+          
+          if (child.name.includes('PereteSTG')) child.position.x = gapDistance;
+          if (child.name.includes('PereteDR'))  child.position.x = -gapDistance;
+          
+          // Roofs often use Y or Z depending on how you rotated them in Blender
+          if (child.name.includes('AcoperisSTG')) child.position.y = -gapDistance;
+          if (child.name.includes('AcoperisDR'))  child.position.y = -gapDistance;
+        }
+      });
+    };
+
+    applySandwichGap(baseModel.current);
+    modelsGroup.current.children.forEach(applySandwichGap);
+  }, [isIsolated, insulation]);
+
+  // 2. NOW WE CAN DO THE EARLY RETURN
   // Inject modelsGroup into the R3F scene as an imperative primitive (built in useEffect).
   // eslint-disable-next-line react-hooks/refs -- R3F <primitive>: group is attached in GLTF useEffect
   if (!modelsGroup.current) return null;
-  // eslint-disable-next-line react-hooks/refs
+
   return <primitive object={modelsGroup.current} />;
 }
+
+
+
 
 // ─── Slider UI overlay (replaces the HTML sliders) ───────────────────────────
 interface SlidersProps {
   height: number; setHeight: (v: number) => void;
   width:  number; setWidth:  (v: number) => void;
   length: number; setLength: (v: number) => void;
+  showFoundation: boolean; setShowFoundation: (v: boolean) => void;
+  isIsolated: boolean;     setIsIsolated: (v: boolean) => void;
+  insulation: number;      setInsulation: (v: number) => void;
 }
-function Sliders({ height, setHeight, width, setWidth, length, setLength }: SlidersProps) {
-  const panel: React.CSSProperties = {
-    position: 'absolute',
-    background: '#fff',
-    padding: '10px',
-    borderRadius: '8px',
-    left: '10px',
+
+function Sliders({ height, setHeight, width, setWidth, length, setLength, showFoundation
+  , setShowFoundation, isIsolated, setIsIsolated, insulation, setInsulation }: SlidersProps) {
+  // Helper for synchronized input & slider updates
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, setter: (v: number) => void, min: number, max: number) => {
+    let val = parseInt(e.target.value, 10);
+    if (isNaN(val)) return;
+    
+    // Clamping the value to prevent breaking the model
+    val = Math.max(min, Math.min(max, val));
+    
+    setter(val);
   };
+
   return (
-    <>
-      <div style={{ ...panel, top: '10px' }}>
-        <label>Înălțime: <span id="heightValue">{height}</span> m</label><br />
-        <input id="heightSlider" type="range" min={3} max={6} step={1} value={height}
-          onChange={e => setHeight(parseInt(e.target.value, 10))} />
+    <div style={{ padding: '1rem' }} className="absolute backdrop-blur-lg bg-black/40 rounded-2xl z-10 bottom-4 left-4 right-4 md:bottom-auto md:top-5 md:left-5 md:right-auto md:w-96 border-t-4 border-[#F5A623] text-gray-200 shadow-2xl shadow-black/70 flex flex-col gap-4 transition-all">      
+    
+    <h3 className="m-0 text-lg text-white font-semibold">Configurator Hală</h3>
+
+      {/* Înălțime */}
+      <div className="flex items-center gap-3">
+        <span className="min-w-[64px] text-lg font-medium">Înălțime</span>
+        <input 
+          type="range" min={3} max={6} step={1} value={height} 
+          className="flex-1 accent-[#F5A623] cursor-pointer"
+          onChange={e => setHeight(parseInt(e.target.value, 10))} 
+        />
+        <div className="flex items-center gap-1.5">
+          <input 
+            type="number" value={height} min={3} max={6} 
+            className="w-12 p-1.5 bg-[#1A1C20]/60 border border-gray-600 focus:border-[#F5A623] focus:ring-1 focus:ring-[#F5A623] outline-none text-white rounded text-center font-bold transition-all"
+            onChange={e => handleInputChange(e, setHeight, 3, 6)} 
+          />
+          <span className="text-sm text-gray-400 w-3">m</span>
+        </div>
       </div>
 
-      <div style={{ ...panel, top: '80px' }}>
-        <label>Lățime: <span id="widthValue">{width}</span> m</label><br />
-        <input id="widthSlider" type="range" min={8} max={20} step={1} value={width}
-          onChange={e => setWidth(parseInt(e.target.value, 10))} />
+      {/* Lățime */}
+      <div className="flex items-center gap-3">
+        <span className="min-w-[64px] text-lg font-medium">Lățime</span>
+        <input 
+          type="range" min={8} max={20} step={1} value={width} 
+          className="flex-1 accent-[#F5A623] cursor-pointer"
+          onChange={e => setWidth(parseInt(e.target.value, 10))} 
+        />
+        <div className="flex items-center gap-1.5">
+          <input 
+            type="number" value={width} min={8} max={20} 
+            className="w-12 p-1.5 bg-[#1A1C20]/60 border border-gray-600 focus:border-[#F5A623] focus:ring-1 focus:ring-[#F5A623] outline-none text-white rounded text-center font-bold transition-all"
+            onChange={e => handleInputChange(e, setWidth, 8, 20)} 
+          />
+          <span className="text-sm text-gray-400 w-3">m</span>
+        </div>
       </div>
 
-      <div style={{ ...panel, top: '150px' }}>
-        <label>Lungime: <span id="lengthValue">{length}</span> m</label><br />
-        <input id="lengthSlider" type="range" min={12} max={102} step={6} value={length}
-          onChange={e => setLength(parseInt(e.target.value, 10))} />
+      {/* Lungime */}
+      <div className="flex items-center gap-3">
+        <span className="min-w-[64px] text-lg font-medium">Lungime</span>
+        <input 
+          type="range" min={12} max={102} step={6} value={length} 
+          className="flex-1 accent-[#F5A623] cursor-pointer"
+          onChange={e => setLength(parseInt(e.target.value, 10))} 
+        />
+        <div className="flex items-center gap-1.5">
+          <input 
+            type="number" value={length} min={12} max={102} step={6} 
+            className="w-12 p-1.5 bg-[#1A1C20]/60 border border-gray-600 focus:border-[#F5A623] focus:ring-1 focus:ring-[#F5A623] outline-none text-white rounded text-center font-bold transition-all"
+            onChange={e => handleInputChange(e, setLength, 12, 102)} 
+          />
+          <span className="text-sm text-gray-400 w-3">m</span>
+        </div>
       </div>
-    </>
+
+      <div className="flex items-center justify-between mt-2 pt-4 border-t border-white/10">
+        <span className="text-lg font-medium text-white">Fundație beton</span>
+        <button
+          onClick={() => setShowFoundation(!showFoundation)}
+          className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none ${showFoundation ? 'bg-[#F5A623]' : 'bg-gray-600'}`}
+        >
+          <span 
+            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${showFoundation ? 'translate-x-7' : 'translate-x-1'}`} 
+          />
+        </button>
+      </div>
+
+      {/* Izolație Toggle */}
+      <div className="flex items-center justify-between mt-2 pt-4 border-t border-white/10">
+        <span className="text-lg font-medium text-white">Izolație Panouri</span>
+        <button
+          onClick={() => setIsIsolated(!isIsolated)}
+          className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none ${isIsolated ? 'bg-[#F5A623]' : 'bg-gray-600'}`}
+        >
+          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${isIsolated ? 'translate-x-7' : 'translate-x-1'}`} />
+        </button>
+      </div>
+
+      {/* Conditional Grosime Slider (Only shows if Izolatie is ON) */}
+      {isIsolated && (
+        <div className="flex items-center gap-3 animate-fade-in">
+          <span className="min-w-[64px] text-sm font-medium text-gray-300">Grosime</span>
+          <input 
+            type="range" min={30} max={250} step={10} value={insulation} 
+            className="flex-1 accent-[#F5A623] cursor-pointer h-1.5 bg-gray-700 rounded-lg appearance-none"
+            onChange={e => setInsulation(parseInt(e.target.value, 10))} 
+          />
+          <div className="flex items-center gap-1.5">
+            <input 
+              type="number" value={insulation} min={30} max={250} step={10}
+              className="w-16 py-1.5 px-1 bg-[#1A1C20]/60 border border-gray-600 focus:border-[#F5A623] focus:ring-1 focus:ring-[#F5A623] outline-none text-white rounded text-center font-bold transition-all"
+              onChange={e => handleInputChange(e, setInsulation, 30, 250)} 
+            />
+            <span className="text-xs text-gray-400 w-4">mm</span>
+          </div>
+        </div>
+      )}
+    </div>
   );
+}
+
+function Ground() {
+  // Load the PBR textures as an object
+  const textures = useTexture({
+    map: 'grass/grass_color.jpg',
+    normalMap: 'grass/grass_normal.jpg',
+    roughnessMap: 'grass/grass_roughness.jpg',
+  });
+
+  // We need to apply the repeating logic to ALL of the textures so they align perfectly
+  Object.values(textures).forEach((texture) => {
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    // Repeat the grass 100 times across the 400x400 plane
+    texture.repeat.set(400, 400);
+  });
+
+  return (
+    <mesh rotation-x={-Math.PI / 2} position-y={-0.01} receiveShadow>
+      <planeGeometry args={[2000, 2000]} />
+      {/* Spread all the loaded textures directly into the standard material */}
+      <meshStandardMaterial {...textures} />
+    </mesh>
+  );
+
+  
 }
 
 // ─── Root page component ──────────────────────────────────────────────────────
@@ -798,6 +1292,9 @@ export default function ConfiguratorPage() {
   const [height, setHeight] = useState(3);
   const [width,  setWidth]  = useState(12);
   const [length, setLength] = useState(12);
+  const [showFoundation, setShowFoundation] = useState(true);
+  const [isIsolated, setIsIsolated] = useState(false);
+  const [insulation, setInsulation] = useState(30);
 
   return (
     <div id="scene-container" style={{ position: 'relative', width: '100vw', height: '100vh' }}>
@@ -805,12 +1302,13 @@ export default function ConfiguratorPage() {
         camera={{ fov: 75, near: 0.1, far: 1000, position: [-6, 7, 13] as [number, number, number] }}
         shadows={{ type: THREE.PCFShadowMap }}
         frameloop="always"
-        style={{ background: '#aaaaaa', width: '100%', height: '100%' }}
+        style={{ background: '#dddddd', width: '100%', height: '100%' }}
+        gl={{ localClippingEnabled: true }}
       >
         {/* Lumina directionala cu umbre */}
         <directionalLight
           position={[5, 10, 5]}
-          intensity={1}
+          intensity={0.7}
           castShadow
           shadow-mapSize-width={4096}
           shadow-mapSize-height={4096}
@@ -824,19 +1322,42 @@ export default function ConfiguratorPage() {
           shadow-camera-far={100}
         />
         {/* Lumina ambientala */}
-        <ambientLight intensity={1} />
+        <ambientLight intensity={0.5} />
 
+        <Sky 
+          distance={450000} // How far away the sky is
+          sunPosition={[-5, 10, 5]} // Match this to your directionalLight position!
+          inclination={0} 
+          azimuth={0.25} 
+        />
+        
+        <Environment preset="city" /> {/* This adds reflections to the metal */}
         {/* Plan pentru umbre */}
-        <mesh rotation-x={-Math.PI / 2} position-y={0} receiveShadow>
-          <planeGeometry args={[400, 400]} />
-          <shadowMaterial opacity={0.4} />
+        <mesh rotation-x={-Math.PI / 2} position-y={-0.01} receiveShadow>          
         </mesh>
 
+        <Ground />
+        
+
         {/* Controale orbit — makeDefault exposes the instance via useThree().controls */}
-        <OrbitControls makeDefault target={[0, 0, 0]} />
+        <OrbitControls 
+          makeDefault 
+          target={[0, 0, 0]} 
+          // maxPolarAngle={Math.PI / 2 - 0.05} // Prevents camera from going below ground
+          // minDistance={2}
+          // maxDistance={100}
+          // screenSpacePanning={false}
+        />
 
         {/* Configurator scene — receives slider values as props */}
-        <ConfiguratorScene height={height} width={width} length={length} />
+        <ConfiguratorScene 
+        height={height} 
+        width={width} 
+        length={length} 
+        showFoundation={showFoundation}
+        isIsolated={isIsolated}
+        insulation={insulation}
+        />
       </Canvas>
 
       {/* Sliders overlay (absolute-positioned on top of the canvas) */}
@@ -844,6 +1365,9 @@ export default function ConfiguratorPage() {
         height={height} setHeight={setHeight}
         width={width}   setWidth={setWidth}
         length={length} setLength={setLength}
+        showFoundation={showFoundation} setShowFoundation={setShowFoundation}
+        isIsolated={isIsolated} setIsIsolated={setIsIsolated} // <--- ADD THIS
+        insulation={insulation} setInsulation={setInsulation}
       />
     </div>
   );

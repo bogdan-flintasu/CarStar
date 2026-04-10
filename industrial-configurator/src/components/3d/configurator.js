@@ -78,12 +78,9 @@ function updateLastFrameBeams() {
 
     modelsGroup.children.forEach((frame, i) => {
         frame.traverse(child => {
-            if (!child.userData.isGrinda) return;
-            if (i === lastIndex) {
-                child.visible = false;
-            } else {
-                child.visible = true;
-            }
+            const hideOnLastFrame = child.userData.isGrinda || child.userData.isLastFrameWall;
+            if (!hideOnLastFrame) return;
+            child.visible = i !== lastIndex;
         });
     });
 }
@@ -320,6 +317,10 @@ loader.load(window.MODEL_URL, (gltf) => {
                 child.userData.isGrinda = true;
                 grinzi.push(child);
             }
+
+            if (child.name === "Plane002" || child.name === "Plane003") {
+                child.userData.isLastFrameWall = true;
+            }
         }
     });
 
@@ -487,7 +488,7 @@ heightSlider.addEventListener("input", () => {
                         mesh.rotation.copy(baseMesh.rotation);
                         mesh.position.copy(baseMesh.position);
 
-                        if (!mesh.userData.isGrinda) {
+                        if (!mesh.userData.isGrinda && !mesh.userData.isLastFrameWall) {
                             mesh.visible = baseMesh.visible;
                         }
                     }
@@ -873,7 +874,7 @@ widthSlider.addEventListener("input", () => {
                         mesh.rotation.copy(baseMesh.rotation);
                         mesh.position.copy(baseMesh.position);
 
-                        if (!mesh.userData.isGrinda) {
+                        if (!mesh.userData.isGrinda && !mesh.userData.isLastFrameWall) {
                             mesh.visible = baseMesh.visible;
                         }
 

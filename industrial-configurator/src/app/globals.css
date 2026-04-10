@@ -1,3 +1,11 @@
+@import "tailwindcss";
+
+@layer components {
+  .p {
+    padding:10 px;
+  }
+}
+
 * {
   margin: 0;
   padding: 0;
