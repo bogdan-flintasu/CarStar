@@ -34,7 +34,7 @@ yarn-error.log*
 pnpm-debug.log*
 
 # ─── Cursor / local IDE session artifacts ───────────────────────────────────
-.cursor/debug*.log
+.cursor
 
 # ─── Vercel ─────────────────────────────────────────────────────────────────
 .vercel
