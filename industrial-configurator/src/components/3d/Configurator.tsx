@@ -6,22 +6,22 @@ import { Environment, OrbitControls, useGLTF, Sky, useTexture } from '@react-thr
 import * as THREE from 'three';
 
 // ─── Constants (same as original) ────────────────────────────────────────────
-const model_height   = 6;
-const initial_width  = 12;
+const model_height = 6;
+const initial_width = 12;
 const distanceLength = 6;
-const DeltaX         = 1.5363;
-const DeltaY         = 0.27089;
-const model_width    = 12;
-const minWidth       = 8;
-const midWidth       = 12;
-const maxWidth       = 20;
-const maxrise        = 0.696;
-const minrise        = -0.335;
+const DeltaX = 1.5363;
+const DeltaY = 0.27089;
+const model_width = 12;
+const minWidth = 8;
+const midWidth = 12;
+const maxWidth = 20;
+const maxrise = 0.696;
+const minrise = -0.335;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface ConfiguratorProps {
   height: number;
-  width:  number;
+  width: number;
   length: number;
   showFoundation: boolean;
   isIsolated: boolean;
@@ -32,9 +32,9 @@ interface ConfiguratorProps {
 // Lives inside <Canvas> so it has access to useThree / useGLTF
 function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, insulation }: ConfiguratorProps) {
 
-  
 
-  const { camera, controls } = useThree();
+
+  const { camera, controls, scene } = useThree();
   const metalTextures = useTexture({
     map: 'metal/metal_color.jpg',
     normalMap: 'metal/metal_normal.jpg',
@@ -45,7 +45,7 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
   // Industrial metal shouldn't repeat as much as grass
   Object.values(metalTextures).forEach(t => {
     t.wrapS = t.wrapT = THREE.RepeatWrapping;
-    t.repeat.set(1, 1); 
+    t.repeat.set(1, 1);
   });
 
   const wallTextures = useTexture({
@@ -66,57 +66,72 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
     t.center.set(0.5, 0.5);
     t.rotation = Math.PI / 2;
     // Adjust these numbers until the ribs look like the right size
-    t.repeat.set(1, 20); 
+    t.repeat.set(1, 20);
   });
 
   // (clipPlanes removed – gable panels now use custom geometry instead of clipping)
 
   // GLTF loader (replaces: loader.load(window.MODEL_URL, ...))
-  const { scene: gltfScene } = useGLTF('/models/jgheaburi.gltf');
+  const { scene: gltfScene } = useGLTF('/models/jgheaburi-2.gltf');
 
   // ── Imperative state refs  (mirrors original module-level variables) ───────
-  const resize_height     = useRef<THREE.Mesh[]>([]);
-  const lowered           = useRef<THREE.Object3D[]>([]);
-  const threemeters       = useRef<THREE.Object3D[]>([]);
-  const fourmeters_lower  = useRef<THREE.Object3D[]>([]);
+  const resize_height = useRef<THREE.Mesh[]>([]);
+  const lowered = useRef<THREE.Object3D[]>([]);
+  const threemeters = useRef<THREE.Object3D[]>([]);
+  const fourmeters_lower = useRef<THREE.Object3D[]>([]);
   const fourmeters_height = useRef(0);
-  const fivemeters        = useRef<THREE.Object3D[]>([]);
-  const resize_width      = useRef<THREE.Mesh[]>([]);
-  const left              = useRef<THREE.Mesh[]>([]);
-  const right             = useRef<THREE.Mesh[]>([]);
-  const grinzi            = useRef<THREE.Mesh[]>([]);
-  const grinziLeft        = useRef<THREE.Mesh[]>([]);
-  const grinziRight       = useRef<THREE.Mesh[]>([]);
+  const fivemeters = useRef<THREE.Object3D[]>([]);
+  const resize_width = useRef<THREE.Mesh[]>([]);
+  const left = useRef<THREE.Mesh[]>([]);
+  const right = useRef<THREE.Mesh[]>([]);
+  const grinzi = useRef<THREE.Mesh[]>([]);
+  const grinziLeft = useRef<THREE.Mesh[]>([]);
+  const grinziRight = useRef<THREE.Mesh[]>([]);
+  const sideWalls = useRef<THREE.Mesh[]>([]);
 
-  const initial_scale            = useRef(1);
-  const baza_stalp               = useRef<THREE.Mesh | null>(null);
-  const baza_stalp001            = useRef<THREE.Mesh | null>(null);
-  const suruburi_sus001          = useRef<THREE.Mesh | null>(null);
-  const suruburi_sus002          = useRef<THREE.Mesh | null>(null);
-  const plane_sus_1              = useRef<THREE.Mesh | null>(null);
-  const plane_sus_2              = useRef<THREE.Mesh | null>(null);
-  const baseModel                = useRef<THREE.Object3D | null>(null);
-  const modelsGroup              = useRef<THREE.Group | null>(null);
-  const lastGrindaLeft           = useRef<THREE.Mesh | null>(null);
-  const lastGrindaRight          = useRef<THREE.Mesh | null>(null);
-  const extraGrindaLeft          = useRef<THREE.Mesh | null>(null);
-  const extraGrindaRight         = useRef<THREE.Mesh | null>(null);
-  const extraGrindaLeftTemplate  = useRef<THREE.Mesh | null>(null);
+  // Clip planes — declared here (before helpers) so closures can reference them safely.
+  const clipPlanes = useRef<THREE.Plane[]>([
+    new THREE.Plane(),
+    new THREE.Plane(),
+    new THREE.Plane(),
+    new THREE.Plane(),
+  ]);
+  // Two Z-axis planes that clip PereteSTG/PereteDR to the lateral edges of AcoperisSTG/AcoperisDR.
+  const sideClipPlanes = useRef<THREE.Plane[]>([
+    new THREE.Plane(), // single eave-height cut
+    new THREE.Plane(), // spare (unused for now)
+  ]);
+  const sideClipHelperRef = useRef<THREE.PlaneHelper | null>(null);
+
+  const initial_scale = useRef(1);
+  const baza_stalp = useRef<THREE.Mesh | null>(null);
+  const baza_stalp001 = useRef<THREE.Mesh | null>(null);
+  const suruburi_sus001 = useRef<THREE.Mesh | null>(null);
+  const suruburi_sus002 = useRef<THREE.Mesh | null>(null);
+  const plane_sus_1 = useRef<THREE.Mesh | null>(null);
+  const plane_sus_2 = useRef<THREE.Mesh | null>(null);
+  const baseModel = useRef<THREE.Object3D | null>(null);
+  const modelsGroup = useRef<THREE.Group | null>(null);
+  const lastGrindaLeft = useRef<THREE.Mesh | null>(null);
+  const lastGrindaRight = useRef<THREE.Mesh | null>(null);
+  const extraGrindaLeft = useRef<THREE.Mesh | null>(null);
+  const extraGrindaRight = useRef<THREE.Mesh | null>(null);
+  const extraGrindaLeftTemplate = useRef<THREE.Mesh | null>(null);
   const extraGrindaRightTemplate = useRef<THREE.Mesh | null>(null);
-  const newGrindaLeft            = useRef<THREE.Mesh | null>(null);
-  const newGrindaRight           = useRef<THREE.Mesh | null>(null);
-  const newGrindaLeftTemplate    = useRef<THREE.Mesh | null>(null);
-  const newGrindaRightTemplate   = useRef<THREE.Mesh | null>(null);
+  const newGrindaLeft = useRef<THREE.Mesh | null>(null);
+  const newGrindaRight = useRef<THREE.Mesh | null>(null);
+  const newGrindaLeftTemplate = useRef<THREE.Mesh | null>(null);
+  const newGrindaRightTemplate = useRef<THREE.Mesh | null>(null);
 
   const currentRise = useRef(0);
-  const ok          = useRef(true);
+  const ok = useRef(true);
 
   // Track previous prop values to detect which slider actually changed
   const prevHeight = useRef(height);
-  const prevWidth  = useRef(width);
+  const prevWidth = useRef(width);
   const prevLength = useRef(length);
   // Always-current height ref (avoids stale closure inside width effect)
-  const heightRef  = useRef(height);
+  const heightRef = useRef(height);
   useEffect(() => {
     heightRef.current = height;
   }, [height]);
@@ -126,8 +141,8 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
   function updateCamera(len: number) {
     camera.position.set(
       Math.min(-10, -len * 0.3),
-      Math.max(6,   len * 0.2),
-      Math.max(10,  len * 0.2)
+      Math.max(6, len * 0.2),
+      Math.max(10, len * 0.2)
     );
     const centerZ = -len / 2;
     // controls is the OrbitControls instance when makeDefault is set
@@ -148,6 +163,22 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
         const hideOnLastFrame = child.userData.isGrinda || child.userData.isLastFrameWall;
         if (!hideOnLastFrame) return;
         child.visible = i !== lastIndex;
+      });
+    });
+  }
+
+  /** Show spate objects only on the second-to-last frame. */
+  function updateSpateVisibility() {
+    const mg = modelsGroup.current;
+    if (!mg || mg.children.length === 0) return;
+    const secondToLastIndex = mg.children.length - 2;
+    const spateNames = ['burlan_spateDR', 'burlan_spateSTG', 'jgheab_spateDR', 'jgheab_spateSTG'];
+    mg.children.forEach((frame, index) => {
+      spateNames.forEach(spateName => {
+        const spate = frame.getObjectByName(spateName) as THREE.Object3D | undefined;
+        if (spate) {
+          spate.visible = index === secondToLastIndex;
+        }
       });
     });
   }
@@ -221,6 +252,55 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
     else syncGrinziFor15();
   }
 
+  /** Recalculate & apply the single horizontal Y-axis clipping plane for PereteSTG / PereteDR.
+   *  The cut sits at the eave height — the lowest (outer) edge of AcoperisSTG / AcoperisDR.
+   *  Uses the same eaveY formula as the PereteFata/PereteSpate clip effect, but bumped up slightly. */
+  function applySideClipPlanes(h: number) {
+    const mg = modelsGroup.current;
+    if (!mg) return;
+
+    // eaveY = the bottom edge of AcoperisSTG/AcoperisDR (roof panel outer edge).
+    const cornerLiftOffset = 0.4; // User requested "a bit higher", previous was 0.23, then 0.33
+    const eaveY = h + cornerLiftOffset;
+
+    const sp = sideClipPlanes.current;
+    sp[0].setComponents(0, -1, 0, eaveY);
+
+    // Track processed materials in this pass to avoid redundant work
+    const updatedMaterials = new Set<THREE.Material>();
+
+    // Apply to ALL frames in the modelsGroup to ensure clones are clipped too
+    mg.children.forEach((frame) => {
+      frame.traverse((child) => {
+        if (child instanceof THREE.Mesh && (child.name.includes('PereteSTG') || child.name.includes('PereteDR'))) {
+          // Clone material only if it hasn't been cloned specifically for clipping yet
+          if (!child.userData.sideClipMatCloned) {
+            child.material = (child.material as THREE.Material).clone();
+            child.userData.sideClipMatCloned = true;
+          }
+          
+          const mat = child.material as THREE.MeshStandardMaterial;
+          if (!updatedMaterials.has(mat)) {
+            mat.clippingPlanes = [sp[0]];
+            mat.clipShadows = true;
+            mat.side = THREE.DoubleSide;
+            mat.needsUpdate = true;
+            updatedMaterials.add(mat);
+          }
+        }
+      });
+    });
+
+    // ── Visual debug helper ──
+    if (sideClipHelperRef.current) {
+      scene.remove(sideClipHelperRef.current);
+    }
+    const helper = new THREE.PlaneHelper(sp[0], 30, 0xff6600);
+    helper.visible = false;
+    scene.add(helper);
+    sideClipHelperRef.current = helper;
+  }
+
   // ── One-time setup: parse GLTF scene (mirror of loader.load callback) ─────
   useEffect(() => {
     // Reset all imperative collections so React Strict Mode / effect re-runs match
@@ -234,6 +314,7 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
     left.current = [];
     right.current = [];
     grinzi.current = [];
+    sideWalls.current = [];
     grinziLeft.current = [];
     grinziRight.current = [];
     fourmeters_height.current = 0;
@@ -263,9 +344,9 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
 
     model.traverse((child) => {
       if (!(child instanceof THREE.Mesh)) return;
-      child.castShadow    = true;
+      child.castShadow = true;
       child.receiveShadow = true;
-      
+
       // const material = new THREE.MeshStandardMaterial({
       //   ...metalTextures,
       //   metalness: 0.8, // Force it to look like real metal
@@ -280,7 +361,7 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
       // size.multiply(child.scale);
 
       // const maxDim = Math.max(size.x, size.y, size.z);
-      
+
       // // Calculate how many times to repeat. Increase the multiplier (e.g., 3 or 4) if the scratches look too big.
       // const repeatValue = maxDim * 5; 
 
@@ -306,7 +387,7 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
       //     metalness: 0.6,
       //     roughness: 0.4,
       //   });
-        
+
       //   // Ensure the wall texture scales with the height of the building
       //   // heightRef.current / 6 ensures the texture doesn't stretch when the wall grows
       //   const scaleY = heightRef.current / 6;
@@ -318,43 +399,43 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
         // 1. Ensure the material actually uses the textures from your foundationTextures object
         child.userData.initialScaleX = child.scale.x;
         child.material = new THREE.MeshStandardMaterial({
-            map: foundationTextures.map, // Make sure these property names match your loader
-            normalMap: foundationTextures.normalMap,
-            roughnessMap: foundationTextures.roughnessMap,
-            color: new THREE.Color('#8a8a8a'), // Slightly darker concrete looks more realistic
-            roughness: 0.9,
-            metalness: 0.0,
-            normalScale: new THREE.Vector2(1.5, 1.5) // Bumped up for more grit
+          map: foundationTextures.map, // Make sure these property names match your loader
+          normalMap: foundationTextures.normalMap,
+          roughnessMap: foundationTextures.roughnessMap,
+          color: new THREE.Color('#8a8a8a'), // Slightly darker concrete looks more realistic
+          roughness: 0.9,
+          metalness: 0.0,
+          normalScale: new THREE.Vector2(1.5, 1.5) // Bumped up for more grit
         });
-    
+
         // 2. Tiling logic
         // If the floor is 12x12 (as per your screenshot), we want it to tile in BOTH directions
         const repeatX = (width || 12) / 2;  // Repeat every 2 meters
-        const repeatY = (length || 12) / 2; 
-    
+        const repeatY = (length || 12) / 2;
+
         // 3. APPLY TO ALL MAPS
         // This is the most common point of failure: all maps must share the same tiling
         const activeMaps = ['map', 'normalMap', 'roughnessMap'];
         activeMaps.forEach(mapName => {
-            const texture = child.material[mapName];
-            if (texture) {
-                texture.wrapS = THREE.RepeatWrapping;
-                texture.wrapT = THREE.RepeatWrapping;
-                texture.repeat.set(repeatX, repeatY);
-                texture.needsUpdate = true;
-            }
+          const texture = child.material[mapName];
+          if (texture) {
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(repeatX, repeatY);
+            texture.needsUpdate = true;
+          }
         });
-    }
+      }
 
       if (child.name === 'suruburi_laterale008') {
-        lastGrindaLeft.current          = child;
+        lastGrindaLeft.current = child;
         extraGrindaLeftTemplate.current = child;
-        newGrindaLeftTemplate.current   = child;
+        newGrindaLeftTemplate.current = child;
       }
       if (child.name === 'suruburi_laterale017') {
-        lastGrindaRight.current          = child;
+        lastGrindaRight.current = child;
         extraGrindaRightTemplate.current = child;
-        newGrindaRightTemplate.current   = child;
+        newGrindaRightTemplate.current = child;
       }
 
       if (child.name === 'baza_stalp' || child.name === 'stalp_sus_1' || child.name === 'suruburi_sus001') {
@@ -364,18 +445,18 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
         right.current.push(child);
       }
 
-      if (['suruburi_laterale005','suruburi_laterale006','suruburi_laterale007','suruburi_laterale008'].includes(child.name)) {
+      if (['suruburi_laterale005', 'suruburi_laterale006', 'suruburi_laterale007', 'suruburi_laterale008'].includes(child.name)) {
         grinziLeft.current.push(child);
         child.userData.initialX = child.position.x;
         child.userData.initialY = child.position.y;
       }
-      if (['suruburi_laterale014','suruburi_laterale015','suruburi_laterale016','suruburi_laterale017'].includes(child.name)) {
+      if (['suruburi_laterale014', 'suruburi_laterale015', 'suruburi_laterale016', 'suruburi_laterale017'].includes(child.name)) {
         grinziRight.current.push(child);
         child.userData.initialX = child.position.x;
         child.userData.initialY = child.position.y;
       }
 
-      if (child.name === 'stalp_1' || child.name === 'stalp_2' ) {
+      if (child.name === 'stalp_1' || child.name === 'stalp_2') {
         resize_height.current.push(child);
         child.children.forEach(subChild => {
           subChild.userData.initialLocalY = subChild.position.y;
@@ -383,15 +464,15 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
       }
 
       if ([
-        'suruburi_sus001','suruburi_sus002','aripa_lateral','plane_aripioara001',
-        'suruburi_sus','aripioara_sustinere_sus','aripioara_lateral','plane_aripioara',
-        'suruburi_sus003','aripioara_sustinere_sus002','plane_sus_1','plane_sus_2',
+        'suruburi_sus001', 'suruburi_sus002', 'aripa_lateral', 'plane_aripioara001',
+        'suruburi_sus', 'aripioara_sustinere_sus', 'aripioara_lateral', 'plane_aripioara',
+        'suruburi_sus003', 'aripioara_sustinere_sus002', 'plane_sus_1', 'plane_sus_2',
       ].includes(child.name)) {
         lowered.current.push(child);
         child.userData.initialY = child.position.y;
       }
 
-      if (['suruburi_laterale002','suruburi_laterale003','suruburi_laterale011','suruburi_laterale012'].includes(child.name)) {
+      if (['suruburi_laterale002', 'suruburi_laterale003', 'suruburi_laterale011', 'suruburi_laterale012'].includes(child.name)) {
         threemeters.current.push(child);
       }
       if (child.name === 'suruburi_laterale002' || child.name === 'suruburi_laterale011') {
@@ -439,30 +520,64 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
         child.userData.isGrinda = true;
         grinzi.current.push(child);
       }
+      // Mark spate objects for custom visibility handling
+      if (child.name === 'burlan_spateSTG' || child.name === 'burlan_spateDR' ||
+        child.name === 'jgheab_spateSTG' || child.name === 'jgheab_spateDR') {
+        child.userData.isSpateMesh = true;
+      }
       // End-closure wall meshes (one per side); hidden on the last frame like grinzi
-      if (child.name === 'PereteSTG' || child.name === 'PereteDR' || child.name === 'AcoperisSTG' || child.name === 'AcoperisDR' || child.name === 'beton' || child.name === 'jgheab') {
+      if (child.name === 'PereteSTG' || child.name === 'PereteDR' || child.name === 'AcoperisSTG' || child.name === 'AcoperisDR' ||
+        child.name === 'beton' || child.name === 'jgheabSTG' || child.name === 'jgheabDR' || child.name === 'coltar_acoperis') {
         child.userData.isLastFrameWall = true;
       }
+
+      // Collect side walls — reparented AFTER traverse to avoid mutating the scene graph mid-iteration.
+      if (child.name === 'PereteSTG' || child.name === 'PereteDR') {
+        sideWalls.current.push(child);
+      }
+
 
       if (['PereteSTG', 'PereteDR', 'AcoperisSTG', 'AcoperisDR'].includes(child.name)) {
         // Create a duplicate mesh using the exact same geometry and material
         const innerSkin = new THREE.Mesh(child.geometry, child.material);
         innerSkin.name = child.name + '_inner';
-        
+
         // Attach it to the main wall so it moves/scales exactly when the hall resizes
         child.add(innerSkin);
       }
     });
 
-    
+    // Reparent PereteSTG/PereteDR to model root AFTER traverse completes.
+    // stalp_1/stalp_2 (their GLTF parents) are scaled by resize_height, which would
+    // corrupt any position.y we set on the walls. Detaching breaks that link.
+    sideWalls.current.forEach(mesh => {
+      const worldPos = new THREE.Vector3();
+      mesh.getWorldPosition(worldPos);
+      model.attach(mesh); // reparent, preserving world transform
+      mesh.position.copy(worldPos); // restore position in new parent space
+      mesh.userData.sideWallBaseY = mesh.position.y; // anchor Y at model_height=6
+      mesh.userData.initialX = mesh.position.x;      // anchor X for width slider
+      mesh.userData.initialScaleY = mesh.scale.y;    // GLTF native scale (usually 1)
+
+      // Add to left/right arrays so the width slider moves them correctly
+      if (mesh.name === 'PereteSTG') left.current.push(mesh);
+      if (mesh.name === 'PereteDR')  right.current.push(mesh);
+    });
+
 
     // Apply initial height = 3
     const initial_height = 3;
     const scale = initial_height / model_height;
     initial_scale.current = scale;
 
-    resize_height.current.forEach(mesh => { 
-      mesh.scale.y = scale; 
+    // Side walls: keep at natural GLTF size — clipping planes trim the top to the roof shape.
+    // Just lock position.y to the captured world anchor so they don't drift.
+    sideWalls.current.forEach(mesh => {
+      mesh.position.y = mesh.userData.sideWallBaseY;
+    });
+
+    resize_height.current.forEach(mesh => {
+      mesh.scale.y = scale;
       mesh.children.forEach(subChild => {
         if (subChild.userData.initialLocalY !== undefined) {
           const TWEAK_LATERAL_Y = 0.03; // Increase this if the gap is still visible
@@ -487,7 +602,7 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
     // Build modelsGroup
     const mg = new THREE.Group();
     modelsGroup.current = mg;
-    baseModel.current   = model;
+    baseModel.current = model;
     model.userData.isBase = true;
     mg.add(model);
 
@@ -500,9 +615,13 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
     }
 
     updateLastFrameBeams();
+    updateSpateVisibility();
+
+    // Apply side-wall eave clip plane immediately — sideWalls.current is populated here.
+    applySideClipPlanes(height);
 
     return () => { mg.removeFromParent(); };
-  }, [gltfScene]);
+  }, [gltfScene]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── HEIGHT slider ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -512,8 +631,14 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
 
     const new_height = height;
     const scale = new_height / model_height;
-    resize_height.current.forEach(mesh => { 
-      mesh.scale.y = scale; 
+    // Side walls: position is fixed — clipping planes handle roof trimming.
+    // No scale.y change needed since they are no longer pillar children.
+    sideWalls.current.forEach(mesh => {
+      mesh.position.y = mesh.userData.sideWallBaseY;
+    });
+
+    resize_height.current.forEach(mesh => {
+      mesh.scale.y = scale;
       // Counteract the parent scale shift on the child's local position
       mesh.children.forEach(subChild => {
         if (subChild.userData.initialLocalY !== undefined) {
@@ -567,7 +692,7 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
               mesh.scale.copy(baseMesh.scale);
               mesh.rotation.copy(baseMesh.rotation);
               mesh.position.copy(baseMesh.position);
-              if (!mesh.userData.isGrinda && !mesh.userData.isLastFrameWall) {
+              if (!baseMesh.userData.isGrinda && !baseMesh.userData.isLastFrameWall && !baseMesh.userData.isSpateMesh) {
                 mesh.visible = baseMesh.visible;
               }
             }
@@ -584,10 +709,10 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
     if (prevLength.current === length) return;
     prevLength.current = length;
 
-    const newLength     = length;
+    const newLength = length;
     const requiredCount = Math.floor(newLength / distanceLength) + 1;
-    const mg            = modelsGroup.current;
-    const bm            = baseModel.current;
+    const mg = modelsGroup.current;
+    const bm = baseModel.current;
 
     while (mg.children.length > requiredCount) {
       mg.remove(mg.children[mg.children.length - 1]);
@@ -600,6 +725,7 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
 
     updateCamera(newLength);
     updateLastFrameBeams();
+    updateSpateVisibility();
   }, [length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── WIDTH slider ──────────────────────────────────────────────────────────
@@ -610,32 +736,32 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
 
     const new_width = width;
 
-    const half_new     = new_width / 2;
+    const half_new = new_width / 2;
     const half_initial = model_width / 2;
-    const scaleX       = half_new / half_initial;
-    const delta        = half_new - half_initial;
-    const widthDelta   = new_width - initial_width;
+    const scaleX = half_new / half_initial;
+    const delta = half_new - half_initial;
+    const widthDelta = new_width - initial_width;
 
     const THRESHOLD = 12;
-    let pullMain  = 0;
+    let pullMain = 0;
     let pullStalp = 0;
     if (new_width > THRESHOLD) {
       const excess = new_width - THRESHOLD;
-      pullMain  = excess * 0.484;
+      pullMain = excess * 0.484;
       pullStalp = pullMain;
     } else {
       const deficit = THRESHOLD - new_width;
-      pullMain  = -deficit * 0.487;
+      pullMain = -deficit * 0.487;
       pullStalp = pullMain * 0.987;
     }
 
-    const bs  = baza_stalp.current;
+    const bs = baza_stalp.current;
     const bs1 = baza_stalp001.current;
     const ss1 = suruburi_sus001.current;
     const ss2 = suruburi_sus002.current;
 
     if (bs && bs1 && ss1 && ss2) {
-      bs.position.x  = bs.userData.initialX  - delta;
+      bs.position.x = bs.userData.initialX - delta;
       ss1.position.x = ss1.userData.initialX - delta;
       bs1.position.x = bs1.userData.initialX + delta;
       ss2.position.x = ss2.userData.initialX + delta;
@@ -651,7 +777,7 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
     }
     currentRise.current = rise;
 
-    const lgLeft  = lastGrindaLeft.current;
+    const lgLeft = lastGrindaLeft.current;
     const lgRight = lastGrindaRight.current;
 
     // Remove last grinzi when width <= 9
@@ -693,9 +819,9 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
     // Small-width grinzi positioning (8–11)
     if ([8, 9, 10, 11].includes(new_width)) {
       const move = widthDelta / 8.3;
-      let moveFactor      = move;
+      let moveFactor = move;
       let riseFactorRight = rise * 0.255;
-      let riseFactorLeft  = rise * 0.255;
+      let riseFactorLeft = rise * 0.255;
       if (new_width === 9) {
         moveFactor = move * -0.09; riseFactorRight = rise * -0.0295; riseFactorLeft = rise * -0.026;
       } else if (new_width === 8) {
@@ -814,22 +940,22 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
       (new_width >= 19 && new_width <= maxWidth)
     ) {
       const move = widthDelta / 8.3;
-      let moveFactor: number   = (new_width - 15) / 10.3;
+      let moveFactor: number = (new_width - 15) / 10.3;
       const riseFactor: number = (new_width - 15) / 58;
       let riseFactorRight: number;
       let riseFactorLeft: number;
 
       if (new_width > initial_width && new_width <= 14) {
-        moveFactor      = move;
+        moveFactor = move;
         riseFactorRight = rise * 0.255;
-        riseFactorLeft  = rise * 0.255;
+        riseFactorLeft = rise * 0.255;
       } else if (new_width >= 19 && new_width <= 20) {
-        moveFactor      = (new_width - 18) / 12.4;
+        moveFactor = (new_width - 18) / 12.4;
         riseFactorRight = (new_width - 18) / 70;
-        riseFactorLeft  = riseFactorRight;
+        riseFactorLeft = riseFactorRight;
       } else {
         riseFactorRight = riseFactor;
-        riseFactorLeft  = riseFactor;
+        riseFactorLeft = riseFactor;
       }
 
       grinziLeft.current.forEach((g, i) => {
@@ -860,7 +986,7 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
     resize_width.current.forEach(mesh => {
       mesh.scale.x = scaleX;
       const localLen = (mesh.userData.localLength || 1) * mesh.scale.x;
-      const angle    = Math.atan2(rise, localLen);
+      const angle = Math.atan2(rise, localLen);
 
       if (mesh.name.includes('stalp_sus_1')) {
         mesh.position.x = mesh.userData.initialX - delta;
@@ -916,7 +1042,7 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
               mesh.scale.copy(baseMesh.scale);
               mesh.rotation.copy(baseMesh.rotation);
               mesh.position.copy(baseMesh.position);
-              if (!mesh.userData.isGrinda && !mesh.userData.isLastFrameWall) {
+              if (!baseMesh.userData.isGrinda && !baseMesh.userData.isLastFrameWall && !baseMesh.userData.isSpateMesh) {
                 mesh.visible = baseMesh.visible;
               }
             }
@@ -928,14 +1054,6 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
     updateLastFrameBeams();
   }, [width]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  
-  // ── Clipping planes for front/back gable panels (LOCAL space) ─────────────
-  const clipPlanes = useRef<THREE.Plane[]>([
-    new THREE.Plane(),
-    new THREE.Plane(),
-    new THREE.Plane(),
-    new THREE.Plane(),
-  ]);
 
   /**
    * Update clipping planes using PURE world geometry.
@@ -953,27 +1071,27 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
     } else {
       pullMain = -(THRESHOLD - width) * 0.487;
     }
-    
+
     // The columns start at 6m half-width, plus the offset
     const structuralHalfW = 6 + pullMain;
-    
+
     // The base roof pitch derived directly from your Blender model (7389mm - 6104mm)
-    const baseRise = 1.285; 
-    
+    const baseRise = 1.285;
+
     const cornerLiftOffset = 0.23;
 
     const eaveY = height + cornerLiftOffset;
     const peakY = height + baseRise + currentRise.current;
 
     // Small buffers so the cut sits slightly outside the steel beams
-    const extraWidth = 0.4;
+    const extraWidth = 0.41;
     const extraHeight = 0.26;
 
     const planes = clipPlanes.current;
     const limitX = structuralHalfW + extraWidth;
 
     // ── 2. Build the 4 clipping planes ──
-    
+
     // Plane 0 – Left vertical cut
     planes[0].setComponents(1, 0, 0, limitX);
 
@@ -981,7 +1099,7 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
     planes[1].setComponents(-1, 0, 0, limitX);
 
     // Plane 2 – Left Roof Slope
-    const dxL = structuralHalfW; 
+    const dxL = structuralHalfW;
     const dyL = peakY - eaveY;
     // Normal pointing down and right (into the hall)
     const normalL = new THREE.Vector3(dyL, -dxL, 0).normalize();
@@ -1001,7 +1119,7 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
     const totalFrames = mg.children.length;
     mg.children.forEach((frame, index) => {
       const isFirst = index === 0;
-      const isLast  = index === totalFrames - 1;
+      const isLast = index === totalFrames - 1;
 
       const pf = frame.getObjectByName('PereteFata') as THREE.Mesh | undefined;
       if (pf) {
@@ -1016,8 +1134,8 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
           }
           const pScaleY = pf.parent ? pf.parent.scale.y : 1;
           pf.scale.set(
-            pf.userData.initialScaleX, 
-            pf.userData.initialScaleY / pScaleY, 
+            pf.userData.initialScaleX,
+            pf.userData.initialScaleY / pScaleY,
             pf.userData.initialScaleZ
           );
           // ─────────────────────────────────────────────────────────
@@ -1034,12 +1152,11 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
         }
       }
 
+      // PereteSpate: visible only on the LAST frame
       const ps = frame.getObjectByName('PereteSpate') as THREE.Mesh | undefined;
       if (ps) {
         ps.visible = isLast;
         if (ps.visible) {
-
-          // ── REAL FIX: PRESERVE BLENDER SCALE WHILE UN-SQUASHING ──
           if (ps.userData.initialScaleY === undefined) {
             ps.userData.initialScaleX = ps.scale.x;
             ps.userData.initialScaleY = ps.scale.y;
@@ -1047,12 +1164,10 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
           }
           const pScaleY = ps.parent ? ps.parent.scale.y : 1;
           ps.scale.set(
-            ps.userData.initialScaleX, 
-            ps.userData.initialScaleY / pScaleY, 
+            ps.userData.initialScaleX,
+            ps.userData.initialScaleY / pScaleY,
             ps.userData.initialScaleZ
           );
-          // ─────────────────────────────────────────────────────────
-
           if (!ps.userData.clipMatCloned) {
             ps.material = (ps.material as THREE.Material).clone();
             ps.userData.clipMatCloned = true;
@@ -1064,9 +1179,20 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
           mat.needsUpdate = true;
         }
       }
+
     });
 
+    // burlan_spate* and jgheab_spate*: visible only on the SECOND-TO-LAST frame
+    updateSpateVisibility();
+
   }, [width, height, length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+
+  // ── Side-wall eave clipping: update when height, width or length changes ─────
+  useEffect(() => {
+    if (!modelsGroup.current) return;
+    applySideClipPlanes(height);
+  }, [height, width, length]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
 
@@ -1086,7 +1212,7 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
 
     toggleConcrete(baseModel.current);
     modelsGroup.current.children.forEach(toggleConcrete);
-  }, [showFoundation]); 
+  }, [showFoundation]);
 
   useEffect(() => {
     if (!baseModel.current || !modelsGroup.current) return;
@@ -1096,23 +1222,23 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
 
     const applySandwichGap = (modelTarget: THREE.Object3D) => {
       modelTarget.traverse((child) => {
-        
+
         // Target the duplicates we created in the setup
         if (child.name.endsWith('_inner')) {
-          
+
           // Hide the inner skin entirely if insulation is toggled off
           child.visible = isIsolated;
 
           // Push the inner skin inward to create the thickness.
           // IMPORTANT: If the inner wall moves sideways or up instead of inward towards the center of the hall, 
           // change 'x' to 'y' or 'z' below to match your Blender local axes!
-          
+
           if (child.name.includes('PereteSTG')) child.position.x = gapDistance;
-          if (child.name.includes('PereteDR'))  child.position.x = -gapDistance;
-          
+          if (child.name.includes('PereteDR')) child.position.x = -gapDistance;
+
           // Roofs often use Y or Z depending on how you rotated them in Blender
           if (child.name.includes('AcoperisSTG')) child.position.y = -gapDistance;
-          if (child.name.includes('AcoperisDR'))  child.position.y = -gapDistance;
+          if (child.name.includes('AcoperisDR')) child.position.y = -gapDistance;
         }
       });
     };
@@ -1135,11 +1261,11 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
 // ─── Slider UI overlay (replaces the HTML sliders) ───────────────────────────
 interface SlidersProps {
   height: number; setHeight: (v: number) => void;
-  width:  number; setWidth:  (v: number) => void;
+  width: number; setWidth: (v: number) => void;
   length: number; setLength: (v: number) => void;
   showFoundation: boolean; setShowFoundation: (v: boolean) => void;
-  isIsolated: boolean;     setIsIsolated: (v: boolean) => void;
-  insulation: number;      setInsulation: (v: number) => void;
+  isIsolated: boolean; setIsIsolated: (v: boolean) => void;
+  insulation: number; setInsulation: (v: number) => void;
 }
 
 function Sliders({ height, setHeight, width, setWidth, length, setLength, showFoundation
@@ -1148,31 +1274,31 @@ function Sliders({ height, setHeight, width, setWidth, length, setLength, showFo
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, setter: (v: number) => void, min: number, max: number) => {
     let val = parseInt(e.target.value, 10);
     if (isNaN(val)) return;
-    
+
     // Clamping the value to prevent breaking the model
     val = Math.max(min, Math.min(max, val));
-    
+
     setter(val);
   };
 
   return (
-    <div style={{ padding: '1rem' }} className="absolute backdrop-blur-lg bg-black/40 rounded-2xl z-10 bottom-4 left-4 right-4 md:bottom-auto md:top-5 md:left-5 md:right-auto md:w-96 border-t-4 border-[#F5A623] text-gray-200 shadow-2xl shadow-black/70 flex flex-col gap-4 transition-all">      
-    
-    <h3 className="m-0 text-lg text-white font-semibold">Configurator Hală</h3>
+    <div style={{ padding: '1rem' }} className="absolute backdrop-blur-lg bg-black/40 rounded-2xl z-10 bottom-4 left-4 right-4 md:bottom-auto md:top-5 md:left-5 md:right-auto md:w-96 border-t-4 border-[#F5A623] text-gray-200 shadow-2xl shadow-black/70 flex flex-col gap-4 transition-all">
+
+      <h3 className="m-0 text-lg text-white font-semibold">Configurator Hală</h3>
 
       {/* Înălțime */}
       <div className="flex items-center gap-3">
         <span className="min-w-[64px] text-lg font-medium">Înălțime</span>
-        <input 
-          type="range" min={3} max={6} step={1} value={height} 
+        <input
+          type="range" min={3} max={6} step={1} value={height}
           className="flex-1 accent-[#F5A623] cursor-pointer"
-          onChange={e => setHeight(parseInt(e.target.value, 10))} 
+          onChange={e => setHeight(parseInt(e.target.value, 10))}
         />
         <div className="flex items-center gap-1.5">
-          <input 
-            type="number" value={height} min={3} max={6} 
+          <input
+            type="number" value={height} min={3} max={6}
             className="w-12 p-1.5 bg-[#1A1C20]/60 border border-gray-600 focus:border-[#F5A623] focus:ring-1 focus:ring-[#F5A623] outline-none text-white rounded text-center font-bold transition-all"
-            onChange={e => handleInputChange(e, setHeight, 3, 6)} 
+            onChange={e => handleInputChange(e, setHeight, 3, 6)}
           />
           <span className="text-sm text-gray-400 w-3">m</span>
         </div>
@@ -1181,16 +1307,16 @@ function Sliders({ height, setHeight, width, setWidth, length, setLength, showFo
       {/* Lățime */}
       <div className="flex items-center gap-3">
         <span className="min-w-[64px] text-lg font-medium">Lățime</span>
-        <input 
-          type="range" min={8} max={20} step={1} value={width} 
+        <input
+          type="range" min={8} max={20} step={1} value={width}
           className="flex-1 accent-[#F5A623] cursor-pointer"
-          onChange={e => setWidth(parseInt(e.target.value, 10))} 
+          onChange={e => setWidth(parseInt(e.target.value, 10))}
         />
         <div className="flex items-center gap-1.5">
-          <input 
-            type="number" value={width} min={8} max={20} 
+          <input
+            type="number" value={width} min={8} max={20}
             className="w-12 p-1.5 bg-[#1A1C20]/60 border border-gray-600 focus:border-[#F5A623] focus:ring-1 focus:ring-[#F5A623] outline-none text-white rounded text-center font-bold transition-all"
-            onChange={e => handleInputChange(e, setWidth, 8, 20)} 
+            onChange={e => handleInputChange(e, setWidth, 8, 20)}
           />
           <span className="text-sm text-gray-400 w-3">m</span>
         </div>
@@ -1199,16 +1325,16 @@ function Sliders({ height, setHeight, width, setWidth, length, setLength, showFo
       {/* Lungime */}
       <div className="flex items-center gap-3">
         <span className="min-w-[64px] text-lg font-medium">Lungime</span>
-        <input 
-          type="range" min={12} max={102} step={6} value={length} 
+        <input
+          type="range" min={12} max={102} step={6} value={length}
           className="flex-1 accent-[#F5A623] cursor-pointer"
-          onChange={e => setLength(parseInt(e.target.value, 10))} 
+          onChange={e => setLength(parseInt(e.target.value, 10))}
         />
         <div className="flex items-center gap-1.5">
-          <input 
-            type="number" value={length} min={12} max={102} step={6} 
+          <input
+            type="number" value={length} min={12} max={102} step={6}
             className="w-12 p-1.5 bg-[#1A1C20]/60 border border-gray-600 focus:border-[#F5A623] focus:ring-1 focus:ring-[#F5A623] outline-none text-white rounded text-center font-bold transition-all"
-            onChange={e => handleInputChange(e, setLength, 12, 102)} 
+            onChange={e => handleInputChange(e, setLength, 12, 102)}
           />
           <span className="text-sm text-gray-400 w-3">m</span>
         </div>
@@ -1220,8 +1346,8 @@ function Sliders({ height, setHeight, width, setWidth, length, setLength, showFo
           onClick={() => setShowFoundation(!showFoundation)}
           className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none ${showFoundation ? 'bg-[#F5A623]' : 'bg-gray-600'}`}
         >
-          <span 
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${showFoundation ? 'translate-x-7' : 'translate-x-1'}`} 
+          <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${showFoundation ? 'translate-x-7' : 'translate-x-1'}`}
           />
         </button>
       </div>
@@ -1241,16 +1367,16 @@ function Sliders({ height, setHeight, width, setWidth, length, setLength, showFo
       {isIsolated && (
         <div className="flex items-center gap-3 animate-fade-in">
           <span className="min-w-[64px] text-sm font-medium text-gray-300">Grosime</span>
-          <input 
-            type="range" min={30} max={250} step={10} value={insulation} 
+          <input
+            type="range" min={30} max={250} step={10} value={insulation}
             className="flex-1 accent-[#F5A623] cursor-pointer h-1.5 bg-gray-700 rounded-lg appearance-none"
-            onChange={e => setInsulation(parseInt(e.target.value, 10))} 
+            onChange={e => setInsulation(parseInt(e.target.value, 10))}
           />
           <div className="flex items-center gap-1.5">
-            <input 
+            <input
               type="number" value={insulation} min={30} max={250} step={10}
               className="w-16 py-1.5 px-1 bg-[#1A1C20]/60 border border-gray-600 focus:border-[#F5A623] focus:ring-1 focus:ring-[#F5A623] outline-none text-white rounded text-center font-bold transition-all"
-              onChange={e => handleInputChange(e, setInsulation, 30, 250)} 
+              onChange={e => handleInputChange(e, setInsulation, 30, 250)}
             />
             <span className="text-xs text-gray-400 w-4">mm</span>
           </div>
@@ -1284,13 +1410,13 @@ function Ground() {
     </mesh>
   );
 
-  
+
 }
 
 // ─── Root page component ──────────────────────────────────────────────────────
 export default function ConfiguratorPage() {
   const [height, setHeight] = useState(3);
-  const [width,  setWidth]  = useState(12);
+  const [width, setWidth] = useState(12);
   const [length, setLength] = useState(12);
   const [showFoundation, setShowFoundation] = useState(true);
   const [isIsolated, setIsIsolated] = useState(false);
@@ -1324,46 +1450,46 @@ export default function ConfiguratorPage() {
         {/* Lumina ambientala */}
         <ambientLight intensity={0.5} />
 
-        <Sky 
+        <Sky
           distance={450000} // How far away the sky is
           sunPosition={[-5, 10, 5]} // Match this to your directionalLight position!
-          inclination={0} 
-          azimuth={0.25} 
+          inclination={0}
+          azimuth={0.25}
         />
-        
+
         <Environment preset="city" /> {/* This adds reflections to the metal */}
         {/* Plan pentru umbre */}
-        <mesh rotation-x={-Math.PI / 2} position-y={-0.01} receiveShadow>          
+        <mesh rotation-x={-Math.PI / 2} position-y={-0.01} receiveShadow>
         </mesh>
 
         <Ground />
-        
+
 
         {/* Controale orbit — makeDefault exposes the instance via useThree().controls */}
-        <OrbitControls 
-          makeDefault 
-          target={[0, 0, 0]} 
-          // maxPolarAngle={Math.PI / 2 - 0.05} // Prevents camera from going below ground
-          // minDistance={2}
-          // maxDistance={100}
-          // screenSpacePanning={false}
+        <OrbitControls
+          makeDefault
+          target={[0, 0, 0]}
+        // maxPolarAngle={Math.PI / 2 - 0.05} // Prevents camera from going below ground
+        // minDistance={2}
+        // maxDistance={100}
+        // screenSpacePanning={false}
         />
 
         {/* Configurator scene — receives slider values as props */}
-        <ConfiguratorScene 
-        height={height} 
-        width={width} 
-        length={length} 
-        showFoundation={showFoundation}
-        isIsolated={isIsolated}
-        insulation={insulation}
+        <ConfiguratorScene
+          height={height}
+          width={width}
+          length={length}
+          showFoundation={showFoundation}
+          isIsolated={isIsolated}
+          insulation={insulation}
         />
       </Canvas>
 
       {/* Sliders overlay (absolute-positioned on top of the canvas) */}
       <Sliders
         height={height} setHeight={setHeight}
-        width={width}   setWidth={setWidth}
+        width={width} setWidth={setWidth}
         length={length} setLength={setLength}
         showFoundation={showFoundation} setShowFoundation={setShowFoundation}
         isIsolated={isIsolated} setIsIsolated={setIsIsolated} // <--- ADD THIS
