@@ -1,9 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { Environment, OrbitControls, useGLTF, Sky, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
+import { useOpeningsStore } from '@/stores/useOpeningsStore';
+import type { OpeningType, WallId } from '@/stores/useOpeningsStore';
+import PlacementMarkers from './PlacementMarkers';
+import WallOpenings from './WallOpenings';
 
 // ─── Constants (same as original) ────────────────────────────────────────────
 const model_height = 6;
@@ -26,13 +30,29 @@ interface ConfiguratorProps {
   showFoundation: boolean;
   isIsolated: boolean;
   insulation: number;
+  wallsVisible?: boolean;
+}
+
+// Helper to walk up the parent chain and find if a mesh belongs to one of the 4 walls
+function findWallId(object: THREE.Object3D | null): WallId | null {
+  let curr = object;
+  while (curr) {
+    const name = curr.name;
+    if (name.includes('PereteFata')) return 'PereteFata';
+    if (name.includes('PereteSpate')) return 'PereteSpate';
+    if (name.includes('PereteSTG')) return 'PereteSTG';
+    if (name.includes('PereteDR')) return 'PereteDR';
+    curr = curr.parent;
+  }
+  return null;
 }
 
 // ─── Inner R3F scene component ────────────────────────────────────────────────
 // Lives inside <Canvas> so it has access to useThree / useGLTF
-function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, insulation }: ConfiguratorProps) {
-
-
+export function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, insulation, wallsVisible = true }: ConfiguratorProps) {
+  const activeTool = useOpeningsStore((s) => s.activeTool);
+  const setHoveredWallId = useOpeningsStore((s) => s.setHoveredWallId);
+  const clearHoveredWallId = useOpeningsStore((s) => s.clearHoveredWallId);
 
   const { camera, controls, scene } = useThree();
   const metalTextures = useTexture({
@@ -72,7 +92,7 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
   // (clipPlanes removed – gable panels now use custom geometry instead of clipping)
 
   // GLTF loader (replaces: loader.load(window.MODEL_URL, ...))
-  const { scene: gltfScene } = useGLTF('/models/jgheaburi-2.gltf');
+  const { scene: gltfScene } = useGLTF('/models/da.gltf');
 
   // ── Imperative state refs  (mirrors original module-level variables) ───────
   const resize_height = useRef<THREE.Mesh[]>([]);
@@ -88,6 +108,8 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
   const grinziLeft = useRef<THREE.Mesh[]>([]);
   const grinziRight = useRef<THREE.Mesh[]>([]);
   const sideWalls = useRef<THREE.Mesh[]>([]);
+  const roofNodes = useRef<THREE.Mesh[]>([]);
+  const burlanNodes = useRef<THREE.Mesh[]>([]);
 
   // Clip planes — declared here (before helpers) so closures can reference them safely.
   const clipPlanes = useRef<THREE.Plane[]>([
@@ -130,11 +152,21 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
   const prevHeight = useRef(height);
   const prevWidth = useRef(width);
   const prevLength = useRef(length);
-  // Always-current height ref (avoids stale closure inside width effect)
+  // Always-current refs (avoids stale closure inside callbacks/effects)
   const heightRef = useRef(height);
-  useEffect(() => {
+  useLayoutEffect(() => {
     heightRef.current = height;
   }, [height]);
+
+  const wallsVisibleRef = useRef(wallsVisible);
+  useLayoutEffect(() => {
+    wallsVisibleRef.current = wallsVisible;
+  }, [wallsVisible]);
+
+  const showFoundationRef = useRef(showFoundation);
+  useLayoutEffect(() => {
+    showFoundationRef.current = showFoundation;
+  }, [showFoundation]);
 
   // ── Helpers (exact translation of original functions) ─────────────────────
 
@@ -159,10 +191,33 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
     if (!mg || mg.children.length === 0) return;
     const lastIndex = mg.children.length - 1;
     mg.children.forEach((frame, i) => {
+      const isFirst = i === 0;
+      const isLast = i === lastIndex;
       frame.traverse(child => {
+        if (!(child instanceof THREE.Mesh)) return;
         const hideOnLastFrame = child.userData.isGrinda || child.userData.isLastFrameWall;
         if (!hideOnLastFrame) return;
-        child.visible = i !== lastIndex;
+
+        if (child.userData.isLastFrameWall) {
+          if (child.name.includes('Perete')) {
+            if (child.name.includes('PereteFata')) {
+              child.visible = wallsVisibleRef.current && isFirst;
+            } else if (child.name.includes('PereteSpate')) {
+              child.visible = wallsVisibleRef.current && isLast;
+            } else {
+              // Side walls (PereteSTG, PereteDR) or others
+              child.visible = wallsVisibleRef.current && !isLast;
+            }
+          } else if (child.name.includes('beton')) {
+            child.visible = showFoundationRef.current && !isLast;
+          } else {
+            // Other last frame elements like gutters
+            child.visible = !isLast;
+          }
+        } else {
+          // Grinzi
+          child.visible = !isLast;
+        }
       });
     });
   }
@@ -172,7 +227,14 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
     const mg = modelsGroup.current;
     if (!mg || mg.children.length === 0) return;
     const secondToLastIndex = mg.children.length - 2;
-    const spateNames = ['burlan_spateDR', 'burlan_spateSTG', 'jgheab_spateDR', 'jgheab_spateSTG'];
+    const spateNames = [
+      'burlan_spateDR',
+      'burlan_spateSTG',
+      'jgheab_spateDR',
+      'jgheab_spateSTG',
+      'jgheabDR_prelungire',
+      'jgheabSTG_prelungire',
+    ];
     mg.children.forEach((frame, index) => {
       spateNames.forEach(spateName => {
         const spate = frame.getObjectByName(spateName) as THREE.Object3D | undefined;
@@ -302,7 +364,7 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
   }
 
   // ── One-time setup: parse GLTF scene (mirror of loader.load callback) ─────
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Reset all imperative collections so React Strict Mode / effect re-runs match
     // the single-shot `loader.load` behavior in configurator.js (no duplicate meshes).
     resize_height.current = [];
@@ -341,6 +403,7 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
 
     const model = gltfScene.clone(true);
     model.position.set(0, 0, 0);
+    const roofBaseYByName = new Map<string, number>();
 
     model.traverse((child) => {
       if (!(child instanceof THREE.Mesh)) return;
@@ -522,13 +585,33 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
       }
       // Mark spate objects for custom visibility handling
       if (child.name === 'burlan_spateSTG' || child.name === 'burlan_spateDR' ||
-        child.name === 'jgheab_spateSTG' || child.name === 'jgheab_spateDR') {
+        child.name === 'jgheab_spateSTG' || child.name === 'jgheab_spateDR' ||
+        child.name === 'jgheabDR_prelungire' || child.name === 'jgheabSTG_prelungire' || child.name === 'beton') {
         child.userData.isSpateMesh = true;
       }
       // End-closure wall meshes (one per side); hidden on the last frame like grinzi
       if (child.name === 'PereteSTG' || child.name === 'PereteDR' || child.name === 'AcoperisSTG' || child.name === 'AcoperisDR' ||
         child.name === 'beton' || child.name === 'jgheabSTG' || child.name === 'jgheabDR' || child.name === 'coltar_acoperis') {
         child.userData.isLastFrameWall = true;
+      }
+
+      // Collect roof and gutter/downpipe nodes so we can control rotation/scale explicitly.
+      if (child.name === 'AcoperisSTG' || child.name === 'AcoperisDR') {
+        // cache initial local scales/rotation/position
+        child.userData.initialScaleX = child.scale.x;
+        child.userData.initialScaleY = child.scale.y;
+        child.userData.initialScaleZ = child.scale.z;
+        child.userData.initialRotationZ = child.rotation.z;
+        child.userData.initialPosition = child.position.clone();
+        roofNodes.current.push(child);
+      }
+
+      if (child.name === 'burlan' || child.name === 'burlanDR' || child.name === 'burlan_spateSTG' || child.name === 'burlan_spateDR') {
+        child.userData.initialScaleX = child.scale.x;
+        child.userData.initialScaleY = child.scale.y;
+        child.userData.initialScaleZ = child.scale.z;
+        child.userData.initialPosition = child.position.clone();
+        burlanNodes.current.push(child);
       }
 
       // Collect side walls — reparented AFTER traverse to avoid mutating the scene graph mid-iteration.
@@ -558,10 +641,23 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
       mesh.userData.sideWallBaseY = mesh.position.y; // anchor Y at model_height=6
       mesh.userData.initialX = mesh.position.x;      // anchor X for width slider
       mesh.userData.initialScaleY = mesh.scale.y;    // GLTF native scale (usually 1)
+      mesh.userData.isSideWall = true;
 
       // Add to left/right arrays so the width slider moves them correctly
       if (mesh.name === 'PereteSTG') left.current.push(mesh);
       if (mesh.name === 'PereteDR')  right.current.push(mesh);
+    });
+
+    // Reparent roof meshes to model root to avoid inheriting transforms from their Blender parents.
+    roofNodes.current.forEach(mesh => {
+      const worldPos = new THREE.Vector3();
+      mesh.getWorldPosition(worldPos);
+      model.attach(mesh);
+      mesh.position.copy(worldPos);
+      // Subtract 3m from roof base so Acoperis renders lower initially
+      mesh.userData.roofBaseY = mesh.position.y - 3;
+      mesh.position.y = mesh.userData.roofBaseY;
+      roofBaseYByName.set(mesh.name, mesh.userData.roofBaseY);
     });
 
 
@@ -584,6 +680,13 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
           subChild.position.y = (subChild.userData.initialLocalY / scale) + TWEAK_LATERAL_Y;
         }
       });
+    });
+    burlanNodes.current.forEach(b => {
+      b.scale.set(
+        b.userData.initialScaleX || 1,
+        (b.userData.initialScaleY || 1) * scale,
+        b.userData.initialScaleZ || 1
+      );
     });
     lowered.current.forEach(obj => {
 
@@ -614,6 +717,17 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
       mg.add(clone);
     }
 
+    // Ensure all frames (base + clones) share the exact same roof base offset.
+    roofBaseYByName.forEach((baseY, name) => {
+      mg.children.forEach(frame => {
+        const roof = frame.getObjectByName(name) as THREE.Mesh | undefined;
+        if (roof) {
+          roof.userData.roofBaseY = baseY;
+          roof.position.y = baseY;
+        }
+      });
+    });
+
     updateLastFrameBeams();
     updateSpateVisibility();
 
@@ -624,7 +738,7 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
   }, [gltfScene]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── HEIGHT slider ─────────────────────────────────────────────────────────
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!baseModel.current || !modelsGroup.current) return;
     if (prevHeight.current === height) return;
     prevHeight.current = height;
@@ -647,6 +761,13 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
         }
       });
     });
+    burlanNodes.current.forEach(b => {
+      b.scale.set(
+        b.userData.initialScaleX || 1,
+        (b.userData.initialScaleY || 1) * scale,
+        b.userData.initialScaleZ || 1
+      );
+    });
     const deltaHeight = (scale - initial_scale.current) * model_height;
     lowered.current.forEach(obj => { obj.position.y = obj.userData.initialY + deltaHeight; });
     resize_width.current.forEach(obj => { obj.position.y = obj.userData.initialY + deltaHeight; });
@@ -656,6 +777,14 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
     if (p1 && p2) {
       p1.position.y = p1.userData.initialY + deltaHeight + currentRise.current;
       p2.position.y = p2.userData.initialY + deltaHeight + currentRise.current;
+    }
+
+    // Ensure roofs follow height changes before clone sync
+    if (roofNodes.current.length > 0) {
+      roofNodes.current.forEach(r => {
+        const baseY = r.userData.roofBaseY ?? r.position.y;
+        r.position.y = baseY + deltaHeight + currentRise.current;
+      });
     }
 
     if (new_height === 3) {
@@ -704,7 +833,7 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
   }, [height]);
 
   // ── LENGTH slider ─────────────────────────────────────────────────────────
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!baseModel.current || !modelsGroup.current) return;
     if (prevLength.current === length) return;
     prevLength.current = length;
@@ -728,8 +857,8 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
     updateSpateVisibility();
   }, [length]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── WIDTH slider ──────────────────────────────────────────────────────────
-  useEffect(() => {
+  // ── WIDTH slider ─────────────────────────────────────────────────────────
+  useLayoutEffect(() => {
     if (!baseModel.current || !modelsGroup.current) return;
     if (prevWidth.current === width) return;
     prevWidth.current = width;
@@ -776,6 +905,9 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
       rise = t * minrise;
     }
     currentRise.current = rise;
+    const heightScale = heightRef.current / model_height;
+    const heightDelta = (heightScale - initial_scale.current) * model_height;
+    const scaleRoof = scaleX;
 
     const lgLeft = lastGrindaLeft.current;
     const lgRight = lastGrindaRight.current;
@@ -1005,6 +1137,29 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
       }
     });
 
+    // After width resize, synchronize roof rotations but preserve and scale appropriately
+    if (roofNodes.current.length > 0) {
+      const support = resize_width.current.find(m => m.name === 'stalp_sus' || m.name === 'stalp_sus_1');
+      roofNodes.current.forEach((r) => {
+        // invert rotation for DR side so left/right roofs tilt opposite directions
+        if (support) {
+          const baseRot = support.rotation.z || 0;
+          const add = r.userData.initialRotationZ || 0;
+          if (r.name.includes('DR')) {
+            r.rotation.z = -baseRot + add;
+          } else {
+            r.rotation.z = baseRot + add;
+          }
+        }
+        // Apply X scaling so the roof stretches with the building width, but keep Y/Z original
+        const roofScaleX = r.name.includes('DR') ? scaleRoof * 1.01 : scaleRoof;
+        const targetScaleX = (r.userData.initialScaleX || 1) * roofScaleX;
+        r.scale.set(targetScaleX, r.userData.initialScaleY || 1, r.userData.initialScaleZ || 1);
+        const baseY = r.userData.roofBaseY ?? r.position.y;
+        r.position.y = baseY + heightDelta + currentRise.current;
+      });
+    }
+
     const betonBase = baseModel.current.getObjectByName('beton') as THREE.Mesh;
     if (betonBase) {
       // FIX: Multiply our slider ratio by the mesh's original starting scale
@@ -1085,7 +1240,7 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
 
     // Small buffers so the cut sits slightly outside the steel beams
     const extraWidth = 0.41;
-    const extraHeight = 0.26;
+    const extraHeight = 0.255;
 
     const planes = clipPlanes.current;
     const limitX = structuralHalfW + extraWidth;
@@ -1123,7 +1278,7 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
 
       const pf = frame.getObjectByName('PereteFata') as THREE.Mesh | undefined;
       if (pf) {
-        pf.visible = isFirst;
+        pf.visible = wallsVisible && isFirst;
         if (pf.visible) {
 
           // ── REAL FIX: PRESERVE BLENDER SCALE WHILE UN-SQUASHING ──
@@ -1155,7 +1310,7 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
       // PereteSpate: visible only on the LAST frame
       const ps = frame.getObjectByName('PereteSpate') as THREE.Mesh | undefined;
       if (ps) {
-        ps.visible = isLast;
+        ps.visible = wallsVisible && isLast;
         if (ps.visible) {
           if (ps.userData.initialScaleY === undefined) {
             ps.userData.initialScaleX = ps.scale.x;
@@ -1185,11 +1340,11 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
     // burlan_spate* and jgheab_spate*: visible only on the SECOND-TO-LAST frame
     updateSpateVisibility();
 
-  }, [width, height, length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [width, height, length, wallsVisible]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
   // ── Side-wall eave clipping: update when height, width or length changes ─────
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!modelsGroup.current) return;
     applySideClipPlanes(height);
   }, [height, width, length]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -1197,7 +1352,7 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
 
 
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!baseModel.current || !modelsGroup.current) return;
 
     const toggleConcrete = (modelTarget: THREE.Object3D) => {
@@ -1214,7 +1369,45 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
     modelsGroup.current.children.forEach(toggleConcrete);
   }, [showFoundation]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (!baseModel.current || !modelsGroup.current) return;
+
+    const mg = modelsGroup.current;
+    const totalFrames = mg.children.length;
+
+    mg.children.forEach((frame, index) => {
+      const isFirst = index === 0;
+      const isLast = index === totalFrames - 1;
+      frame.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          if (
+            child.name.includes('Perete') ||
+            child.userData.isSideWall ||
+            child.userData.isLastFrameWall ||
+            child.name.endsWith('_inner')
+          ) {
+            // Keep roofs visible if walls are hidden, only hide vertical walls
+            if (!child.name.includes('Acoperis')) {
+              if (child.name.includes('PereteFata')) {
+                child.visible = wallsVisible && isFirst;
+              } else if (child.name.includes('PereteSpate')) {
+                child.visible = wallsVisible && isLast;
+              } else {
+                // Side walls (PereteSTG, PereteDR) or others
+                child.visible = wallsVisible && !isLast;
+              }
+            }
+          }
+        }
+      });
+    });
+
+    if (wallsVisible) {
+      updateSpateVisibility();
+    }
+  }, [wallsVisible, length]);
+
+  useLayoutEffect(() => {
     if (!baseModel.current || !modelsGroup.current) return;
 
     // Convert your slider (mm) to Three.js world units (meters) -> 250mm = 0.25
@@ -1252,141 +1445,28 @@ function ConfiguratorScene({ height, width, length, showFoundation, isIsolated, 
   // eslint-disable-next-line react-hooks/refs -- R3F <primitive>: group is attached in GLTF useEffect
   if (!modelsGroup.current) return null;
 
-  return <primitive object={modelsGroup.current} />;
-}
-
-
-
-
-// ─── Slider UI overlay (replaces the HTML sliders) ───────────────────────────
-interface SlidersProps {
-  height: number; setHeight: (v: number) => void;
-  width: number; setWidth: (v: number) => void;
-  length: number; setLength: (v: number) => void;
-  showFoundation: boolean; setShowFoundation: (v: boolean) => void;
-  isIsolated: boolean; setIsIsolated: (v: boolean) => void;
-  insulation: number; setInsulation: (v: number) => void;
-}
-
-function Sliders({ height, setHeight, width, setWidth, length, setLength, showFoundation
-  , setShowFoundation, isIsolated, setIsIsolated, insulation, setInsulation }: SlidersProps) {
-  // Helper for synchronized input & slider updates
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, setter: (v: number) => void, min: number, max: number) => {
-    let val = parseInt(e.target.value, 10);
-    if (isNaN(val)) return;
-
-    // Clamping the value to prevent breaking the model
-    val = Math.max(min, Math.min(max, val));
-
-    setter(val);
-  };
-
   return (
-    <div style={{ padding: '1rem' }} className="absolute backdrop-blur-lg bg-black/40 rounded-2xl z-10 bottom-4 left-4 right-4 md:bottom-auto md:top-5 md:left-5 md:right-auto md:w-96 border-t-4 border-[#F5A623] text-gray-200 shadow-2xl shadow-black/70 flex flex-col gap-4 transition-all">
-
-      <h3 className="m-0 text-lg text-white font-semibold">Configurator Hală</h3>
-
-      {/* Înălțime */}
-      <div className="flex items-center gap-3">
-        <span className="min-w-[64px] text-lg font-medium">Înălțime</span>
-        <input
-          type="range" min={3} max={6} step={1} value={height}
-          className="flex-1 accent-[#F5A623] cursor-pointer"
-          onChange={e => setHeight(parseInt(e.target.value, 10))}
-        />
-        <div className="flex items-center gap-1.5">
-          <input
-            type="number" value={height} min={3} max={6}
-            className="w-12 p-1.5 bg-[#1A1C20]/60 border border-gray-600 focus:border-[#F5A623] focus:ring-1 focus:ring-[#F5A623] outline-none text-white rounded text-center font-bold transition-all"
-            onChange={e => handleInputChange(e, setHeight, 3, 6)}
-          />
-          <span className="text-sm text-gray-400 w-3">m</span>
-        </div>
-      </div>
-
-      {/* Lățime */}
-      <div className="flex items-center gap-3">
-        <span className="min-w-[64px] text-lg font-medium">Lățime</span>
-        <input
-          type="range" min={8} max={20} step={1} value={width}
-          className="flex-1 accent-[#F5A623] cursor-pointer"
-          onChange={e => setWidth(parseInt(e.target.value, 10))}
-        />
-        <div className="flex items-center gap-1.5">
-          <input
-            type="number" value={width} min={8} max={20}
-            className="w-12 p-1.5 bg-[#1A1C20]/60 border border-gray-600 focus:border-[#F5A623] focus:ring-1 focus:ring-[#F5A623] outline-none text-white rounded text-center font-bold transition-all"
-            onChange={e => handleInputChange(e, setWidth, 8, 20)}
-          />
-          <span className="text-sm text-gray-400 w-3">m</span>
-        </div>
-      </div>
-
-      {/* Lungime */}
-      <div className="flex items-center gap-3">
-        <span className="min-w-[64px] text-lg font-medium">Lungime</span>
-        <input
-          type="range" min={12} max={102} step={6} value={length}
-          className="flex-1 accent-[#F5A623] cursor-pointer"
-          onChange={e => setLength(parseInt(e.target.value, 10))}
-        />
-        <div className="flex items-center gap-1.5">
-          <input
-            type="number" value={length} min={12} max={102} step={6}
-            className="w-12 p-1.5 bg-[#1A1C20]/60 border border-gray-600 focus:border-[#F5A623] focus:ring-1 focus:ring-[#F5A623] outline-none text-white rounded text-center font-bold transition-all"
-            onChange={e => handleInputChange(e, setLength, 12, 102)}
-          />
-          <span className="text-sm text-gray-400 w-3">m</span>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between mt-2 pt-4 border-t border-white/10">
-        <span className="text-lg font-medium text-white">Fundație beton</span>
-        <button
-          onClick={() => setShowFoundation(!showFoundation)}
-          className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none ${showFoundation ? 'bg-[#F5A623]' : 'bg-gray-600'}`}
-        >
-          <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${showFoundation ? 'translate-x-7' : 'translate-x-1'}`}
-          />
-        </button>
-      </div>
-
-      {/* Izolație Toggle */}
-      <div className="flex items-center justify-between mt-2 pt-4 border-t border-white/10">
-        <span className="text-lg font-medium text-white">Izolație Panouri</span>
-        <button
-          onClick={() => setIsIsolated(!isIsolated)}
-          className={`relative inline-flex h-6 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none ${isIsolated ? 'bg-[#F5A623]' : 'bg-gray-600'}`}
-        >
-          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-300 ${isIsolated ? 'translate-x-7' : 'translate-x-1'}`} />
-        </button>
-      </div>
-
-      {/* Conditional Grosime Slider (Only shows if Izolatie is ON) */}
-      {isIsolated && (
-        <div className="flex items-center gap-3 animate-fade-in">
-          <span className="min-w-[64px] text-sm font-medium text-gray-300">Grosime</span>
-          <input
-            type="range" min={30} max={250} step={10} value={insulation}
-            className="flex-1 accent-[#F5A623] cursor-pointer h-1.5 bg-gray-700 rounded-lg appearance-none"
-            onChange={e => setInsulation(parseInt(e.target.value, 10))}
-          />
-          <div className="flex items-center gap-1.5">
-            <input
-              type="number" value={insulation} min={30} max={250} step={10}
-              className="w-16 py-1.5 px-1 bg-[#1A1C20]/60 border border-gray-600 focus:border-[#F5A623] focus:ring-1 focus:ring-[#F5A623] outline-none text-white rounded text-center font-bold transition-all"
-              onChange={e => handleInputChange(e, setInsulation, 30, 250)}
-            />
-            <span className="text-xs text-gray-400 w-4">mm</span>
-          </div>
-        </div>
-      )}
-    </div>
+    <group
+      onPointerOver={(e) => {
+        if (!activeTool) return;
+        e.stopPropagation();
+        const wallId = findWallId(e.object);
+        if (wallId) {
+          setHoveredWallId(wallId);
+        }
+      }}
+      onPointerOut={(e) => {
+        if (!activeTool) return;
+        e.stopPropagation();
+        clearHoveredWallId();
+      }}
+    >
+      <primitive object={modelsGroup.current} />
+    </group>
   );
 }
 
-function Ground() {
+export function Ground() {
   // Load the PBR textures as an object
   const textures = useTexture({
     map: 'grass/grass_color.jpg',
@@ -1413,88 +1493,14 @@ function Ground() {
 
 }
 
-// ─── Root page component ──────────────────────────────────────────────────────
-export default function ConfiguratorPage() {
-  const [height, setHeight] = useState(3);
-  const [width, setWidth] = useState(12);
-  const [length, setLength] = useState(12);
-  const [showFoundation, setShowFoundation] = useState(true);
-  const [isIsolated, setIsIsolated] = useState(false);
-  const [insulation, setInsulation] = useState(30);
-
+// ─── Orbit controls wrapper — disables during opening drag/resize ─────────────
+export function ControlledOrbitControls() {
+  const isDragging = useOpeningsStore((s) => s.isDragging);
   return (
-    <div id="scene-container" style={{ position: 'relative', width: '100vw', height: '100vh' }}>
-      <Canvas
-        camera={{ fov: 75, near: 0.1, far: 1000, position: [-6, 7, 13] as [number, number, number] }}
-        shadows={{ type: THREE.PCFShadowMap }}
-        frameloop="always"
-        style={{ background: '#dddddd', width: '100%', height: '100%' }}
-        gl={{ localClippingEnabled: true }}
-      >
-        {/* Lumina directionala cu umbre */}
-        <directionalLight
-          position={[5, 10, 5]}
-          intensity={0.7}
-          castShadow
-          shadow-mapSize-width={4096}
-          shadow-mapSize-height={4096}
-          shadow-bias={-0.005}
-          shadow-normalBias={0.005}
-          shadow-camera-left={-100}
-          shadow-camera-right={100}
-          shadow-camera-top={100}
-          shadow-camera-bottom={-100}
-          shadow-camera-near={1}
-          shadow-camera-far={100}
-        />
-        {/* Lumina ambientala */}
-        <ambientLight intensity={0.5} />
-
-        <Sky
-          distance={450000} // How far away the sky is
-          sunPosition={[-5, 10, 5]} // Match this to your directionalLight position!
-          inclination={0}
-          azimuth={0.25}
-        />
-
-        <Environment preset="city" /> {/* This adds reflections to the metal */}
-        {/* Plan pentru umbre */}
-        <mesh rotation-x={-Math.PI / 2} position-y={-0.01} receiveShadow>
-        </mesh>
-
-        <Ground />
-
-
-        {/* Controale orbit — makeDefault exposes the instance via useThree().controls */}
-        <OrbitControls
-          makeDefault
-          target={[0, 0, 0]}
-        // maxPolarAngle={Math.PI / 2 - 0.05} // Prevents camera from going below ground
-        // minDistance={2}
-        // maxDistance={100}
-        // screenSpacePanning={false}
-        />
-
-        {/* Configurator scene — receives slider values as props */}
-        <ConfiguratorScene
-          height={height}
-          width={width}
-          length={length}
-          showFoundation={showFoundation}
-          isIsolated={isIsolated}
-          insulation={insulation}
-        />
-      </Canvas>
-
-      {/* Sliders overlay (absolute-positioned on top of the canvas) */}
-      <Sliders
-        height={height} setHeight={setHeight}
-        width={width} setWidth={setWidth}
-        length={length} setLength={setLength}
-        showFoundation={showFoundation} setShowFoundation={setShowFoundation}
-        isIsolated={isIsolated} setIsIsolated={setIsIsolated} // <--- ADD THIS
-        insulation={insulation} setInsulation={setInsulation}
-      />
-    </div>
+    <OrbitControls
+      makeDefault
+      target={[0, 0, 0]}
+      enabled={!isDragging}
+    />
   );
 }

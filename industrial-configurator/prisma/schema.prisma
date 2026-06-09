@@ -1,0 +1,31 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Configuration {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  data      Json     // full configuration as JSON
+  createdAt DateTime @default(now())
+  userEmail String?
+  userName  String?
+  userPhone String?
+}
+
+model Prices {
+  id              String   @id @default(cuid())
+  structurePerM3  Float
+  foundationPerM2 Float
+  sandwichPerM2   Float
+  windowPerUnit   Float
+  doorPerUnit     Float
+  bigDoorPerUnit  Float
+  updatedAt       DateTime @updatedAt
+}
