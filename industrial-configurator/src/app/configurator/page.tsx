@@ -25,7 +25,7 @@ function GlobalLoader() {
           />
         </div>
         
-        <p className="text-gray-400 font-bold tracking-widest text-sm uppercase">Loading Environment {Math.round(progress)}%</p>
+        <p className="text-gray-400 font-bold tracking-widest text-sm uppercase">Se încarcă modelul 3D {Math.round(progress)}%</p>
       </div>
     </div>
   );

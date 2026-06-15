@@ -1,6 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 // ─── Default Prices (fallback until loaded from API) ─────────────────────────
 export const DEFAULT_PRICES = {
@@ -54,20 +55,31 @@ interface ConfiguratorState {
 
   // ── Configuration export ─────────────────────────────────
   getConfigurationData: (openingsCount: { windows: number; doors: number; garageDoors: number }) => Record<string, unknown>;
+  resetConfigurator: () => void;
 }
 
-export const useConfiguratorStore = create<ConfiguratorState>((set, get) => ({
+export const useConfiguratorStore = create<ConfiguratorState>()(
+  persist(
+    (set, get) => ({
   // ── Step navigation ──────────────────────────────────────
   currentStep: 1,
-  setStep: (step) => set({ currentStep: step }),
+  setStep: (step) => set({ currentStep: step, wallsVisible: step !== 1 }),
   nextStep: () =>
-    set((s) => ({
-      currentStep: Math.min(4, s.currentStep + 1) as ConfigStep,
-    })),
+    set((s) => {
+      const next = Math.min(4, s.currentStep + 1) as ConfigStep;
+      return {
+        currentStep: next,
+        wallsVisible: next !== 1,
+      };
+    }),
   prevStep: () =>
-    set((s) => ({
-      currentStep: Math.max(1, s.currentStep - 1) as ConfigStep,
-    })),
+    set((s) => {
+      const prev = Math.max(1, s.currentStep - 1) as ConfigStep;
+      return {
+        currentStep: prev,
+        wallsVisible: prev !== 1,
+      };
+    }),
 
   // ── Dimensions ───────────────────────────────────────────
   height: 3,
@@ -78,7 +90,7 @@ export const useConfiguratorStore = create<ConfiguratorState>((set, get) => ({
   setLength: (v) => set({ length: v }),
 
   // ── Walls visibility ────────────────────────────────────
-  wallsVisible: true,
+  wallsVisible: false,
   setWallsVisible: (v) => set({ wallsVisible: v }),
 
   // ── Panels & Foundation ─────────────────────────────────
@@ -140,4 +152,23 @@ export const useConfiguratorStore = create<ConfiguratorState>((set, get) => ({
       estimatedPrice: s.getEstimatedPrice(openingsCount),
     };
   },
-}));
+
+  resetConfigurator: () => {
+    set({
+      currentStep: 1,
+      height: 3,
+      width: 12,
+      length: 12,
+      wallsVisible: false,
+      showFoundation: true,
+      hasSandwichPanels: false,
+      isIsolated: false,
+      insulation: 30,
+    });
+  },
+    }),
+    {
+      name: 'carstar-configurator-storage', // name of the item in the storage (must be unique)
+    }
+  )
+);

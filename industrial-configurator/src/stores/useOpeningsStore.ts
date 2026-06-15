@@ -1,6 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type OpeningType = 'window' | 'door' | 'garageDoor';
@@ -40,7 +41,10 @@ interface OpeningsState {
   setIsDragging: (v: boolean) => void;
   setShowMarkers: (v: boolean) => void;
   setHoveredWallId: (wallId: WallId | null) => void;
+  setHoveredWallId: (wallId: WallId | null) => void;
   clearHoveredWallId: () => void;
+  setOpenings: (openings: Opening[]) => void;
+  resetOpenings: () => void;
 }
 
 // ─── Default dimensions per type ──────────────────────────────────────────────
@@ -53,7 +57,9 @@ export const DEFAULT_DIMENSIONS: Record<OpeningType, { width: number; height: nu
 let _nextId = 1;
 let _clearHoverTimeout: NodeJS.Timeout | null = null;
 
-export const useOpeningsStore = create<OpeningsState>((set) => ({
+export const useOpeningsStore = create<OpeningsState>()(
+  persist(
+    (set) => ({
   openings: [],
   activeTool: null,
   selectedOpeningId: null,
@@ -116,4 +122,30 @@ export const useOpeningsStore = create<OpeningsState>((set) => ({
       set({ hoveredWallId: null });
     }, 150);
   },
-}));
+
+  setOpenings: (openings) => {
+    set({ openings });
+    _nextId = Math.max(_nextId, ...openings.map(o => parseInt(o.id.replace('op-', '')) || 0)) + 1;
+  },
+
+  resetOpenings: () => {
+    set({
+      openings: [],
+      activeTool: null,
+      selectedOpeningId: null,
+      isDragging: false,
+      showMarkers: false,
+      hoveredWallId: null,
+    });
+    _nextId = 1;
+  },
+    }),
+    {
+      name: 'carstar-openings-storage', // name of the item in the storage (must be unique)
+      // Optional: ignore non-serializable state like active dragging flags
+      partialize: (state) => ({
+        openings: state.openings,
+      }),
+    }
+  )
+);

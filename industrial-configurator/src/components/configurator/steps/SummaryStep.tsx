@@ -37,7 +37,7 @@ export default function SummaryStep() {
 
   const handleGenerateLink = async () => {
     try {
-      const data = getConfigurationData(counts);
+      const data = { ...getConfigurationData(counts), openingsList: openings };
       const res = await fetch('/api/configurations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -66,7 +66,7 @@ export default function SummaryStep() {
     try {
       let link = configLink;
       if (!link) {
-        const data = getConfigurationData(counts);
+        const data = { ...getConfigurationData(counts), openingsList: openings };
         const res = await fetch('/api/configurations', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -110,57 +110,57 @@ export default function SummaryStep() {
     >
       {/* Header */}
       <div className="mb-4">
-        <h3 className="text-sm font-bold text-black uppercase mb-1">Summary</h3>
+        <h3 className="text-sm font-bold text-black uppercase mb-1">Sumar</h3>
       </div>
 
       <div className="space-y-3 flex-1 overflow-y-auto pr-1">
         {/* Price highlight */}
         <div className="bg-white border border-gray-200 rounded-lg p-4 text-center shadow-sm">
           <div className="text-xs text-gray-500 uppercase tracking-wider mb-1 font-bold">
-            Estimated Price
+            Preț Estimativ
           </div>
           <div className="text-3xl font-bold text-black">
             €{estimatedPrice.toLocaleString('en-US')}
           </div>
           <div className="text-xs text-gray-400 mt-1">
-            *Indicative price, subject to change
+            *Preț orientativ, supus modificărilor
           </div>
         </div>
 
         {/* Configuration details */}
         <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-2.5 shadow-sm">
-          <h3 className="text-sm font-bold text-black mb-3 uppercase">Details</h3>
+          <h3 className="text-sm font-bold text-black mb-3 uppercase">Detalii</h3>
 
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600 font-medium">Dimensions</span>
+            <span className="text-gray-600 font-medium">Dimensiuni</span>
             <span className="text-black font-bold">{length} × {width} × {height} m</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600 font-medium">Footprint area</span>
+            <span className="text-gray-600 font-medium">Suprafață la sol</span>
             <span className="text-black font-bold">{floorArea} m²</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600 font-medium">Number of bays</span>
+            <span className="text-gray-600 font-medium">Număr de travee</span>
             <span className="text-black font-bold">{numberOfBays}</span>
           </div>
 
           <div className="h-px bg-gray-100 my-1" />
 
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600 font-medium">Foundation</span>
+            <span className="text-gray-600 font-medium">Fundație</span>
             <span className={`font-bold ${showFoundation ? 'text-green-600' : 'text-gray-400'}`}>
-              {showFoundation ? 'YES' : 'NO'}
+              {showFoundation ? 'DA' : 'NU'}
             </span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600 font-medium">Sandwich panels</span>
+            <span className="text-gray-600 font-medium">Panouri sandwich</span>
             <span className={`font-bold ${hasSandwichPanels ? 'text-green-600' : 'text-gray-400'}`}>
-              {hasSandwichPanels ? 'YES' : 'NO'}
+              {hasSandwichPanels ? 'DA' : 'NU'}
             </span>
           </div>
           {isIsolated && (
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600 font-medium">Insulation</span>
+              <span className="text-gray-600 font-medium">Izolație</span>
               <span className="text-black font-bold">{insulation} mm</span>
             </div>
           )}
@@ -168,22 +168,22 @@ export default function SummaryStep() {
           <div className="h-px bg-gray-100 my-1" />
 
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600 font-medium">Windows</span>
+            <span className="text-gray-600 font-medium">Geamuri</span>
             <span className="text-black font-bold">{windowCount}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600 font-medium">Doors</span>
+            <span className="text-gray-600 font-medium">Uși</span>
             <span className="text-black font-bold">{doorCount}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600 font-medium">Industrial doors</span>
+            <span className="text-gray-600 font-medium">Uși industriale</span>
             <span className="text-black font-bold">{garageDoorCount}</span>
           </div>
         </div>
 
         {/* Generate link */}
         <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-          <h3 className="text-sm font-bold text-black mb-3">Share Configuration</h3>
+          <h3 className="text-sm font-bold text-black mb-3">Partajează Configurația</h3>
           {configLink ? (
             <div className="flex gap-2">
               <input
@@ -196,22 +196,22 @@ export default function SummaryStep() {
                 onClick={handleCopyLink}
                 className="px-3 py-2 rounded-lg bg-[var(--color-primary)] text-white text-xs font-bold cursor-pointer hover:bg-orange-600 transition-colors shrink-0"
               >
-                {copied ? '✓' : 'Copy'}
+                {copied ? '✓' : 'Copiază'}
               </button>
             </div>
           ) : (
             <button
               onClick={handleGenerateLink}
-              className="w-full py-2 rounded-lg border border-[var(--color-primary)] text-[var(--color-primary)] text-sm font-bold cursor-pointer hover:bg-orange-50 transition-colors"
+              className="w-full py-2 rounded-lg border border-[var(--color-primary)] text-[var(--color-primary)] text-sm font-bold cursor-pointer hover:bg-orange-55 transition-colors"
             >
-              Generate Link
+              Generează Link
             </button>
           )}
         </div>
 
         {/* Email form */}
         <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-          <h3 className="text-sm font-bold text-black mb-3">Request Quote</h3>
+          <h3 className="text-sm font-bold text-black mb-3">Cere Ofertă</h3>
 
           {sent ? (
             <div className="text-center py-6 flex flex-col items-center">
@@ -220,13 +220,13 @@ export default function SummaryStep() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <p className="text-sm font-bold text-green-600">Request sent successfully!</p>
+              <p className="text-sm font-bold text-green-600">Cererea a fost trimisă cu succes!</p>
             </div>
           ) : (
             <div className="space-y-2.5">
               <input
                 type="text"
-                placeholder="Name"
+                placeholder="Nume"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full py-2 px-3 bg-white border border-gray-300 focus:border-[var(--color-primary)] outline-none text-black rounded-lg text-sm transition-colors placeholder:text-gray-400"
@@ -241,13 +241,13 @@ export default function SummaryStep() {
               />
               <input
                 type="tel"
-                placeholder="Phone"
+                placeholder="Telefon"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className="w-full py-2 px-3 bg-white border border-gray-300 focus:border-[var(--color-primary)] outline-none text-black rounded-lg text-sm transition-colors placeholder:text-gray-400"
               />
               <textarea
-                placeholder="Message (optional)"
+                placeholder="Mesaj (opțional)"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 rows={2}
@@ -258,7 +258,7 @@ export default function SummaryStep() {
                 disabled={!email || sending}
                 className="w-full py-3 rounded-xl bg-[var(--color-primary)] text-white font-bold text-sm hover:bg-orange-600 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               >
-                {sending ? 'Sending...' : 'Send Request'}
+                {sending ? 'Se trimite...' : 'Trimite Cererea'}
               </button>
             </div>
           )}

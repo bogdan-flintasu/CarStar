@@ -33,7 +33,7 @@ export default function DimensionsStep() {
     >
       {/* Header */}
       <div className="mb-6">
-        <h3 className="text-sm font-bold text-black uppercase mb-1">Dimensions</h3>
+        <h3 className="text-sm font-bold text-black uppercase mb-1">Dimensiuni</h3>
       </div>
 
       {/* Sliders */}
@@ -41,7 +41,7 @@ export default function DimensionsStep() {
         {/* Height */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <label className="text-sm font-bold text-gray-800">Length</label>
+            <label className="text-sm font-bold text-gray-800">Lungime</label>
             <div className="flex items-center border border-gray-300 rounded-lg px-3 py-1">
               <input
                 type="number"
@@ -62,6 +62,7 @@ export default function DimensionsStep() {
             step={6}
             value={length}
             className="w-full cursor-pointer"
+            style={{ '--range-progress': `${((length - 12) / 90) * 100}%` } as React.CSSProperties}
             onChange={(e) => setLength(parseInt(e.target.value, 10))}
           />
         </div>
@@ -69,7 +70,7 @@ export default function DimensionsStep() {
         {/* Width */}
         <div className="pt-4 border-t border-gray-100">
           <div className="flex items-center justify-between mb-4">
-            <label className="text-sm font-bold text-gray-800">Width</label>
+            <label className="text-sm font-bold text-gray-800">Lățime</label>
             <div className="flex items-center border border-gray-300 rounded-lg px-3 py-1">
               <input
                 type="number"
@@ -89,6 +90,7 @@ export default function DimensionsStep() {
             step={1}
             value={width}
             className="w-full cursor-pointer"
+            style={{ '--range-progress': `${((width - 8) / 12) * 100}%` } as React.CSSProperties}
             onChange={(e) => setWidth(parseInt(e.target.value, 10))}
           />
         </div>
@@ -96,7 +98,7 @@ export default function DimensionsStep() {
         {/* Height */}
         <div className="pt-4 border-t border-gray-100">
           <div className="flex items-center justify-between mb-4">
-            <label className="text-sm font-bold text-gray-800">Height</label>
+            <label className="text-sm font-bold text-gray-800">Înălțime</label>
             <div className="flex items-center border border-gray-300 rounded-lg px-3 py-1">
               <input
                 type="number"
@@ -116,12 +118,13 @@ export default function DimensionsStep() {
             step={1}
             value={height}
             className="w-full cursor-pointer"
+            style={{ '--range-progress': `${((height - 3) / 3) * 100}%` } as React.CSSProperties}
             onChange={(e) => setHeight(parseInt(e.target.value, 10))}
           />
         </div>
         {/* Computed values */}
         <div className="flex justify-between items-center pt-4 border-t border-gray-100 mb-6">
-          <span className="text-sm font-bold text-gray-800">Total area</span>
+          <span className="text-sm font-bold text-gray-800">Suprafață utilă</span>
           <span className="text-sm font-bold text-black">{floorArea} m²</span>
         </div>
 
@@ -129,10 +132,10 @@ export default function DimensionsStep() {
         <div className="flex items-center justify-between pt-3 border-t border-gray-100">
           <div>
             <span className="text-sm font-bold text-gray-800 block">
-              Remove walls
+              Ascunde pereții
             </span>
             <span className="text-xs text-gray-500">
-              Show dimensional lines
+              Afișează cotele dimensionale
             </span>
           </div>
           <button

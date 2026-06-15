@@ -29,8 +29,8 @@ export default function DimensionLines({ length, width, height, visible }: Dimen
       {/* Main dimension line */}
       <Line
         points={[
-          [width / 2 + xOffset, 0.1, length / 2],
-          [width / 2 + xOffset, 0.1, -length / 2]
+          [width / 2 + xOffset, 0.1, 0],
+          [width / 2 + xOffset, 0.1, -length]
         ]}
         color="#F5A623"
         lineWidth={2}
@@ -38,12 +38,12 @@ export default function DimensionLines({ length, width, height, visible }: Dimen
         renderOrder={999}
       />
       {/* End ticks */}
-      <Line points={[[width / 2 + xOffset - 0.5, 0.1, length / 2], [width / 2 + xOffset + 0.5, 0.1, length / 2]]} color="#F5A623" depthTest={false} renderOrder={999} />
-      <Line points={[[width / 2 + xOffset - 0.5, 0.1, -length / 2], [width / 2 + xOffset + 0.5, 0.1, -length / 2]]} color="#F5A623" depthTest={false} renderOrder={999} />
+      <Line points={[[width / 2 + xOffset - 0.5, 0.1, 0], [width / 2 + xOffset + 0.5, 0.1, 0]]} color="#F5A623" depthTest={false} renderOrder={999} />
+      <Line points={[[width / 2 + xOffset - 0.5, 0.1, -length], [width / 2 + xOffset + 0.5, 0.1, -length]]} color="#F5A623" depthTest={false} renderOrder={999} />
       
       {/* Label */}
       <Text
-        position={[width / 2 + xOffset, yOffset, 0]}
+        position={[width / 2 + xOffset, yOffset, -length / 2]}
         rotation={[-Math.PI / 2, 0, -Math.PI / 2]}
         fontSize={0.8}
         color="#F5A623"
@@ -59,8 +59,8 @@ export default function DimensionLines({ length, width, height, visible }: Dimen
       {/* Main dimension line */}
       <Line
         points={[
-          [width / 2, 0.1, length / 2 + zOffset],
-          [-width / 2, 0.1, length / 2 + zOffset]
+          [width / 2, 0.1, zOffset],
+          [-width / 2, 0.1, zOffset]
         ]}
         color="#F5A623"
         lineWidth={2}
@@ -68,12 +68,12 @@ export default function DimensionLines({ length, width, height, visible }: Dimen
         renderOrder={999}
       />
       {/* End ticks */}
-      <Line points={[[width / 2, 0.1, length / 2 + zOffset - 0.5], [width / 2, 0.1, length / 2 + zOffset + 0.5]]} color="#F5A623" depthTest={false} renderOrder={999} />
-      <Line points={[[-width / 2, 0.1, length / 2 + zOffset - 0.5], [-width / 2, 0.1, length / 2 + zOffset + 0.5]]} color="#F5A623" depthTest={false} renderOrder={999} />
+      <Line points={[[width / 2, 0.1, zOffset - 0.5], [width / 2, 0.1, zOffset + 0.5]]} color="#F5A623" depthTest={false} renderOrder={999} />
+      <Line points={[[-width / 2, 0.1, zOffset - 0.5], [-width / 2, 0.1, zOffset + 0.5]]} color="#F5A623" depthTest={false} renderOrder={999} />
       
       {/* Label */}
       <Text
-        position={[0, yOffset, length / 2 + zOffset]}
+        position={[0, yOffset, zOffset]}
         rotation={[-Math.PI / 2, 0, 0]}
         fontSize={0.8}
         color="#F5A623"
@@ -89,8 +89,8 @@ export default function DimensionLines({ length, width, height, visible }: Dimen
       {/* Vertical line placed at one of the corners */}
       <Line
         points={[
-          [-width / 2 - xOffset, 0, length / 2],
-          [-width / 2 - xOffset, height, length / 2]
+          [-width / 2 - xOffset, 0, 0],
+          [-width / 2 - xOffset, height, 0]
         ]}
         color="#F5A623"
         lineWidth={2}
@@ -98,12 +98,12 @@ export default function DimensionLines({ length, width, height, visible }: Dimen
         renderOrder={999}
       />
       {/* End ticks */}
-      <Line points={[[-width / 2 - xOffset - 0.5, 0, length / 2], [-width / 2 - xOffset + 0.5, 0, length / 2]]} color="#F5A623" depthTest={false} renderOrder={999} />
-      <Line points={[[-width / 2 - xOffset - 0.5, height, length / 2], [-width / 2 - xOffset + 0.5, height, length / 2]]} color="#F5A623" depthTest={false} renderOrder={999} />
+      <Line points={[[-width / 2 - xOffset - 0.5, 0, 0], [-width / 2 - xOffset + 0.5, 0, 0]]} color="#F5A623" depthTest={false} renderOrder={999} />
+      <Line points={[[-width / 2 - xOffset - 0.5, height, 0], [-width / 2 - xOffset + 0.5, height, 0]]} color="#F5A623" depthTest={false} renderOrder={999} />
       
       {/* Label */}
       <Text
-        position={[-width / 2 - xOffset, height / 2, length / 2]}
+        position={[-width / 2 - xOffset, height / 2, 0]}
         rotation={[0, -Math.PI / 2, 0]}
         fontSize={0.8}
         color="#F5A623"
@@ -113,6 +113,36 @@ export default function DimensionLines({ length, width, height, visible }: Dimen
         renderOrder={1000}
       >
         H = {height}m
+      </Text>
+
+      {/* --- pillars spacing / Step (Z-axis, left side, 0 to -6) --- */}
+      {/* Main dimension line */}
+      <Line
+        points={[
+          [-width / 2 - xOffset, 0.1, 0],
+          [-width / 2 - xOffset, 0.1, -6]
+        ]}
+        color="#F5A623"
+        lineWidth={2}
+        depthTest={false}
+        renderOrder={999}
+      />
+      {/* End ticks */}
+      <Line points={[[-width / 2 - xOffset - 0.5, 0.1, 0], [-width / 2 - xOffset + 0.5, 0.1, 0]]} color="#F5A623" depthTest={false} renderOrder={999} />
+      <Line points={[[-width / 2 - xOffset - 0.5, 0.1, -6], [-width / 2 - xOffset + 0.5, 0.1, -6]]} color="#F5A623" depthTest={false} renderOrder={999} />
+      
+      {/* Label */}
+      <Text
+        position={[-width / 2 - xOffset, yOffset, -3]}
+        rotation={[-Math.PI / 2, 0, -Math.PI / 2]}
+        fontSize={0.8}
+        color="#F5A623"
+        anchorX="center"
+        anchorY="bottom"
+        material-depthTest={false}
+        renderOrder={1000}
+      >
+        Pas = 6m
       </Text>
 
     </group>

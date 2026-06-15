@@ -22,15 +22,15 @@ export default function PanelsStep() {
     >
       {/* Header */}
       <div className="mb-6">
-        <h3 className="text-sm font-bold text-black uppercase mb-1">Structure</h3>
+        <h3 className="text-sm font-bold text-black uppercase mb-1">Structură</h3>
       </div>
 
       <div className="space-y-8 flex-1 overflow-y-auto pr-2 pb-8">
         {/* Foundation Options */}
         <div>
           <div className="mb-3">
-            <span className="text-sm font-bold text-black block">Concrete Foundation</span>
-            <span className="text-xs text-gray-500">Reinforced concrete base for the structure</span>
+            <span className="text-sm font-bold text-black block">Fundație de Beton</span>
+            <span className="text-xs text-gray-500">Bază din beton armat pentru structură</span>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <button
@@ -41,8 +41,8 @@ export default function PanelsStep() {
                   : 'border-gray-200 bg-white hover:border-gray-300'
               }`}
             >
-              <span className="block font-bold text-black text-sm mb-1">Yes</span>
-              <span className="block text-xs text-gray-500 leading-tight">Include foundation</span>
+              <span className="block font-bold text-black text-sm mb-1">Da</span>
+              <span className="block text-xs text-gray-500 leading-tight">Include fundația</span>
             </button>
             <button
               onClick={() => setShowFoundation(false)}
@@ -52,84 +52,58 @@ export default function PanelsStep() {
                   : 'border-gray-200 bg-white hover:border-gray-300'
               }`}
             >
-              <span className="block font-bold text-black text-sm mb-1">No</span>
-              <span className="block text-xs text-gray-500 leading-tight">Without foundation</span>
+              <span className="block font-bold text-black text-sm mb-1">Nu</span>
+              <span className="block text-xs text-gray-500 leading-tight">Fără fundație</span>
             </button>
           </div>
         </div>
 
-        {/* Sandwich Panels Options */}
+        {/* Sandwich Panels / Insulation Options */}
         <div>
           <div className="mb-3">
-            <span className="text-sm font-bold text-black block">Sandwich Panels</span>
-            <span className="text-xs text-gray-500">Thermal insulated wall panels</span>
+            <span className="text-sm font-bold text-black block">Panouri Sandwich</span>
+            <span className="text-xs text-gray-500">Panouri termoizolante pentru pereți</span>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <button
-              onClick={() => setHasSandwichPanels(true)}
+              onClick={() => {
+                setHasSandwichPanels(true);
+                setIsIsolated(true);
+              }}
               className={`p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
                 hasSandwichPanels 
                   ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 shadow-[0_0_15px_rgba(245,166,35,0.1)]' 
                   : 'border-gray-200 bg-white hover:border-gray-300'
               }`}
             >
-              <span className="block font-bold text-black text-sm mb-1">Yes</span>
-              <span className="block text-xs text-gray-500 leading-tight">Add panels</span>
+              <span className="block font-bold text-black text-sm mb-1">Da</span>
+              <span className="block text-xs text-gray-500 leading-tight">Adaugă panouri</span>
             </button>
             <button
-              onClick={() => setHasSandwichPanels(false)}
+              onClick={() => {
+                setHasSandwichPanels(false);
+                setIsIsolated(false);
+              }}
               className={`p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
                 !hasSandwichPanels 
                   ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 shadow-[0_0_15px_rgba(245,166,35,0.1)]' 
                   : 'border-gray-200 bg-white hover:border-gray-300'
               }`}
             >
-              <span className="block font-bold text-black text-sm mb-1">No</span>
-              <span className="block text-xs text-gray-500 leading-tight">Frame only</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Insulation Options */}
-        <div>
-          <div className="mb-3">
-            <span className="text-sm font-bold text-black block">Extra Insulation</span>
-            <span className="text-xs text-gray-500">Additional panel thickness for better R-value</span>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => setIsIsolated(true)}
-              className={`p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
-                isIsolated 
-                  ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 shadow-[0_0_15px_rgba(245,166,35,0.1)]' 
-                  : 'border-gray-200 bg-white hover:border-gray-300'
-              }`}
-            >
-              <span className="block font-bold text-black text-sm mb-1">Yes</span>
-              <span className="block text-xs text-gray-500 leading-tight">Add insulation</span>
-            </button>
-            <button
-              onClick={() => setIsIsolated(false)}
-              className={`p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
-                !isIsolated 
-                  ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 shadow-[0_0_15px_rgba(245,166,35,0.1)]' 
-                  : 'border-gray-200 bg-white hover:border-gray-300'
-              }`}
-            >
-              <span className="block font-bold text-black text-sm mb-1">No</span>
-              <span className="block text-xs text-gray-500 leading-tight">Standard</span>
+              <span className="block font-bold text-black text-sm mb-1">Nu</span>
+              <span className="block text-xs text-gray-500 leading-tight">Doar structura</span>
             </button>
           </div>
 
           {/* Insulation thickness slider (conditional) */}
-          {isIsolated && (
+          {hasSandwichPanels && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               className="mt-6 p-4 rounded-xl border border-gray-200 bg-gray-50"
             >
               <div className="flex items-center justify-between mb-4">
-                <label className="text-sm font-bold text-gray-800">Thickness</label>
+                <label className="text-sm font-bold text-gray-800">Grosime</label>
                 <div className="flex items-center bg-white border border-gray-300 rounded-lg px-3 py-1">
                   <input
                     type="number"
@@ -152,7 +126,8 @@ export default function PanelsStep() {
                 max={250}
                 step={10}
                 value={insulation}
-                className="w-full cursor-pointer accent-[var(--color-primary)]"
+                className="w-full cursor-pointer"
+                style={{ '--range-progress': `${((insulation - 30) / 220) * 100}%` } as React.CSSProperties}
                 onChange={(e) => setInsulation(parseInt(e.target.value, 10))}
               />
             </motion.div>

@@ -74,11 +74,7 @@ export function ConfiguratorScene({ height, width, length, showFoundation, isIso
     roughnessMap: 'wall/wall_roughness.jpg',
   });
 
-  const foundationTextures = useTexture({
-    map: 'concrete/concrete_color.jpg',
-    normalMap: 'concrete/concrete_normal.jpg',
-    roughnessMap: 'concrete/concrete_roughness.jpg',
-  });
+  // Removed foundationTextures as per request
 
   // Walls repeat a lot to create the corrugated rib effect
   Object.values(wallTextures).forEach(t => {
@@ -148,10 +144,12 @@ export function ConfiguratorScene({ height, width, length, showFoundation, isIso
   const currentRise = useRef(0);
   const ok = useRef(true);
 
+  const [sceneReady, setSceneReady] = useState(false);
+
   // Track previous prop values to detect which slider actually changed
-  const prevHeight = useRef(height);
-  const prevWidth = useRef(width);
-  const prevLength = useRef(length);
+  const prevHeight = useRef(-1);
+  const prevWidth = useRef(-1);
+  const prevLength = useRef(-1);
   // Always-current refs (avoids stale closure inside callbacks/effects)
   const heightRef = useRef(height);
   useLayoutEffect(() => {
@@ -401,6 +399,11 @@ export function ConfiguratorScene({ height, width, length, showFoundation, isIso
     ok.current = true;
     currentRise.current = 0;
 
+    // Reset previous tracked props so layout effects run reliably after a new model is built
+    prevHeight.current = -1;
+    prevWidth.current = -1;
+    prevLength.current = -1;
+
     const model = gltfScene.clone(true);
     model.position.set(0, 0, 0);
     const roofBaseYByName = new Map<string, number>();
@@ -459,34 +462,11 @@ export function ConfiguratorScene({ height, width, length, showFoundation, isIso
       // }
 
       if (child.name === 'beton') {
-        // 1. Ensure the material actually uses the textures from your foundationTextures object
         child.userData.initialScaleX = child.scale.x;
         child.material = new THREE.MeshStandardMaterial({
-          map: foundationTextures.map, // Make sure these property names match your loader
-          normalMap: foundationTextures.normalMap,
-          roughnessMap: foundationTextures.roughnessMap,
-          color: new THREE.Color('#8a8a8a'), // Slightly darker concrete looks more realistic
+          color: new THREE.Color('#8a8a8a'),
           roughness: 0.9,
           metalness: 0.0,
-          normalScale: new THREE.Vector2(1.5, 1.5) // Bumped up for more grit
-        });
-
-        // 2. Tiling logic
-        // If the floor is 12x12 (as per your screenshot), we want it to tile in BOTH directions
-        const repeatX = (width || 12) / 2;  // Repeat every 2 meters
-        const repeatY = (length || 12) / 2;
-
-        // 3. APPLY TO ALL MAPS
-        // This is the most common point of failure: all maps must share the same tiling
-        const activeMaps = ['map', 'normalMap', 'roughnessMap'];
-        activeMaps.forEach(mapName => {
-          const texture = child.material[mapName];
-          if (texture) {
-            texture.wrapS = THREE.RepeatWrapping;
-            texture.wrapT = THREE.RepeatWrapping;
-            texture.repeat.set(repeatX, repeatY);
-            texture.needsUpdate = true;
-          }
         });
       }
 
@@ -734,6 +714,8 @@ export function ConfiguratorScene({ height, width, length, showFoundation, isIso
     // Apply side-wall eave clip plane immediately — sideWalls.current is populated here.
     applySideClipPlanes(height);
 
+    setSceneReady(true);
+
     return () => { mg.removeFromParent(); };
   }, [gltfScene]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -830,7 +812,7 @@ export function ConfiguratorScene({ height, width, length, showFoundation, isIso
       }
     });
     updateLastFrameBeams();
-  }, [height]);
+  }, [height, sceneReady]);
 
   // ── LENGTH slider ─────────────────────────────────────────────────────────
   useLayoutEffect(() => {
@@ -855,7 +837,7 @@ export function ConfiguratorScene({ height, width, length, showFoundation, isIso
     updateCamera(newLength);
     updateLastFrameBeams();
     updateSpateVisibility();
-  }, [length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [length, sceneReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── WIDTH slider ─────────────────────────────────────────────────────────
   useLayoutEffect(() => {
@@ -1207,7 +1189,7 @@ export function ConfiguratorScene({ height, width, length, showFoundation, isIso
     });
 
     updateLastFrameBeams();
-  }, [width]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [width, sceneReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
   /**
@@ -1347,7 +1329,7 @@ export function ConfiguratorScene({ height, width, length, showFoundation, isIso
   useLayoutEffect(() => {
     if (!modelsGroup.current) return;
     applySideClipPlanes(height);
-  }, [height, width, length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [height, width, length, sceneReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
 
@@ -1367,7 +1349,7 @@ export function ConfiguratorScene({ height, width, length, showFoundation, isIso
 
     toggleConcrete(baseModel.current);
     modelsGroup.current.children.forEach(toggleConcrete);
-  }, [showFoundation]);
+  }, [showFoundation, sceneReady]);
 
   useLayoutEffect(() => {
     if (!baseModel.current || !modelsGroup.current) return;
@@ -1382,20 +1364,22 @@ export function ConfiguratorScene({ height, width, length, showFoundation, isIso
         if (child instanceof THREE.Mesh) {
           if (
             child.name.includes('Perete') ||
+            child.name.includes('Acoperis') ||
+            child.name.includes('jgheab') ||
+            child.name.includes('coltar') ||
             child.userData.isSideWall ||
             child.userData.isLastFrameWall ||
             child.name.endsWith('_inner')
           ) {
-            // Keep roofs visible if walls are hidden, only hide vertical walls
-            if (!child.name.includes('Acoperis')) {
-              if (child.name.includes('PereteFata')) {
-                child.visible = wallsVisible && isFirst;
-              } else if (child.name.includes('PereteSpate')) {
-                child.visible = wallsVisible && isLast;
-              } else {
-                // Side walls (PereteSTG, PereteDR) or others
-                child.visible = wallsVisible && !isLast;
-              }
+            if (child.name.includes('PereteFata')) {
+              child.visible = wallsVisible && isFirst;
+            } else if (child.name.includes('PereteSpate')) {
+              child.visible = wallsVisible && isLast;
+            } else if (child.name.includes('beton')) {
+              child.visible = showFoundation && !isLast;
+            } else {
+              // Side walls, roofs, gutters, ridges, etc. should follow wallsVisible
+              child.visible = wallsVisible && !isLast;
             }
           }
         }
@@ -1405,7 +1389,7 @@ export function ConfiguratorScene({ height, width, length, showFoundation, isIso
     if (wallsVisible) {
       updateSpateVisibility();
     }
-  }, [wallsVisible, length]);
+  }, [wallsVisible, showFoundation, length, sceneReady]);
 
   useLayoutEffect(() => {
     if (!baseModel.current || !modelsGroup.current) return;
@@ -1438,7 +1422,7 @@ export function ConfiguratorScene({ height, width, length, showFoundation, isIso
 
     applySandwichGap(baseModel.current);
     modelsGroup.current.children.forEach(applySandwichGap);
-  }, [isIsolated, insulation]);
+  }, [isIsolated, insulation, sceneReady]);
 
   // 2. NOW WE CAN DO THE EARLY RETURN
   // Inject modelsGroup into the R3F scene as an imperative primitive (built in useEffect).
@@ -1466,31 +1450,46 @@ export function ConfiguratorScene({ height, width, length, showFoundation, isIso
   );
 }
 
-export function Ground() {
-  // Load the PBR textures as an object
+function GroundMobile() {
+  return (
+    <mesh rotation-x={-Math.PI / 2} position-y={-0.01} receiveShadow>
+      <planeGeometry args={[2000, 2000]} />
+      <meshStandardMaterial color="#3a5a2a" roughness={1} metalness={0} />
+    </mesh>
+  );
+}
+
+function GroundDesktop() {
   const textures = useTexture({
     map: 'grass/grass_color.jpg',
     normalMap: 'grass/grass_normal.jpg',
     roughnessMap: 'grass/grass_roughness.jpg',
   });
 
-  // We need to apply the repeating logic to ALL of the textures so they align perfectly
   Object.values(textures).forEach((texture) => {
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
-    // Repeat the grass 100 times across the 400x400 plane
     texture.repeat.set(400, 400);
   });
 
   return (
     <mesh rotation-x={-Math.PI / 2} position-y={-0.01} receiveShadow>
       <planeGeometry args={[2000, 2000]} />
-      {/* Spread all the loaded textures directly into the standard material */}
       <meshStandardMaterial {...textures} />
     </mesh>
   );
+}
 
+export function Ground() {
+  const [isMobile, setIsMobile] = useState<boolean>(() => typeof window !== 'undefined' ? window.innerWidth < 768 : false);
 
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  return isMobile ? <GroundMobile /> : <GroundDesktop />;
 }
 
 // ─── Orbit controls wrapper — disables during opening drag/resize ─────────────
@@ -1501,6 +1500,8 @@ export function ControlledOrbitControls() {
       makeDefault
       target={[0, 0, 0]}
       enabled={!isDragging}
+      maxPolarAngle={Math.PI / 2}
+      enablePan={true}
     />
   );
 }

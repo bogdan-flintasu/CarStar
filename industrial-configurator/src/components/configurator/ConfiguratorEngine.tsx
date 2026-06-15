@@ -25,16 +25,17 @@ export default function ConfiguratorEngine() {
       camera={{ fov: 75, near: 0.1, far: 1000, position: [-6, 7, 13] as [number, number, number] }}
       shadows={{ type: THREE.PCFShadowMap }}
       frameloop="always"
+      dpr={[1, 1.5]}
       style={{ background: '#dddddd', width: '100%', height: '100%' }}
-      gl={{ localClippingEnabled: true }}
+      gl={{ localClippingEnabled: true, powerPreference: 'high-performance', antialias: false }}
     >
       {/* Lumina directionala cu umbre */}
       <directionalLight
         position={[5, 10, 5]}
         intensity={0.7}
         castShadow
-        shadow-mapSize-width={4096}
-        shadow-mapSize-height={4096}
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
         shadow-bias={-0.005}
         shadow-normalBias={0.005}
         shadow-camera-left={-100}

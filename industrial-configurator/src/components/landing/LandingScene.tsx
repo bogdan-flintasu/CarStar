@@ -1,8 +1,8 @@
 'use client';
 
-import { useRef, useEffect, useMemo } from 'react';
+import { useRef, useEffect, useMemo, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Environment, Sky, useGLTF, useTexture } from '@react-three/drei';
+import { Environment, Sky, useGLTF, useTexture, useProgress } from '@react-three/drei';
 import * as THREE from 'three';
 
 // ─── Interior camera that moves based on scroll progress ──────────────────────
@@ -34,14 +34,8 @@ function ScrollCamera() {
 }
 
 // ─── Hall model for landing page (interior view, stripped down) ────────────────
-function LandingHall() {
+function LandingHallCore({ foundationTextures }: { foundationTextures?: Record<string, THREE.Texture> }) {
   const { scene: gltfScene } = useGLTF('/models/da.gltf');
-
-  const foundationTextures = useTexture({
-    map: 'concrete/concrete_color.jpg',
-    normalMap: 'concrete/concrete_normal.jpg',
-    roughnessMap: 'concrete/concrete_roughness.jpg',
-  });
 
   const model = useMemo(() => {
     const cloned = gltfScene.clone(true);
@@ -54,24 +48,32 @@ function LandingHall() {
       child.receiveShadow = true;
 
       if (child.name === 'beton') {
-        child.material = new THREE.MeshStandardMaterial({
-          map: foundationTextures.map,
-          normalMap: foundationTextures.normalMap,
-          roughnessMap: foundationTextures.roughnessMap,
-          color: new THREE.Color('#8a8a8a'),
-          roughness: 0.9,
-          metalness: 0.0,
-          normalScale: new THREE.Vector2(1.5, 1.5),
-        });
-        const maps = ['map', 'normalMap', 'roughnessMap'];
-        maps.forEach((m) => {
-          const tex = (child.material as Record<string, unknown>)[m] as THREE.Texture | undefined;
-          if (tex) {
-            tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-            tex.repeat.set(6, 6);
-            tex.needsUpdate = true;
-          }
-        });
+        if (foundationTextures) {
+          child.material = new THREE.MeshStandardMaterial({
+            map: foundationTextures.map,
+            normalMap: foundationTextures.normalMap,
+            roughnessMap: foundationTextures.roughnessMap,
+            color: new THREE.Color('#8a8a8a'),
+            roughness: 0.9,
+            metalness: 0.0,
+            normalScale: new THREE.Vector2(1.5, 1.5),
+          });
+          const maps = ['map', 'normalMap', 'roughnessMap'];
+          maps.forEach((m) => {
+            const tex = (child.material as Record<string, unknown>)[m] as THREE.Texture | undefined;
+            if (tex) {
+              tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+              tex.repeat.set(6, 6);
+              tex.needsUpdate = true;
+            }
+          });
+        } else {
+          child.material = new THREE.MeshStandardMaterial({
+            color: '#888888',
+            roughness: 0.9,
+            metalness: 0.1,
+          });
+        }
       }
       // Identify special meshes for visibility logic
       if (child.name.includes('Grinda')) child.userData.isGrinda = true;
@@ -138,8 +140,42 @@ function LandingHall() {
   return <primitive object={frames} />;
 }
 
+function LandingHallDesktop() {
+  const foundationTextures = useTexture({
+    map: 'concrete/concrete_color.jpg',
+    normalMap: 'concrete/concrete_normal.jpg',
+    roughnessMap: 'concrete/concrete_roughness.jpg',
+  });
+  return <LandingHallCore foundationTextures={foundationTextures} />;
+}
+
+function LandingHallMobile() {
+  return <LandingHallCore />;
+}
+
+export function LandingHallWrapper() {
+  const [isMobile, setIsMobile] = useState<boolean>(() => typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  return isMobile ? <LandingHallMobile /> : <LandingHallDesktop />;
+}
+
 // ─── Ground plane ─────────────────────────────────────────────────────────────
-function Ground() {
+function GroundMobile() {
+  return (
+    <mesh rotation-x={-Math.PI / 2} position-y={-0.01} receiveShadow>
+      <planeGeometry args={[1000, 1000]} />
+      <meshStandardMaterial color="#3a5a2a" roughness={1} metalness={0} />
+    </mesh>
+  );
+}
+
+function GroundDesktop() {
   const textures = useTexture({
     map: 'grass/grass_color.jpg',
     normalMap: 'grass/grass_normal.jpg',
@@ -159,14 +195,43 @@ function Ground() {
   );
 }
 
+function GroundWrapper() {
+  const [isMobile, setIsMobile] = useState<boolean>(() => typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  return isMobile ? <GroundMobile /> : <GroundDesktop />;
+}
+
+// ─── Readiness reporter — fires onReady when all assets finish loading ────────
+function ReadinessReporter({ onReady }: { onReady: () => void }) {
+  const { active, progress } = useProgress();
+  const fired = useRef(false);
+
+  useEffect(() => {
+    if (!active && progress >= 100 && !fired.current) {
+      fired.current = true;
+      // Small delay to let the first frame render
+      setTimeout(onReady, 200);
+    }
+  }, [active, progress, onReady]);
+
+  return null;
+}
+
 // ─── Main scene component ─────────────────────────────────────────────────────
-export default function LandingScene() {
+export default function LandingScene({ onReady }: { onReady?: () => void }) {
   return (
     <Canvas
       camera={{ fov: 65, near: 0.1, far: 500, position: [0, 2.5, -6] }}
       shadows={{ type: THREE.PCFShadowMap }}
+      dpr={[1, 1.5]}
       style={{ width: '100%', height: '100%' }}
-      gl={{ localClippingEnabled: true, antialias: true }}
+      gl={{ localClippingEnabled: true, powerPreference: 'high-performance', antialias: false }}
     >
       <directionalLight
         position={[5, 15, 5]}
@@ -189,9 +254,11 @@ export default function LandingScene() {
       />
 
       <Environment preset="city" />
-      <Ground />
-      <LandingHall />
+      <GroundWrapper />
+      <LandingHallWrapper />
       <ScrollCamera />
+      {onReady && <ReadinessReporter onReady={onReady} />}
     </Canvas>
   );
 }
+

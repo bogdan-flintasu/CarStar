@@ -4,10 +4,10 @@ import { motion } from 'framer-motion';
 import type { ConfigStep } from '@/stores/useConfiguratorStore';
 
 const steps = [
-  { id: 1 as ConfigStep, label: 'Dimensions' },
-  { id: 2 as ConfigStep, label: 'Structure' },
-  { id: 3 as ConfigStep, label: 'Openings' },
-  { id: 4 as ConfigStep, label: 'Summary' },
+  { id: 1 as ConfigStep, label: 'Dimensiuni' },
+  { id: 2 as ConfigStep, label: 'Structură' },
+  { id: 3 as ConfigStep, label: 'Ferestre & Uși' },
+  { id: 4 as ConfigStep, label: 'Sumar' },
 ];
 
 interface StepIndicatorProps {

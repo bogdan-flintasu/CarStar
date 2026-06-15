@@ -34,7 +34,7 @@ export default function HeroSection() {
           onClick={scrollDown}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.98 }}
-          className="group inline-flex items-center gap-3 px-8 py-4 rounded-full bg-[var(--color-primary)] text-black font-semibold text-lg transition-all hover:bg-[var(--color-primary-hover)] hover:shadow-[0_0_32px_var(--color-primary-glow)] cursor-pointer"
+          className="group inline-flex items-center gap-3 px-4 py-3 rounded-full bg-[var(--color-primary)] text-black font-semibold text-lg transition-all hover:bg-[var(--color-primary-hover)] hover:shadow-[0_0_32px_var(--color-primary-glow)] cursor-pointer"
         >
           Descoperă Mai Mult
           <svg
