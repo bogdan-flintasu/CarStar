@@ -51,7 +51,7 @@ export default function StepIndicator({ currentStep, onStepClick }: StepIndicato
                 )}
               </div>
               <span 
-                className={`text-sm font-medium transition-colors ${
+                className={`hidden md:inline text-sm font-medium transition-colors ${
                   isActive ? 'text-black' : isCompleted ? 'text-gray-800' : 'text-gray-400 group-hover:text-gray-600'
                 }`}
               >

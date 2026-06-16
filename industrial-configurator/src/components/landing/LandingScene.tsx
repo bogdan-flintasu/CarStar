@@ -4,6 +4,28 @@ import { useRef, useEffect, useMemo, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Environment, Sky, useGLTF, useTexture, useProgress } from '@react-three/drei';
 import * as THREE from 'three';
+import { getGraphicsSettings } from '@/lib/hardwareTier';
+
+// ─── Camera Adjuster for Responsive FOV ───────────────────────────────────────
+function CameraAdjuster() {
+  const { camera } = useThree();
+  
+  useEffect(() => {
+    const handleResize = () => {
+      const isMobile = window.innerWidth < 768;
+      if (camera instanceof THREE.PerspectiveCamera) {
+        camera.fov = isMobile ? 100 : 65;
+        camera.updateProjectionMatrix();
+      }
+    };
+    
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [camera]);
+  
+  return null;
+}
 
 // ─── Interior camera that moves based on scroll progress ──────────────────────
 function ScrollCamera() {
@@ -34,8 +56,8 @@ function ScrollCamera() {
 }
 
 // ─── Hall model for landing page (interior view, stripped down) ────────────────
-function LandingHallCore({ foundationTextures }: { foundationTextures?: Record<string, THREE.Texture> }) {
-  const { scene: gltfScene } = useGLTF('/models/da.gltf');
+function LandingHallCore({ foundationTextures, frameCount }: { foundationTextures?: Record<string, THREE.Texture>; frameCount: number }) {
+  const { scene: gltfScene } = useGLTF('/models/da-draco.glb');
 
   const model = useMemo(() => {
     const cloned = gltfScene.clone(true);
@@ -99,7 +121,6 @@ function LandingHallCore({ foundationTextures }: { foundationTextures?: Record<s
   // Build multiple frames for a long hall
   const frames = useMemo(() => {
     const group = new THREE.Group();
-    const frameCount = 6; // Reduced from 10 for better performance
     for (let i = 0; i < frameCount; i++) {
       const frame = model.clone(true);
       frame.position.z = -i * 6;
@@ -135,25 +156,25 @@ function LandingHallCore({ foundationTextures }: { foundationTextures?: Record<s
     });
 
     return group;
-  }, [model]);
+  }, [model, frameCount]);
 
   return <primitive object={frames} />;
 }
 
-function LandingHallDesktop() {
+function LandingHallDesktop({ frameCount }: { frameCount: number }) {
   const foundationTextures = useTexture({
-    map: 'concrete/concrete_color.jpg',
-    normalMap: 'concrete/concrete_normal.jpg',
-    roughnessMap: 'concrete/concrete_roughness.jpg',
+    map: 'concrete/concrete_color.webp',
+    normalMap: 'concrete/concrete_normal.webp',
+    roughnessMap: 'concrete/concrete_roughness.webp',
   });
-  return <LandingHallCore foundationTextures={foundationTextures} />;
+  return <LandingHallCore foundationTextures={foundationTextures} frameCount={frameCount} />;
 }
 
-function LandingHallMobile() {
-  return <LandingHallCore />;
+function LandingHallMobile({ frameCount }: { frameCount: number }) {
+  return <LandingHallCore frameCount={frameCount} />;
 }
 
-export function LandingHallWrapper() {
+function LandingHallWrapper({ frameCount }: { frameCount: number }) {
   const [isMobile, setIsMobile] = useState<boolean>(() => typeof window !== 'undefined' ? window.innerWidth < 768 : false);
 
   useEffect(() => {
@@ -162,7 +183,7 @@ export function LandingHallWrapper() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  return isMobile ? <LandingHallMobile /> : <LandingHallDesktop />;
+  return isMobile ? <LandingHallMobile frameCount={frameCount} /> : <LandingHallDesktop frameCount={frameCount} />;
 }
 
 // ─── Ground plane ─────────────────────────────────────────────────────────────
@@ -177,9 +198,9 @@ function GroundMobile() {
 
 function GroundDesktop() {
   const textures = useTexture({
-    map: 'grass/grass_color.jpg',
-    normalMap: 'grass/grass_normal.jpg',
-    roughnessMap: 'grass/grass_roughness.jpg',
+    map: 'grass/grass_color.webp',
+    normalMap: 'grass/grass_normal.webp',
+    roughnessMap: 'grass/grass_roughness.webp',
   });
 
   Object.values(textures).forEach((t) => {
@@ -225,20 +246,23 @@ function ReadinessReporter({ onReady }: { onReady: () => void }) {
 
 // ─── Main scene component ─────────────────────────────────────────────────────
 export default function LandingScene({ onReady }: { onReady?: () => void }) {
+  const gfx = getGraphicsSettings();
+
   return (
     <Canvas
       camera={{ fov: 65, near: 0.1, far: 500, position: [0, 2.5, -6] }}
       shadows={{ type: THREE.PCFShadowMap }}
-      dpr={[1, 1.5]}
+      dpr={gfx.dpr}
       style={{ width: '100%', height: '100%' }}
       gl={{ localClippingEnabled: true, powerPreference: 'high-performance', antialias: false }}
     >
+      <CameraAdjuster />
       <directionalLight
         position={[5, 15, 5]}
         intensity={0.6}
         castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
+        shadow-mapSize-width={gfx.shadowMapSize}
+        shadow-mapSize-height={gfx.shadowMapSize}
         shadow-camera-left={-60}
         shadow-camera-right={60}
         shadow-camera-top={60}
@@ -246,16 +270,18 @@ export default function LandingScene({ onReady }: { onReady?: () => void }) {
       />
       <ambientLight intensity={0.4} />
 
-      <Sky
-        distance={450000}
-        sunPosition={[-5, 10, 5]}
-        inclination={0}
-        azimuth={0.25}
-      />
+      {gfx.enableSky && (
+        <Sky
+          distance={450000}
+          sunPosition={[-5, 10, 5]}
+          inclination={0}
+          azimuth={0.25}
+        />
+      )}
 
-      <Environment preset="city" />
+      {gfx.enableEnvironment && <Environment preset="city" />}
       <GroundWrapper />
-      <LandingHallWrapper />
+      <LandingHallWrapper frameCount={gfx.landingFrameCount} />
       <ScrollCamera />
       {onReady && <ReadinessReporter onReady={onReady} />}
     </Canvas>

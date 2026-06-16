@@ -3,6 +3,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
+import { getGraphicsSettings } from '@/lib/hardwareTier';
 import ConfigHeader from './ConfigHeader';
 import ConfigFooter from './ConfigFooter';
 import DimensionsStep from './steps/DimensionsStep';
@@ -17,6 +18,16 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
 
   useEffect(() => {
     setIsMounted(true);
+  }, []);
+
+  // Desktop recommendation banner (dismissible, per-session)
+  const [showDesktopBanner, setShowDesktopBanner] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const gfx = getGraphicsSettings();
+    if (gfx.isMobile && !sessionStorage.getItem('desktop-banner-dismissed')) {
+      setShowDesktopBanner(true);
+    }
   }, []);
 
   // Fetch prices from DB on mount
@@ -67,11 +78,30 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
   }
 
   return (
-    <div className="w-full h-screen flex flex-col bg-[#F8F9FA] overflow-hidden">
+    <div className="w-full h-[100dvh] flex flex-col bg-[#F8F9FA] overflow-hidden">
       {/* Header */}
       <div className="shrink-0">
         <ConfigHeader currentStep={currentStep as any} onStepClick={setStep as any} />
       </div>
+      {/* Desktop recommendation banner for mobile */}
+      {showDesktopBanner && (
+        <div className="md:hidden shrink-0 bg-gray-100 border-b border-gray-200 px-4 py-2 flex items-center justify-between gap-2">
+          <p className="text-[11px] text-gray-600 leading-snug">
+            Pentru experiența completă, vă recomandăm să folosiți configuratorul pe un calculator sau laptop.
+          </p>
+          <button 
+            onClick={() => {
+              setShowDesktopBanner(false);
+              sessionStorage.setItem('desktop-banner-dismissed', '1');
+            }}
+            className="shrink-0 text-gray-400 hover:text-gray-600 p-1"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden relative">
@@ -82,8 +112,8 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
             {children}
           </div>
           
-          {/* Navigation Hint Overlay */}
-          <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur-md px-4 py-3 rounded-xl border border-gray-200 shadow-sm pointer-events-none z-10 flex flex-col gap-1.5">
+          {/* Navigation Hint Overlay — Desktop (bottom-left) */}
+          <div className="hidden md:flex absolute bottom-6 left-6 bg-white/90 backdrop-blur-md px-4 py-3 rounded-xl border border-gray-200 shadow-sm pointer-events-none z-10 flex-col gap-1.5">
             <span className="text-[10px] font-bold text-gray-800 uppercase tracking-wider mb-0.5">Control 3D</span>
             <div className="flex items-center gap-4 text-xs font-medium text-gray-600">
               <span className="flex items-center gap-1.5">
@@ -100,6 +130,21 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
               </span>
             </div>
           </div>
+
+          {/* Navigation Hint Overlay — Mobile (top-right, hidden when panel is open) */}
+          {!isMobilePanelOpen && (
+            <div className="md:hidden absolute top-3 right-3 bg-white/90 backdrop-blur-md px-3 py-2 rounded-xl border border-gray-200 shadow-sm pointer-events-none z-10 flex flex-col gap-1">
+              <span className="text-[9px] font-bold text-gray-800 uppercase tracking-wider">Control 3D</span>
+              <div className="flex gap-3 text-[11px] font-medium text-gray-600">
+                <span className="flex items-center gap-1">
+                  <span className="text-sm leading-none">☝️</span> Rotește
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="text-sm leading-none">✌️</span> Mișcă
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Mobile Toggle Button (only visible on small screens when panel is closed) */}
@@ -118,7 +163,7 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
         {/* Sidebar Area (Bottom Sheet on Mobile) */}
         <div 
           className={`
-            fixed md:relative bottom-0 left-0 right-0 md:bottom-auto md:left-auto md:right-auto
+            fixed md:relative bottom-[70px] left-0 right-0 md:bottom-auto md:left-auto md:right-auto
             w-full md:w-[420px] 
             ${isMobilePanelOpen ? 'h-[60vh]' : 'h-0 overflow-hidden'} md:h-full 
             shrink-0 bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.1)] md:shadow-xl z-30 

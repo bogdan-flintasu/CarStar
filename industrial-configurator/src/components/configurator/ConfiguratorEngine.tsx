@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import PlacementMarkers from '@/components/3d/PlacementMarkers';
 import WallOpenings from '@/components/3d/WallOpenings';
 import DimensionLines from '@/components/3d/DimensionLines';
+import { getGraphicsSettings } from '@/lib/hardwareTier';
 
 export default function ConfiguratorEngine() {
   const {
@@ -20,12 +21,14 @@ export default function ConfiguratorEngine() {
   // so the user can see the effect of the toggles
   const effectiveWallsVisible = currentStep === 2 ? true : wallsVisible;
 
+  const gfx = getGraphicsSettings();
+
   return (
     <Canvas
       camera={{ fov: 75, near: 0.1, far: 1000, position: [-6, 7, 13] as [number, number, number] }}
       shadows={{ type: THREE.PCFShadowMap }}
       frameloop="always"
-      dpr={[1, 1.5]}
+      dpr={gfx.dpr}
       style={{ background: '#dddddd', width: '100%', height: '100%' }}
       gl={{ localClippingEnabled: true, powerPreference: 'high-performance', antialias: false }}
     >
@@ -34,8 +37,8 @@ export default function ConfiguratorEngine() {
         position={[5, 10, 5]}
         intensity={0.7}
         castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
+        shadow-mapSize-width={gfx.shadowMapSize}
+        shadow-mapSize-height={gfx.shadowMapSize}
         shadow-bias={-0.005}
         shadow-normalBias={0.005}
         shadow-camera-left={-100}
@@ -48,14 +51,17 @@ export default function ConfiguratorEngine() {
       {/* Lumina ambientala */}
       <ambientLight intensity={0.5} />
 
-      <Sky
-        distance={450000} // How far away the sky is
-        sunPosition={[-5, 10, 5]} // Match this to your directionalLight position!
-        inclination={0}
-        azimuth={0.25}
-      />
+      {gfx.enableSky && (
+        <Sky
+          distance={450000}
+          sunPosition={[-5, 10, 5]}
+          inclination={0}
+          azimuth={0.25}
+        />
+      )}
 
-      <Environment preset="city" /> {/* This adds reflections to the metal */}
+      {gfx.enableEnvironment && <Environment preset="city" />}
+      
       {/* Plan pentru umbre */}
       <mesh rotation-x={-Math.PI / 2} position-y={-0.01} receiveShadow>
       </mesh>

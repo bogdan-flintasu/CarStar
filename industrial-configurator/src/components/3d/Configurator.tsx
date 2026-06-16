@@ -56,10 +56,10 @@ export function ConfiguratorScene({ height, width, length, showFoundation, isIso
 
   const { camera, controls, scene } = useThree();
   const metalTextures = useTexture({
-    map: 'metal/metal_color.jpg',
-    normalMap: 'metal/metal_normal.jpg',
-    roughnessMap: 'metal/metal_roughness.jpg',
-    metalnessMap: 'metal/metal_metal.jpg',
+    map: 'metal/metal_color.webp',
+    normalMap: 'metal/metal_normal.webp',
+    roughnessMap: 'metal/metal_roughness.webp',
+    metalnessMap: 'metal/metal_metal.webp',
   });
 
   // Industrial metal shouldn't repeat as much as grass
@@ -69,9 +69,9 @@ export function ConfiguratorScene({ height, width, length, showFoundation, isIso
   });
 
   const wallTextures = useTexture({
-    map: 'wall/wall_color.jpg',
-    normalMap: 'wall/wall_normal.jpg',
-    roughnessMap: 'wall/wall_roughness.jpg',
+    map: 'wall/wall_color.webp',
+    normalMap: 'wall/wall_normal.webp',
+    roughnessMap: 'wall/wall_roughness.webp',
   });
 
   // Removed foundationTextures as per request
@@ -88,7 +88,7 @@ export function ConfiguratorScene({ height, width, length, showFoundation, isIso
   // (clipPlanes removed – gable panels now use custom geometry instead of clipping)
 
   // GLTF loader (replaces: loader.load(window.MODEL_URL, ...))
-  const { scene: gltfScene } = useGLTF('/models/da.gltf');
+  const { scene: gltfScene } = useGLTF('/models/da-draco.glb');
 
   // ── Imperative state refs  (mirrors original module-level variables) ───────
   const resize_height = useRef<THREE.Mesh[]>([]);
@@ -412,54 +412,6 @@ export function ConfiguratorScene({ height, width, length, showFoundation, isIso
       if (!(child instanceof THREE.Mesh)) return;
       child.castShadow = true;
       child.receiveShadow = true;
-
-      // const material = new THREE.MeshStandardMaterial({
-      //   ...metalTextures,
-      //   metalness: 0.8, // Force it to look like real metal
-      //   roughness: 0.7, // Adjust this to make it shinier (0.1) or duller (0.9)
-      // });
-
-      // child.geometry.computeBoundingBox();
-      // const box = child.geometry.boundingBox!;
-      // const size = new THREE.Vector3();
-      // box.getSize(size);
-
-      // size.multiply(child.scale);
-
-      // const maxDim = Math.max(size.x, size.y, size.z);
-
-      // // Calculate how many times to repeat. Increase the multiplier (e.g., 3 or 4) if the scratches look too big.
-      // const repeatValue = maxDim * 5; 
-
-      // // FIX: Clone ALL maps so Color, Normal, Roughness, and Metalness stay perfectly synced
-      // const textureMaps = ['map', 'normalMap', 'roughnessMap', 'metalnessMap'];
-      // textureMaps.forEach((mapName) => {
-      //   // We have to use 'as any' here briefly to bypass TypeScript's strict indexing on materials
-      //   if ((material as any)[mapName]) {
-      //     (material as any)[mapName] = (material as any)[mapName].clone();
-      //     // Uniform tiling stops stretching regardless of which way the UVs are rotated
-      //     (material as any)[mapName].repeat.set(repeatValue, repeatValue);
-      //     (material as any)[mapName].needsUpdate = true;
-      //   }
-      // });
-
-      // child.material = material;
-
-      // if (child.name === 'Plane002' || child.name === 'Plane003') {
-      //   child.material = new THREE.MeshStandardMaterial({
-      //     ...wallTextures,
-      //     color: new THREE.Color('#9ca3af'),
-      //     normalScale: new THREE.Vector2(1.5, 1.5), // Default grey, can be changed later
-      //     metalness: 0.6,
-      //     roughness: 0.4,
-      //   });
-
-      //   // Ensure the wall texture scales with the height of the building
-      //   // heightRef.current / 6 ensures the texture doesn't stretch when the wall grows
-      //   const scaleY = heightRef.current / 6;
-      //   child.material.map.repeat.set(10, 1 * scaleY);
-      //   child.material.normalMap.repeat.set(10, 1 * scaleY);
-      // }
 
       if (child.name === 'beton') {
         child.userData.initialScaleX = child.scale.x;
@@ -1461,9 +1413,9 @@ function GroundMobile() {
 
 function GroundDesktop() {
   const textures = useTexture({
-    map: 'grass/grass_color.jpg',
-    normalMap: 'grass/grass_normal.jpg',
-    roughnessMap: 'grass/grass_roughness.jpg',
+    map: 'grass/grass_color.webp',
+    normalMap: 'grass/grass_normal.webp',
+    roughnessMap: 'grass/grass_roughness.webp',
   });
 
   Object.values(textures).forEach((texture) => {

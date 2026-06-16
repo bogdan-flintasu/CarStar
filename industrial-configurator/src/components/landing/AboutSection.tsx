@@ -44,18 +44,18 @@ export default function AboutSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.7, delay: 0.3, ease: 'easeOut' }}
-          className="grid grid-cols-3 gap-6 mt-16"
+          className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mt-12 md:mt-16"
         >
           {[
             { number: '500+', label: 'Proiecte Finalizate' },
             { number: '15+', label: 'Ani Experiență' },
             { number: '98%', label: 'Clienți Mulțumiți' },
           ].map((stat) => (
-            <div key={stat.label} className="glass-card p-6">
-              <div className="text-3xl md:text-4xl font-bold gradient-text mb-2">
+            <div key={stat.label} className="glass-card p-4 md:p-6">
+              <div className="text-2xl md:text-4xl font-bold gradient-text mb-1 md:mb-2">
                 {stat.number}
               </div>
-              <div className="text-sm text-[var(--color-text-muted)]">
+              <div className="text-xs md:text-sm text-[var(--color-text-muted)]">
                 {stat.label}
               </div>
             </div>

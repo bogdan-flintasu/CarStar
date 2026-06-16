@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useEffect, useCallback } from 'react';
+import { Suspense, useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,6 +21,36 @@ const LandingScene = dynamic(() => import('@/components/landing/LandingScene'), 
 export default function LandingPage() {
   const [hasScrolled, setHasScrolled] = useState(false);
   const [modelReady, setModelReady] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [useFallback, setUseFallback] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const fallbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Detect mobile on mount
+  useEffect(() => {
+    // Set body background to dark to prevent white flash during mobile scroll jumping
+    const originalBackground = document.body.style.backgroundColor;
+    document.body.style.backgroundColor = '#0a0b0d';
+
+    const mobile = window.innerWidth < 768 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    setIsMobile(mobile);
+
+    if (mobile) {
+      // Mobile: skip 3D entirely, mark as ready immediately
+      setModelReady(true);
+    } else {
+      // Desktop: start a 15s fallback timer — if 3D hasn't loaded, show the image
+      fallbackTimer.current = setTimeout(() => {
+        setUseFallback(true);
+        setModelReady(true); // dismiss the loading spinner
+      }, 15000);
+    }
+
+    return () => {
+      document.body.style.backgroundColor = originalBackground;
+      if (fallbackTimer.current) clearTimeout(fallbackTimer.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (window.scrollY > 10) {
@@ -40,12 +70,18 @@ export default function LandingPage() {
   }, []);
 
   const handleModelReady = useCallback(() => {
+    // 3D loaded in time — cancel the fallback timer
+    if (fallbackTimer.current) clearTimeout(fallbackTimer.current);
+    setUseFallback(false);
     setModelReady(true);
   }, []);
 
+  // Should we show the 3D canvas? Only on desktop when fallback hasn't kicked in
+  const show3D = !isMobile && !useFallback;
+
   return (
-    <div className="relative landing-theme">
-      {/* Full-screen loading overlay */}
+    <div className="relative landing-theme" data-version="2">
+      {/* Full-screen loading overlay — only on desktop while 3D loads */}
       <AnimatePresence>
         {!modelReady && (
           <motion.div
@@ -127,26 +163,44 @@ export default function LandingPage() {
         )}
       </AnimatePresence>
 
-      {/* Fixed 3D background */}
-      <div className="fixed inset-0 z-0">
-        <Suspense fallback={<div className="w-full h-full bg-[var(--color-bg-primary)]" />}>
-          <LandingScene onReady={handleModelReady} />
-        </Suspense>
-      </div>
+      {/* Background layer */}
+      {show3D ? (
+        /* Desktop: Full 3D canvas */
+        <div className="fixed top-0 left-0 w-full h-[120vh] z-0">
+          <Suspense fallback={<div className="w-full h-full bg-[var(--color-bg-primary)]" />}>
+            <LandingScene onReady={handleModelReady} />
+          </Suspense>
+        </div>
+      ) : (
+        /* Mobile OR Desktop fallback: Static image background */
+        <div
+          className="fixed top-0 left-0 w-full h-[120vh] z-0"
+          style={{
+            backgroundImage: 'url(/photos/image.png)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+          }}
+        />
+      )}
 
       {/* Dark overlay for text readability */}
-      <div className="fixed inset-0 z-[1] landing-overlay pointer-events-none" />
+      <div className="fixed top-0 left-0 w-full h-[120vh] z-[1] landing-overlay pointer-events-none" />
 
       {/* Fixed navigation header */}
       <header className={`fixed top-0 left-0 right-0 z-50 bg-black/10 backdrop-blur-md border-b border-white/10 transition-all duration-500 ${
         hasScrolled ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
       }`}>
-        <nav className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="text-xl font-extrabold tracking-tight select-none">
-            <span className="text-white">Car</span>
-            <span className="text-[#F5A623]">Star</span>
-          </Link>
-          <div className="flex items-center gap-8">
+        <nav className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between relative">
+          <div className="flex-shrink-0">
+            <Link href="/" className="text-xl font-extrabold tracking-tight select-none">
+              <span className="text-white">Car</span>
+              <span className="text-[#F5A623]">Star</span>
+            </Link>
+          </div>
+          
+          {/* Desktop Nav Links - Centered */}
+          <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8">
             {[
               { href: '#despre-noi', label: 'Despre Noi' },
               { href: '#de-ce-noi', label: 'De Ce Noi' },
@@ -158,11 +212,14 @@ export default function LandingPage() {
                 initial={{ opacity: 0, y: -10 }}
                 animate={hasScrolled ? { opacity: 1, y: 0 } : { opacity: 0, y: -10 }}
                 transition={{ duration: 0.4, delay: 0.1 * i }}
-                className="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+                className="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors font-medium"
               >
                 {link.label}
               </motion.a>
             ))}
+          </div>
+
+          <div className="flex items-center gap-3">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={hasScrolled ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
@@ -170,18 +227,62 @@ export default function LandingPage() {
             >
               <Link
                 href="/configurator"
-                className="px-5 py-2 rounded-full bg-[var(--color-primary)] text-black text-sm font-semibold hover:bg-[var(--color-primary-hover)] transition-colors"
+                className="px-4 py-1.5 md:px-5 md:py-2 rounded-full bg-[var(--color-primary)] text-black text-xs md:text-sm font-semibold hover:bg-[var(--color-primary-hover)] transition-colors"
               >
                 Configurator
               </Link>
             </motion.div>
+            
+            {/* Hamburger Menu Toggle */}
+            <button 
+              className="md:hidden text-white p-2"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {isMobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
           </div>
         </nav>
+
+        {/* Mobile Dropdown Menu */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="md:hidden border-t border-white/10 overflow-hidden"
+            >
+              <div className="flex flex-col px-6 py-4 space-y-4 items-center text-center">
+                {[
+                  { href: '#despre-noi', label: 'Despre Noi' },
+                  { href: '#de-ce-noi', label: 'De Ce Noi' },
+                  { href: '#servicii', label: 'Servicii' },
+                ].map((link) => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-[var(--color-text-secondary)] hover:text-white transition-colors text-lg font-medium"
+                  >
+                    {link.label}
+                  </a>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* Scrollable content sections */}
       <main className="relative z-10">
         <HeroSection />
+        
         <AboutSection />
         <WhyUsSection />
         <ServicesSection />
