@@ -1,9 +1,9 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
-import { useOpeningsStore } from '@/stores/useOpeningsStore';
+import { useOpeningsStore, MIN_OPENING_SIZE } from '@/stores/useOpeningsStore';
 import type { OpeningType } from '@/stores/useOpeningsStore';
+import { countOpenings } from '@/lib/pricing';
 
 // ─── Custom SVG Icons ─────────────────────────────────────────────────────────
 function WindowIcon({ className = 'w-7 h-7' }: { className?: string }) {
@@ -69,8 +69,6 @@ const LABEL_MAP: Record<OpeningType, string> = {
 };
 
 export default function ClosingsStep() {
-  const { nextStep, prevStep } = useConfiguratorStore();
-
   const activeTool = useOpeningsStore((s) => s.activeTool);
   const setActiveTool = useOpeningsStore((s) => s.setActiveTool);
   const selectedOpeningId = useOpeningsStore((s) => s.selectedOpeningId);
@@ -78,8 +76,13 @@ export default function ClosingsStep() {
   const updateOpening = useOpeningsStore((s) => s.updateOpening);
   const removeOpening = useOpeningsStore((s) => s.removeOpening);
   const selectOpening = useOpeningsStore((s) => s.selectOpening);
+  const wallSpans = useOpeningsStore((s) => s.wallSpans);
 
   const selectedOpening = openings.find((o) => o.id === selectedOpeningId) || null;
+  // Inputs are bounded by the selected wall; the store clamps every update to it as well.
+  const selectedWall = selectedOpening && wallSpans ? wallSpans[selectedOpening.wallId] : null;
+  const maxWidth = selectedWall ? Math.floor(selectedWall.length * 10) / 10 : undefined;
+  const maxHeight = selectedWall ? Math.floor(selectedWall.height * 10) / 10 : undefined;
 
   const tools: { type: OpeningType; label: string }[] = [
     { type: 'window', label: 'Geamuri' },
@@ -92,9 +95,7 @@ export default function ClosingsStep() {
   };
 
   // Count openings by type
-  const windowCount = openings.filter((o) => o.type === 'window').length;
-  const doorCount = openings.filter((o) => o.type === 'door').length;
-  const garageDoorCount = openings.filter((o) => o.type === 'garageDoor').length;
+  const { windows: windowCount, doors: doorCount, garageDoors: garageDoorCount } = countOpenings(openings);
 
   return (
     <motion.div
@@ -199,13 +200,13 @@ export default function ClosingsStep() {
                 <input
                   type="number"
                   value={Math.round(selectedOpening.width * 100) / 100}
-                  min={0.3}
-                  max={20}
+                  min={MIN_OPENING_SIZE}
+                  max={maxWidth}
                   step={0.1}
                   className="w-12 text-right outline-none text-black font-medium"
                   onChange={(e) => {
                     const val = parseFloat(e.target.value);
-                    if (!isNaN(val) && val >= 0.3) updateOpening(selectedOpening.id, { width: val });
+                    if (!isNaN(val) && val >= MIN_OPENING_SIZE) updateOpening(selectedOpening.id, { width: val });
                   }}
                 />
                 <span className="text-gray-500 ml-1">m</span>
@@ -219,13 +220,13 @@ export default function ClosingsStep() {
                 <input
                   type="number"
                   value={Math.round(selectedOpening.height * 100) / 100}
-                  min={0.3}
-                  max={10}
+                  min={MIN_OPENING_SIZE}
+                  max={maxHeight}
                   step={0.1}
                   className="w-12 text-right outline-none text-black font-medium"
                   onChange={(e) => {
                     const val = parseFloat(e.target.value);
-                    if (!isNaN(val) && val >= 0.3) updateOpening(selectedOpening.id, { height: val });
+                    if (!isNaN(val) && val >= MIN_OPENING_SIZE) updateOpening(selectedOpening.id, { height: val });
                   }}
                 />
                 <span className="text-gray-500 ml-1">m</span>

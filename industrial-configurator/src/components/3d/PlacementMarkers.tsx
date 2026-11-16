@@ -2,7 +2,8 @@
 
 import { useMemo } from 'react';
 import { Html } from '@react-three/drei';
-import { useOpeningsStore, DEFAULT_DIMENSIONS } from '@/stores/useOpeningsStore';
+import { useOpeningsStore, DEFAULT_DIMENSIONS, isFloorStanding } from '@/stores/useOpeningsStore';
+import { getWallDescriptors } from './openings/wallSpans';
 import type { WallId, OpeningType } from '@/stores/useOpeningsStore';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -21,76 +22,7 @@ interface MarkerPoint {
   normY: number;
 }
 
-// ─── Wall geometry helpers ────────────────────────────────────────────────────
-// These compute the actual world-space extents of each wall based on the
-// imperative positioning logic in Configurator.tsx.
-
-const THRESHOLD = 12;
-
-/** Precise offsets to make openings sit perfectly flush on the exterior face of the GLTF panels.
- *  - Front/Back walls have a panel thickness offset of ~0.048m.
- *  - Left/Right side walls have a column + panel offset of ~0.44m past the structural half-width. */
-const FRONT_BACK_WALL_OFFSET = 0.048;
-const SIDE_WALL_OFFSET = 0.44;
-
-function computePullMain(width: number): number {
-  if (width > THRESHOLD) return (width - THRESHOLD) * 0.484;
-  return -(THRESHOLD - width) * 0.487;
-}
-
-/**
- * Returns the 4 walls as rectangles in world space:
- *   origin  = bottom-left corner of the wall face
- *   axisH   = unit vector along the wall's horizontal direction
- *   axisV   = (0,1,0) always
- *   spanH   = wall width in metres
- *   spanV   = wall height in metres
- *   normal  = outward-facing normal (for offsetting markers)
- */
-function getWallDescriptors(w: number, h: number, l: number) {
-  const pull = computePullMain(w);
-  const halfStruct = 6 + pull;
-
-  // Front wall (PereteFata) sits at Z ≈ 0, spans X from -halfStruct to +halfStruct
-  // Back wall (PereteSpate) sits at Z = -length
-  // Left wall (PereteSTG) sits at X = -halfStruct, spans Z from 0 to -length
-  // Right wall (PereteDR) sits at X = +halfStruct, spans Z from 0 to -length
-
-  return [
-    {
-      wallId: 'PereteFata' as WallId,
-      originX: -halfStruct, originY: 0, originZ: FRONT_BACK_WALL_OFFSET,
-      axisH: [1, 0, 0] as [number, number, number],
-      normal: [0, 0, 1] as [number, number, number],
-      spanH: halfStruct * 2,
-      spanV: h,
-    },
-    {
-      wallId: 'PereteSpate' as WallId,
-      originX: halfStruct, originY: 0, originZ: -l - FRONT_BACK_WALL_OFFSET,
-      axisH: [-1, 0, 0] as [number, number, number],
-      normal: [0, 0, -1] as [number, number, number],
-      spanH: halfStruct * 2,
-      spanV: h,
-    },
-    {
-      wallId: 'PereteSTG' as WallId,
-      originX: -halfStruct - SIDE_WALL_OFFSET, originY: 0, originZ: 0,
-      axisH: [0, 0, -1] as [number, number, number],
-      normal: [-1, 0, 0] as [number, number, number],
-      spanH: l,
-      spanV: h,
-    },
-    {
-      wallId: 'PereteDR' as WallId,
-      originX: halfStruct + SIDE_WALL_OFFSET, originY: 0, originZ: 0,
-      axisH: [0, 0, -1] as [number, number, number],
-      normal: [1, 0, 0] as [number, number, number],
-      spanH: l,
-      spanV: h,
-    },
-  ];
-}
+// Wall geometry lives in ./openings/wallSpans (single source until D1's layout.walls, E6).
 
 /**
  * Generate evenly-spaced marker positions on each wall (~2m apart horizontally).
@@ -169,25 +101,14 @@ export default function PlacementMarkers({ hallWidth, hallHeight, hallLength }: 
 
   const handleClick = (marker: MarkerPoint, tool: OpeningType) => {
     const dims = DEFAULT_DIMENSIONS[tool];
-    const wallDescs = getWallDescriptors(hallWidth, hallHeight, hallLength);
-    const wallDesc = wallDescs.find((wd) => wd.wallId === marker.wallId)!;
+    const wall = getWallDescriptors(hallWidth, hallHeight, hallLength).find((wd) => wd.wallId === marker.wallId)!;
 
-    // For doors, posY must place the bottom edge at ground level
-    let posY = marker.normY;
-    if (tool === 'door' || tool === 'garageDoor') {
-      // posY is the centre of the opening, normalised
-      // bottom edge = posY - (dims.height / 2) / wallHeight = 0
-      // so posY = dims.height / (2 * wallHeight)
-      posY = dims.height / (2 * wallDesc.spanV);
-      // Clamp so the door doesn't go above the wall
-      posY = Math.min(posY, 1 - dims.height / (2 * wallDesc.spanV));
-    }
-
+    // Centre the opening on the marker; doors stand on the floor. The store clamps to the wall.
     addOpening({
       type: tool,
       wallId: marker.wallId,
-      posX: marker.normX,
-      posY,
+      offsetX: marker.normX * wall.spanH - dims.width / 2,
+      sill: isFloorStanding(tool) ? 0 : marker.normY * wall.spanV - dims.height / 2,
       width: dims.width,
       height: dims.height,
     });
@@ -228,6 +149,3 @@ export default function PlacementMarkers({ hallWidth, hallHeight, hallLength }: 
     </group>
   );
 }
-
-// Re-export the wall descriptors helper for use by WallOpening
-export { getWallDescriptors };

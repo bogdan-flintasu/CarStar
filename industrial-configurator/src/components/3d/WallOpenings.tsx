@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useOpeningsStore } from '@/stores/useOpeningsStore';
 import WallOpening from './WallOpening';
+import { getWallSpans } from './openings/wallSpans';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface WallOpeningsProps {
@@ -13,10 +15,16 @@ interface WallOpeningsProps {
 // ─── Component ────────────────────────────────────────────────────────────────
 /**
  * Orchestrator component that renders all openings from the Zustand store.
- * Uses shallow comparison on the openings array for optimal re-render performance.
+ * Also publishes the current wall spans to the store so every mutation is clamped to its wall.
  */
 export default function WallOpenings({ hallWidth, hallHeight, hallLength }: WallOpeningsProps) {
   const openings = useOpeningsStore((s) => s.openings);
+  const setWallSpans = useOpeningsStore((s) => s.setWallSpans);
+
+  // Tell the store which wall rectangles to clamp against (add/update/drag/resize).
+  useEffect(() => {
+    setWallSpans(getWallSpans(hallWidth, hallHeight, hallLength));
+  }, [hallWidth, hallHeight, hallLength, setWallSpans]);
 
   return (
     <group>

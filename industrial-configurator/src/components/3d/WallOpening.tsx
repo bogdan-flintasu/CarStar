@@ -1,11 +1,13 @@
 'use client';
 
-import { useRef, useState, useCallback, useMemo, useEffect } from 'react';
+import { useRef, useCallback, useMemo, useEffect, useState } from 'react';
 import { ThreeEvent, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { useOpeningsStore } from '@/stores/useOpeningsStore';
+import { useOpeningsStore, resizeOpening } from '@/stores/useOpeningsStore';
 import type { Opening, WallId } from '@/stores/useOpeningsStore';
-import { getWallDescriptors } from './PlacementMarkers';
+import type { ResizeHandle, WallSpan } from './openings/types';
+import { openingCentre } from './openings/openingMath';
+import { getWallDescriptor } from './openings/wallSpans';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface WallOpeningProps {
@@ -23,77 +25,47 @@ const GARAGE_DOOR_COLOR = '#666666';
 const SELECTED_EMISSIVE = '#F5A623';
 const HANDLE_COLOR = '#ffffff';
 const HANDLE_SIZE = 0.08;
+const FRAME_THICKNESS = 0.04;
+const GARAGE_DIVIDER_COUNT = 3;
+const HANDLES: readonly ResizeHandle[] = ['tl', 'tr', 'bl', 'br'];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Convert normalised wall coords to world position for a given wall */
-function normalizedToWorld(
-  wallId: WallId,
-  normX: number,
-  normY: number,
-  hallWidth: number,
-  hallHeight: number,
-  hallLength: number
-): [number, number, number] {
-  const walls = getWallDescriptors(hallWidth, hallHeight, hallLength);
-  const wall = walls.find((w) => w.wallId === wallId)!;
-
-  // Origin already includes the surface offset from getWallDescriptors
-  const x =
-    wall.originX +
-    wall.axisH[0] * normX * wall.spanH;
-  const y = normY * wall.spanV;
-  const z =
-    wall.originZ +
-    wall.axisH[2] * normX * wall.spanH;
-
-  return [x, y, z];
-}
-
-/** Get the rotation for a wall-aligned object */
+/** Rotation that maps the opening's local +Z onto the wall's outward normal (so it renders outside). */
 function getWallRotation(wallId: WallId): [number, number, number] {
   switch (wallId) {
     case 'PereteFata':
-      return [0, 0, 0]; // facing +Z
+      return [0, 0, 0];
     case 'PereteSpate':
-      return [0, Math.PI, 0]; // facing -Z
+      return [0, Math.PI, 0];
     case 'PereteSTG':
-      return [0, Math.PI / 2, 0]; // facing -X
+      return [0, -Math.PI / 2, 0];
     case 'PereteDR':
-      return [0, -Math.PI / 2, 0]; // facing +X
+      return [0, Math.PI / 2, 0];
   }
 }
 
-/** Get the wall-local drag plane normal in world space */
-function getWallNormal(wallId: WallId): THREE.Vector3 {
-  switch (wallId) {
-    case 'PereteFata':
-      return new THREE.Vector3(0, 0, 1);
-    case 'PereteSpate':
-      return new THREE.Vector3(0, 0, -1);
-    case 'PereteSTG':
-      return new THREE.Vector3(-1, 0, 0);
-    case 'PereteDR':
-      return new THREE.Vector3(1, 0, 0);
+/** Horizontal divider lines of an industrial door, as one line-segments geometry. */
+function buildDividerGeometry(width: number, height: number): THREE.BufferGeometry {
+  const pts: number[] = [];
+  for (let i = 1; i <= GARAGE_DIVIDER_COUNT; i++) {
+    const y = -height / 2 + (i * height) / (GARAGE_DIVIDER_COUNT + 1);
+    pts.push(-width / 2, y, 0.03, width / 2, y, 0.03);
   }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+  return geo;
 }
 
-/** Get the wall-local horizontal axis in world space */
-function getWallHorizontalAxis(wallId: WallId): THREE.Vector3 {
-  switch (wallId) {
-    case 'PereteFata':
-      return new THREE.Vector3(1, 0, 0);
-    case 'PereteSpate':
-      return new THREE.Vector3(-1, 0, 0);
-    case 'PereteSTG':
-    case 'PereteDR':
-      return new THREE.Vector3(0, 0, -1);
-  }
+function buildEdgesGeometry(width: number, height: number): THREE.EdgesGeometry {
+  const plane = new THREE.PlaneGeometry(width, height);
+  const edges = new THREE.EdgesGeometry(plane);
+  plane.dispose();
+  return edges;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function WallOpening({ opening, hallWidth, hallHeight, hallLength }: WallOpeningProps) {
-  const meshRef = useRef<THREE.Mesh>(null);
   const { camera, gl } = useThree();
 
   const selectedId = useOpeningsStore((s) => s.selectedOpeningId);
@@ -102,266 +74,184 @@ export default function WallOpening({ opening, hallWidth, hallHeight, hallLength
   const setIsDragging = useOpeningsStore((s) => s.setIsDragging);
 
   const isSelected = selectedId === opening.id;
-  const [localDragging, setLocalDragging] = useState(false);
-  const [activeHandle, setActiveHandle] = useState<string | null>(null);
+  /** Which interaction is running, only for visual feedback. */
+  const [interaction, setInteraction] = useState<'move' | ResizeHandle | null>(null);
+  /** Removes the window listeners of the running drag/resize. */
+  const endSessionRef = useRef<(() => void) | null>(null);
 
-  // Refs for drag state
-  const dragStartNorm = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const dragStartMouse = useRef<THREE.Vector3>(new THREE.Vector3());
-
-  // Compute world position
-  const worldPos = useMemo(
-    () => normalizedToWorld(opening.wallId, opening.posX, opening.posY, hallWidth, hallHeight, hallLength),
-    [opening.wallId, opening.posX, opening.posY, hallWidth, hallHeight, hallLength]
+  const wall = useMemo(
+    () => getWallDescriptor(opening.wallId, hallWidth, hallHeight, hallLength),
+    [opening.wallId, hallWidth, hallHeight, hallLength],
   );
+  const span: WallSpan = useMemo(() => ({ length: wall.spanH, height: wall.spanV }), [wall]);
+
+  // Group sits at the opening centre on the wall face.
+  const worldPos = useMemo<[number, number, number]>(() => {
+    const c = openingCentre(opening);
+    return [
+      wall.originX + wall.axisH[0] * c.x,
+      wall.originY + c.y,
+      wall.originZ + wall.axisH[2] * c.x,
+    ];
+  }, [wall, opening]);
 
   const rotation = useMemo(() => getWallRotation(opening.wallId), [opening.wallId]);
+  /** +1 when the group's local +X runs along increasing offsetX, -1 when reversed (left wall). */
+  const xSign = useMemo(() => {
+    const localX = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(...rotation));
+    return localX.dot(new THREE.Vector3(...wall.axisH)) < 0 ? -1 : 1;
+  }, [rotation, wall]);
 
-  // Get wall descriptor for bounds clamping
-  const wallDesc = useMemo(() => {
-    const walls = getWallDescriptors(hallWidth, hallHeight, hallLength);
-    return walls.find((w) => w.wallId === opening.wallId)!;
-  }, [opening.wallId, hallWidth, hallHeight, hallLength]);
+  // ── Geometry (memoised and disposed: no per-render GPU buffers) ─────────
+  const edgesGeometry = useMemo(
+    () => buildEdgesGeometry(opening.width, opening.height),
+    [opening.width, opening.height],
+  );
+  useEffect(() => () => edgesGeometry.dispose(), [edgesGeometry]);
 
-  // ── Drag plane setup ────────────────────────────────────────────────────
-  const dragPlane = useMemo(() => {
-    const normal = getWallNormal(opening.wallId);
-    const point = new THREE.Vector3(...worldPos);
-    const plane = new THREE.Plane();
-    plane.setFromNormalAndCoplanarPoint(normal, point);
-    return plane;
-  }, [opening.wallId, worldPos]);
+  const dividerGeometry = useMemo(
+    () => (opening.type === 'garageDoor' ? buildDividerGeometry(opening.width, opening.height) : null),
+    [opening.type, opening.width, opening.height],
+  );
+  useEffect(() => () => dividerGeometry?.dispose(), [dividerGeometry]);
 
+  // ── Pointer sessions ────────────────────────────────────────────────────
+  // Move/up are tracked on `window`, so fast drags that leave the mesh (or the canvas) keep working.
   const raycaster = useMemo(() => new THREE.Raycaster(), []);
 
-  /** Convert a mouse event to a world-space intersection on the drag plane */
-  const getPlaneIntersection = useCallback(
-    (event: PointerEvent): THREE.Vector3 | null => {
+  const intersect = useCallback(
+    (clientX: number, clientY: number, plane: THREE.Plane): THREE.Vector3 | null => {
       const rect = gl.domElement.getBoundingClientRect();
-      const mouse = new THREE.Vector2(
-        ((event.clientX - rect.left) / rect.width) * 2 - 1,
-        -((event.clientY - rect.top) / rect.height) * 2 + 1
+      const ndc = new THREE.Vector2(
+        ((clientX - rect.left) / rect.width) * 2 - 1,
+        -((clientY - rect.top) / rect.height) * 2 + 1,
       );
-      raycaster.setFromCamera(mouse, camera);
-      const target = new THREE.Vector3();
-      const hit = raycaster.ray.intersectPlane(dragPlane, target);
-      return hit ? target : null;
+      raycaster.setFromCamera(ndc, camera);
+      return raycaster.ray.intersectPlane(plane, new THREE.Vector3());
     },
-    [camera, gl, dragPlane, raycaster]
+    [camera, gl, raycaster],
   );
 
-  // ── Drag handlers ──────────────────────────────────────────────────────
-  const handlePointerDown = useCallback(
-    (e: ThreeEvent<PointerEvent>) => {
-      if (!isSelected) return;
+  /** Starts a drag; `onDelta` gets the pointer delta in metres along the wall (dH) and up (dV). */
+  const startSession = useCallback(
+    (e: ThreeEvent<PointerEvent>, kind: 'move' | ResizeHandle, onDelta: (dH: number, dV: number) => void) => {
       e.stopPropagation();
-      setLocalDragging(true);
-      setIsDragging(true); // Disable orbit controls
-      dragStartNorm.current = { x: opening.posX, y: opening.posY };
-      const intersection = getPlaneIntersection(e.nativeEvent);
-      if (intersection) {
-        dragStartMouse.current.copy(intersection);
-      }
-      (e.target as HTMLElement)?.setPointerCapture?.(e.nativeEvent.pointerId);
+      endSessionRef.current?.();
+
+      const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(
+        new THREE.Vector3(...wall.normal),
+        new THREE.Vector3(...worldPos),
+      );
+      const start = intersect(e.nativeEvent.clientX, e.nativeEvent.clientY, plane);
+      if (!start) return;
+      const axisH = new THREE.Vector3(...wall.axisH);
+      const pointerId = e.nativeEvent.pointerId;
+
+      const onMove = (ev: PointerEvent) => {
+        if (ev.pointerId !== pointerId) return;
+        const hit = intersect(ev.clientX, ev.clientY, plane);
+        if (!hit) return;
+        const d = hit.sub(start);
+        onDelta(d.dot(axisH), d.y);
+      };
+      const end = () => {
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        window.removeEventListener('pointercancel', onUp);
+        endSessionRef.current = null;
+        setInteraction(null);
+        setIsDragging(false);
+      };
+      const onUp = (ev: PointerEvent) => {
+        if (ev.pointerId === pointerId) end();
+      };
+
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+      window.addEventListener('pointercancel', onUp);
+      endSessionRef.current = end;
+      setInteraction(kind);
+      setIsDragging(true); // disables OrbitControls
     },
-    [isSelected, opening.posX, opening.posY, getPlaneIntersection, setIsDragging]
+    [wall, worldPos, intersect, setIsDragging],
   );
 
-  const handlePointerMove = useCallback(
+  // End any running session on unmount (e.g. the opening was deleted mid-drag).
+  useEffect(() => () => endSessionRef.current?.(), []);
+
+  const handleMovePointerDown = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
-      if (!localDragging) return;
-      e.stopPropagation();
-
-      const intersection = getPlaneIntersection(e.nativeEvent);
-      if (!intersection) return;
-
-      const delta = intersection.clone().sub(dragStartMouse.current);
-      const hAxis = getWallHorizontalAxis(opening.wallId);
-
-      // Project delta onto wall axes
-      const deltaH = delta.dot(hAxis) / wallDesc.spanH;
-      const deltaV = delta.y / wallDesc.spanV;
-
-      let newNormX = dragStartNorm.current.x + deltaH;
-      let newNormY = dragStartNorm.current.y + deltaV;
-
-      // Clamp within wall bounds (half-width/height margin)
-      const halfW = opening.width / (2 * wallDesc.spanH);
-      const halfH = opening.height / (2 * wallDesc.spanV);
-      newNormX = Math.max(halfW, Math.min(1 - halfW, newNormX));
-      newNormY = Math.max(halfH, Math.min(1 - halfH, newNormY));
-
-      // Ground constraint for doors
-      if (opening.type === 'door' || opening.type === 'garageDoor') {
-        newNormY = halfH; // Lock bottom edge to ground
-      }
-
-      updateOpening(opening.id, { posX: newNormX, posY: newNormY });
+      const startOpening = opening;
+      startSession(e, 'move', (dH, dV) => {
+        // The store clamps to the wall and keeps doors on the floor.
+        updateOpening(startOpening.id, {
+          offsetX: startOpening.offsetX + dH,
+          sill: startOpening.sill + dV,
+        });
+      });
     },
-    [localDragging, getPlaneIntersection, opening, wallDesc, updateOpening]
+    [opening, startSession, updateOpening],
   );
-
-  const handlePointerUp = useCallback(
-    (e: ThreeEvent<PointerEvent>) => {
-      if (!localDragging) return;
-      e.stopPropagation();
-      setLocalDragging(false);
-      setIsDragging(false); // Re-enable orbit controls
-    },
-    [localDragging, setIsDragging]
-  );
-
-  // ── Resize handle drag ──────────────────────────────────────────────────
-  const resizeStart = useRef<{ w: number; h: number; mouseWorld: THREE.Vector3 }>({
-    w: 0, h: 0, mouseWorld: new THREE.Vector3(),
-  });
 
   const handleResizePointerDown = useCallback(
-    (handle: string, e: ThreeEvent<PointerEvent>) => {
-      e.stopPropagation();
-      setActiveHandle(handle);
-      setIsDragging(true); // Disable orbit controls
-      resizeStart.current = {
-        w: opening.width,
-        h: opening.height,
-        mouseWorld: new THREE.Vector3(),
-      };
-      const intersection = getPlaneIntersection(e.nativeEvent);
-      if (intersection) {
-        resizeStart.current.mouseWorld.copy(intersection);
-      }
-      (e.target as HTMLElement)?.setPointerCapture?.(e.nativeEvent.pointerId);
+    (handle: ResizeHandle, e: ThreeEvent<PointerEvent>) => {
+      const startOpening = opening;
+      startSession(e, handle, (dH, dV) => {
+        const { offsetX, sill, width, height } = resizeOpening(startOpening, handle, dH, dV, span);
+        updateOpening(startOpening.id, { offsetX, sill, width, height });
+      });
     },
-    [opening.width, opening.height, getPlaneIntersection, setIsDragging]
+    [opening, span, startSession, updateOpening],
   );
 
-  const handleResizePointerMove = useCallback(
-    (e: ThreeEvent<PointerEvent>) => {
-      if (!activeHandle) return;
-      e.stopPropagation();
-
-      const intersection = getPlaneIntersection(e.nativeEvent);
-      if (!intersection) return;
-
-      const delta = intersection.clone().sub(resizeStart.current.mouseWorld);
-      const hAxis = getWallHorizontalAxis(opening.wallId);
-      const deltaH = delta.dot(hAxis);
-      const deltaV = delta.y;
-
-      let newW = resizeStart.current.w;
-      let newH = resizeStart.current.h;
-
-      // Determine resize direction based on handle
-      if (activeHandle.includes('r')) newW += deltaH;
-      if (activeHandle.includes('l')) newW -= deltaH;
-      if (activeHandle.includes('t')) newH += deltaV;
-      if (activeHandle.includes('b')) newH -= deltaV;
-
-      // Minimum size
-      newW = Math.max(0.3, newW);
-      newH = Math.max(0.3, newH);
-
-      // Max size = wall dimensions
-      newW = Math.min(wallDesc.spanH * 0.9, newW);
-      newH = Math.min(wallDesc.spanV * 0.9, newH);
-
-      updateOpening(opening.id, { width: newW, height: newH });
-    },
-    [activeHandle, getPlaneIntersection, opening, wallDesc, updateOpening]
-  );
-
-  const handleResizePointerUp = useCallback(
-    (e: ThreeEvent<PointerEvent>) => {
-      if (!activeHandle) return;
-      e.stopPropagation();
-      setActiveHandle(null);
-      setIsDragging(false); // Re-enable orbit controls
-    },
-    [activeHandle, setIsDragging]
-  );
-
-  // ── Click to select ────────────────────────────────────────────────────
   const handleClick = useCallback(
     (e: ThreeEvent<MouseEvent>) => {
       e.stopPropagation();
       selectOpening(opening.id);
     },
-    [opening.id, selectOpening]
+    [opening.id, selectOpening],
   );
 
   // ── Material ────────────────────────────────────────────────────────────
-  const materialProps = useMemo(() => {
-    const base = {
+  const materialProps = useMemo(
+    () => ({
       transparent: opening.type === 'window',
       opacity: opening.type === 'window' ? WINDOW_OPACITY : 1,
-      color: opening.type === 'window'
-        ? WINDOW_COLOR
-        : opening.type === 'door'
-          ? DOOR_COLOR
-          : GARAGE_DOOR_COLOR,
+      color:
+        opening.type === 'window' ? WINDOW_COLOR : opening.type === 'door' ? DOOR_COLOR : GARAGE_DOOR_COLOR,
       emissive: isSelected ? SELECTED_EMISSIVE : '#000000',
       emissiveIntensity: isSelected ? 0.3 : 0,
       metalness: opening.type === 'garageDoor' ? 0.7 : 0.1,
       roughness: opening.type === 'window' ? 0.1 : 0.6,
       side: THREE.DoubleSide as THREE.Side,
-    };
-    return base;
-  }, [opening.type, isSelected]);
+    }),
+    [opening.type, isSelected],
+  );
 
-  // ── Frame (border around opening) ───────────────────────────────────────
-  const frameThickness = 0.04;
-
-  // ── Resize handles (4 corners) ─────────────────────────────────────────
   const handlePositions = useMemo(() => {
     const hw = opening.width / 2;
     const hh = opening.height / 2;
-    return [
-      { id: 'tl', pos: [-hw, hh, 0.05] as [number, number, number] },
-      { id: 'tr', pos: [hw, hh, 0.05] as [number, number, number] },
-      { id: 'bl', pos: [-hw, -hh, 0.05] as [number, number, number] },
-      { id: 'br', pos: [hw, -hh, 0.05] as [number, number, number] },
-    ];
-  }, [opening.width, opening.height]);
-
-  // Listen for global pointer up to cancel dragging/resizing if pointer leaves canvas
-  useEffect(() => {
-    const handleGlobalPointerUp = () => {
-      if (localDragging) {
-        setLocalDragging(false);
-        setIsDragging(false);
-      }
-      if (activeHandle) {
-        setActiveHandle(null);
-        setIsDragging(false);
-      }
-    };
-    window.addEventListener('pointerup', handleGlobalPointerUp);
-    return () => window.removeEventListener('pointerup', handleGlobalPointerUp);
-  }, [localDragging, activeHandle, setIsDragging]);
+    return HANDLES.map((id) => ({
+      id,
+      // 'r' = the edge with the larger offsetX, wherever that lands in local space.
+      pos: [(id.includes('r') ? hw : -hw) * xSign, id.includes('t') ? hh : -hh, 0.05] as [number, number, number],
+    }));
+  }, [opening.width, opening.height, xSign]);
 
   return (
     <group position={worldPos} rotation={rotation}>
-      {/* Depth mask — renders FIRST, writes only to depth buffer (not color).
-          Positioned slightly in front of the wall surface so the wall's own
-          pixels behind this rectangle fail the depth test → visual hole. */}
+      {/* Depth mask — writes depth only, hiding the wall behind the opening (replaced by real holes in E2). */}
       <mesh renderOrder={-1} position={[0, 0, 0.015]}>
         <planeGeometry args={[opening.width - 0.02, opening.height - 0.02]} />
-        <meshBasicMaterial
-          colorWrite={false}
-          depthWrite={true}
-          side={THREE.FrontSide}
-        />
+        <meshBasicMaterial colorWrite={false} depthWrite={true} side={THREE.FrontSide} />
       </mesh>
 
-      {/* Main opening mesh — sits in front of the depth mask so it's visible */}
+      {/* Main opening mesh */}
       <mesh
-        ref={meshRef}
         renderOrder={1}
         position={[0, 0, 0.025]}
         onClick={handleClick}
-        onPointerDown={isSelected ? handlePointerDown : undefined}
-        onPointerMove={isSelected && localDragging ? handlePointerMove : undefined}
-        onPointerUp={isSelected ? handlePointerUp : undefined}
+        onPointerDown={isSelected ? handleMovePointerDown : undefined}
         castShadow={false}
         receiveShadow={false}
       >
@@ -370,44 +260,26 @@ export default function WallOpening({ opening, hallWidth, hallHeight, hallLength
       </mesh>
 
       {/* Frame border */}
-      <lineSegments renderOrder={2} position={[0, 0, 0.03]}>
-        <edgesGeometry args={[new THREE.PlaneGeometry(opening.width, opening.height)]} />
-        <lineBasicMaterial
-          color={isSelected ? '#F5A623' : '#333333'}
-          linewidth={2}
-        />
+      <lineSegments renderOrder={2} position={[0, 0, 0.03]} geometry={edgesGeometry}>
+        <lineBasicMaterial color={isSelected || interaction ? '#F5A623' : '#333333'} />
       </lineSegments>
 
-      {/* Door-specific: horizontal line dividers for garage doors */}
-      {opening.type === 'garageDoor' && (
-        <group>
-          {Array.from({ length: 3 }, (_, i) => {
-            const y = -opening.height / 2 + ((i + 1) * opening.height) / 4;
-            return (
-              <line key={`div-${i}`}>
-                <bufferGeometry>
-                  <bufferAttribute
-                    attach="attributes-position"
-                    args={[new Float32Array([
-                      -opening.width / 2, y, 0.03,
-                      opening.width / 2, y, 0.03,
-                    ]), 3]}
-                  />
-                </bufferGeometry>
-                <lineBasicMaterial color="#555555" />
-              </line>
-            );
-          })}
-        </group>
+      {/* Industrial door: horizontal panel dividers */}
+      {dividerGeometry && (
+        <lineSegments geometry={dividerGeometry}>
+          <lineBasicMaterial color="#555555" />
+        </lineSegments>
       )}
 
       {/* Frame thickness (thin box behind the plane to give depth) */}
-      <mesh position={[0, 0, -frameThickness / 2]}>
-        <boxGeometry args={[opening.width + frameThickness * 2, opening.height + frameThickness * 2, frameThickness]} />
+      <mesh position={[0, 0, -FRAME_THICKNESS / 2]}>
+        <boxGeometry
+          args={[opening.width + FRAME_THICKNESS * 2, opening.height + FRAME_THICKNESS * 2, FRAME_THICKNESS]}
+        />
         <meshStandardMaterial color="#333333" metalness={0.5} roughness={0.5} />
       </mesh>
 
-      {/* Resize handles (visible only when selected) */}
+      {/* Resize handles (selected only). Each anchors the opposite corner. */}
       {isSelected &&
         handlePositions.map((hp) => (
           <mesh
@@ -415,14 +287,12 @@ export default function WallOpening({ opening, hallWidth, hallHeight, hallLength
             position={hp.pos}
             renderOrder={3}
             onPointerDown={(e) => handleResizePointerDown(hp.id, e)}
-            onPointerMove={activeHandle === hp.id ? handleResizePointerMove : undefined}
-            onPointerUp={handleResizePointerUp}
           >
             <sphereGeometry args={[HANDLE_SIZE, 12, 12]} />
             <meshStandardMaterial
               color={HANDLE_COLOR}
               emissive="#F5A623"
-              emissiveIntensity={0.5}
+              emissiveIntensity={interaction === hp.id ? 1 : 0.5}
             />
           </mesh>
         ))}
