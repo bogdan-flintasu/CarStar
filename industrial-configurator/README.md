@@ -10,7 +10,7 @@ Requires Node >= 20 (<27) and pnpm 12 (`corepack enable` picks the version from 
 ```bash
 cd industrial-configurator
 pnpm install                 # also runs `prisma generate` (postinstall)
-cp .env.example .env
+cp .env.example .env         # then set AUTH_SECRET, ADMIN_PASSWORD_HASH, APP_BASE_URL (see Environment variables)
 pnpm prisma migrate deploy   # creates prisma/dev.db from prisma/migrations
 pnpm db:seed                 # default prices (optional: /api/prices self-seeds too)
 pnpm dev                     # http://localhost:3000
@@ -33,7 +33,10 @@ CI (`.github/workflows/ci.yml`): install, `tsc --noEmit`, lint, test, build.
 ## Environment variables
 
 See `.env.example`: `DATABASE_URL` (SQLite file), `RESEND_*` (contact email),
-`ALLOWED_DEV_ORIGINS` (optional, comma-separated tunnel hosts for `next dev`).
+`AUTH_SECRET` (>= 32 random chars), `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`
+(bcrypt, each `$` escaped as `\$` in `.env`; generate with
+`node -e "console.log(require('bcryptjs').hashSync(process.argv[1],12))" '<password>'`), `APP_BASE_URL`
+(public origin, used to validate email links), `ALLOWED_DEV_ORIGINS` (optional, comma-separated tunnel hosts for `next dev`).
 
 ## Layout
 
