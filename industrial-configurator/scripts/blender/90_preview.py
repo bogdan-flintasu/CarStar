@@ -10,6 +10,7 @@ for detail views, so before/after images are directly comparable.
 import os
 import sys
 
+sys.dont_write_bytecode = True  # no __pycache__ in the repo
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bpy  # noqa: E402
 from mathutils import Vector  # noqa: E402
