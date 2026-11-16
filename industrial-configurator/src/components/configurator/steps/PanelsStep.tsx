@@ -8,15 +8,13 @@ export default function PanelsStep() {
   const {
     showFoundation, setShowFoundation,
     hasSandwichPanels, setHasSandwichPanels,
-    isIsolated, setIsIsolated,
+    setIsIsolated,
     insulation, setInsulation,
-    nextStep, prevStep,
   } = useConfiguratorStore(useShallow((s) => ({
     showFoundation: s.showFoundation, setShowFoundation: s.setShowFoundation,
     hasSandwichPanels: s.hasSandwichPanels, setHasSandwichPanels: s.setHasSandwichPanels,
-    isIsolated: s.isIsolated, setIsIsolated: s.setIsIsolated,
+    setIsIsolated: s.setIsIsolated,
     insulation: s.insulation, setInsulation: s.setInsulation,
-    nextStep: s.nextStep, prevStep: s.prevStep,
   })));
 
   return (

@@ -13,14 +13,12 @@ export default function SummaryStep() {
     showFoundation, hasSandwichPanels,
     isIsolated, insulation,
     getFloorArea, getNumberOfBays, getEstimatedPrice, getConfigurationData,
-    prevStep,
   } = useConfiguratorStore(useShallow((s) => ({
     length: s.length, width: s.width, height: s.height,
     showFoundation: s.showFoundation, hasSandwichPanels: s.hasSandwichPanels,
     isIsolated: s.isIsolated, insulation: s.insulation,
     getFloorArea: s.getFloorArea, getNumberOfBays: s.getNumberOfBays,
     getEstimatedPrice: s.getEstimatedPrice, getConfigurationData: s.getConfigurationData,
-    prevStep: s.prevStep,
   })));
 
   const openings = useOpeningsStore((s) => s.openings);
@@ -38,6 +36,8 @@ export default function SummaryStep() {
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [honeypot, setHoneypot] = useState('');
+  const [error, setError] = useState('');
   const [configLink, setConfigLink] = useState('');
   const [copied, setCopied] = useState(false);
 
@@ -59,6 +59,13 @@ export default function SummaryStep() {
     }
   };
 
+  const errorFor = (status: number) =>
+    status === 429
+      ? 'Prea multe cereri. Încercați din nou peste câteva minute.'
+      : status === 400
+        ? 'Datele introduse nu sunt valide. Verificați câmpurile și încercați din nou.'
+        : 'A apărut o eroare. Încercați din nou.';
+
   const handleCopyLink = () => {
     navigator.clipboard.writeText(configLink);
     setCopied(true);
@@ -68,6 +75,7 @@ export default function SummaryStep() {
   const handleSubmitEmail = async () => {
     if (!email) return;
     setSending(true);
+    setError('');
 
     try {
       let link = configLink;
@@ -78,6 +86,10 @@ export default function SummaryStep() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ data, userName: name, userEmail: email, userPhone: phone }),
         });
+        if (!res.ok) {
+          setError(errorFor(res.status));
+          return;
+        }
         const result = await res.json();
         if (result.token) {
           link = `${window.location.origin}/configuration/${result.token}`;
@@ -85,7 +97,7 @@ export default function SummaryStep() {
         }
       }
 
-      await fetch('/api/send-email', {
+      const mailRes = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -93,14 +105,20 @@ export default function SummaryStep() {
           email,
           phone,
           message,
+          website: honeypot,
           configurationLink: link,
           configurationSummary: getConfigurationData(counts),
         }),
       });
 
+      if (!mailRes.ok) {
+        setError(errorFor(mailRes.status));
+        return;
+      }
       setSent(true);
     } catch (err) {
       console.error('Failed to send email:', err);
+      setError(errorFor(0));
     } finally {
       setSending(false);
     }
@@ -259,6 +277,17 @@ export default function SummaryStep() {
                 rows={2}
                 className="w-full py-2 px-3 bg-white border border-gray-300 focus:border-[var(--color-primary)] outline-none text-black rounded-lg text-sm transition-colors resize-none placeholder:text-gray-400"
               />
+              <input
+                type="text"
+                name="website"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                className="hidden"
+              />
+              {error && <p role="alert" className="text-xs text-red-500">{error}</p>}
               <button
                 onClick={handleSubmitEmail}
                 disabled={!email || sending}

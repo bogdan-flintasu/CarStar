@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { motion } from 'framer-motion';
 import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
+import { HALL_LIMITS } from '@/lib/hall';
 
 interface DimensionFieldProps {
   label: string;
@@ -18,7 +19,7 @@ interface DimensionFieldProps {
 /**
  * Slider + number input. The input keeps a local draft string while typing and only
  * validates/clamps on blur or Enter, so multi-digit values can be typed.
- * Values are snapped to `step` (length: 6 m bay grid) and out-of-range values are clamped
+ * Values are snapped to `step` and out-of-range values are clamped
  * with an inline notice.
  */
 function DimensionField({ label, value, min, max, step, onCommit, first }: DimensionFieldProps) {
@@ -33,11 +34,9 @@ function DimensionField({ label, value, min, max, step, onCommit, first }: Dimen
       setNotice(`Introduceți o valoare între ${min} și ${max} m.`);
       return;
     }
-    let v = Math.max(min, Math.min(max, parsed));
+    const v = Math.max(min, Math.min(max, parsed));
     const clamped = v !== parsed;
-    if (step > 1) v = min + Math.round((v - min) / step) * step;
     if (clamped) setNotice(`Valoarea trebuie să fie între ${min} și ${max} m.`);
-    else if (v !== parsed) setNotice(`Lungimea se rotunjește la multiplu de ${step} m (${v} m).`);
     else setNotice('');
     onCommit(v);
   };
@@ -56,7 +55,7 @@ function DimensionField({ label, value, min, max, step, onCommit, first }: Dimen
             step={step}
             aria-label={label}
             aria-invalid={!!notice}
-            className="w-12 text-right outline-none text-black font-medium"
+            className="w-14 text-right outline-none text-black font-medium"
             onChange={(e) => { setDraft(e.target.value); setNotice(''); }}
             onBlur={commit}
             onKeyDown={(e) => { if (e.key === 'Enter') commit(); }}
@@ -112,9 +111,9 @@ export default function DimensionsStep() {
 
       {/* Sliders */}
       <div className="space-y-5 flex-1">
-        <DimensionField label="Lungime" value={length} min={12} max={102} step={6} onCommit={setLength} first />
-        <DimensionField label="Lățime" value={width} min={8} max={20} step={1} onCommit={setWidth} />
-        <DimensionField label="Înălțime" value={height} min={3} max={6} step={1} onCommit={setHeight} />
+        <DimensionField label="Lungime" value={length} min={HALL_LIMITS.length.min} max={HALL_LIMITS.length.max} step={1} onCommit={setLength} first />
+        <DimensionField label="Lățime" value={width} min={HALL_LIMITS.width.min} max={HALL_LIMITS.width.max} step={1} onCommit={setWidth} />
+        <DimensionField label="Înălțime" value={height} min={HALL_LIMITS.height.min} max={HALL_LIMITS.height.max} step={1} onCommit={setHeight} />
         {/* Computed values */}
         <div className="flex justify-between items-center pt-4 border-t border-gray-100 mb-6">
           <span className="text-sm font-bold text-gray-800">Suprafață utilă</span>

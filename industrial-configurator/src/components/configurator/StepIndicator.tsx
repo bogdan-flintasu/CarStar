@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import type { ConfigStep } from '@/stores/useConfiguratorStore';
 
 const steps = [
@@ -21,7 +20,7 @@ export default function StepIndicator({ currentStep, onStepClick }: StepIndicato
       {/* Background connecting line */}
       <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-0.5 bg-gray-200 -z-10" />
 
-      {steps.map((step, i) => {
+      {steps.map((step) => {
         const isActive = step.id === currentStep;
         const isCompleted = step.id < currentStep;
 

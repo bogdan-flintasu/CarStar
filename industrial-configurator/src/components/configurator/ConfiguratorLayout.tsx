@@ -44,6 +44,11 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const showDesktopBanner = isMounted && !bannerDismissed && getGraphicsSettings().isMobile && !readDismissed();
 
+  // Persisted state is rehydrated on the client only (skipHydration), so the shell renders on the server.
+  useEffect(() => {
+    void useConfiguratorStore.persist.rehydrate();
+  }, []);
+
   // Fetch prices from DB on mount
   useEffect(() => {
     fetch('/api/prices')
@@ -87,11 +92,6 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
         return null;
     }
   };
-
-  if (!isMounted) {
-    // Prevent hydration mismatch by rendering a blank/loading screen on the server
-    return <div className="w-full h-screen bg-[#F8F9FA]" />;
-  }
 
   return (
     <div className="w-full h-[100dvh] flex flex-col bg-[#F8F9FA] overflow-hidden">
