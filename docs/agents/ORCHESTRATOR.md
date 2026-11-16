@@ -50,3 +50,8 @@ Overrides: no git-lfs (.blend + big binaries in ~/CarStar-assets/); source model
   Open handoffs: F part 2 -> requestHallFraming() in ConfigHeader.handleReset; disable "Continuă" on opening conflicts; honeypot `website` + 400/429 errors in SummaryStep; lift 6 m length snap; server price wins. C (optional) -> Panel metallicFactor ~0.35 in GLB (D set it in code; skip).
   Not verified by D: side-by-side look vs original renders at 12/15/18, full-res shading. -> Q.
   PAUSED here per user: waiting for go-ahead before F part 2 / Q.
+- User: 52% used, proceed. Launched F part 2 (sonnet/low, ws-f2) with the 5 handoffs, no browser. Q next after merge.
+- User: at the end, start the local dev server on port 3000 for manual testing (preview_start 'dev').
+- F part 2 done (c00ce84). Merged ws-f2 -> 4374014. Gate GREEN: tsc, 318 tests, build, lint 0 errors 0 warnings. F11 partial, F12 not done. Handoff B (honeypot) already implemented in send-email route. Handoff D: setHallReady(true) on first frame -> fix round. Launching Q (sonnet/medium, one pass, ws-q).
+- Q done (845717d, QA_REPORT.md). Merged ws-q. §9: 6 PASS, 1 PARTIAL. FAILs: F9 setHallReady (D), F11 wallLabelRo unused (E), F12 mobile sheet (F), openings browser check (E, left to user's manual test), Turbopack multi-lockfile warning (A). One combined fix round launched: sonnet/medium, ws-fix.
+- Fix round done (0da146f). Merged ws-fix -> 37c0926. FINAL GATE GREEN (tsc, lint 0, 318 tests, build). SUMMARY.md written.
