@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
 import { useOpeningsStore } from '@/stores/useOpeningsStore';
@@ -12,7 +13,6 @@ export default function ConfigurationTokenPage() {
   const token = params.token as string;
 
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
 
   const {
     setLength, setWidth, setHeight,
@@ -58,7 +58,6 @@ export default function ConfigurationTokenPage() {
       .catch((err) => {
         console.error('Failed to load configuration:', err);
         setError('Configurarea nu a fost găsită.');
-        setLoading(false);
       });
   }, [token, router, setLength, setWidth, setHeight, setShowFoundation, setHasSandwichPanels, setIsIsolated, setInsulation, setOpenings]);
 
@@ -73,12 +72,12 @@ export default function ConfigurationTokenPage() {
           </div>
           <h1 className="text-xl font-bold text-white mb-2">Eroare</h1>
           <p className="text-gray-500 text-sm mb-6">{error}</p>
-          <a
+          <Link
             href="/"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#F5A623] text-black font-bold text-sm hover:bg-[#e6951a] transition-colors"
           >
             Înapoi la Pagina Principală
-          </a>
+          </Link>
         </div>
       </div>
     );

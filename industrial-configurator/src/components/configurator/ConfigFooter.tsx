@@ -10,7 +10,9 @@ interface ConfigFooterProps {
 }
 
 export default function ConfigFooter({ length, width, height, estimatedPrice }: ConfigFooterProps) {
-  const { currentStep, nextStep, showFoundation } = useConfiguratorStore();
+  const currentStep = useConfiguratorStore((s) => s.currentStep);
+  const nextStep = useConfiguratorStore((s) => s.nextStep);
+  const showFoundation = useConfiguratorStore((s) => s.showFoundation);
 
   const summary = showFoundation
     ? `${length} x ${width} x ${height} m | Structură Metalică | Fundație`

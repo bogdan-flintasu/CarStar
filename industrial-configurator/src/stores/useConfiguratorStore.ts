@@ -3,15 +3,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-// ─── Default Prices (fallback until loaded from API) ─────────────────────────
-export const DEFAULT_PRICES = {
-  structurePerM3: 45,      // €/m³
-  foundationPerM2: 35,     // €/m²
-  sandwichPerM2: 25,       // €/m²
-  windowPerUnit: 150,      // €/buc
-  doorPerUnit: 300,        // €/buc
-  bigDoorPerUnit: 800,     // €/buc
-};
+import { DEFAULT_PRICES, calculatePrice, type Prices } from '@/lib/pricing';
+
+export { DEFAULT_PRICES };
 
 export type ConfigStep = 1 | 2 | 3 | 4;
 
@@ -45,8 +39,8 @@ interface ConfiguratorState {
   setInsulation: (v: number) => void;
 
   // ── Prices ───────────────────────────────────────────────
-  prices: typeof DEFAULT_PRICES;
-  setPrices: (prices: typeof DEFAULT_PRICES) => void;
+  prices: Prices;
+  setPrices: (prices: Prices) => void;
 
   // ── Computed values ──────────────────────────────────────
   getFloorArea: () => number;
@@ -120,23 +114,7 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
 
   getEstimatedPrice: (openingsCount) => {
     const { length, width, height, showFoundation, hasSandwichPanels, prices } = get();
-
-    let price = length * width * height * prices.structurePerM3;
-    price += openingsCount.windows * prices.windowPerUnit;
-    price += openingsCount.doors * prices.doorPerUnit;
-    price += openingsCount.garageDoors * prices.bigDoorPerUnit;
-
-    if (showFoundation) {
-      price += length * width * prices.foundationPerM2;
-    }
-
-    if (hasSandwichPanels) {
-      // Wall area = 2 * (length * height) + 2 * (width * height)
-      const wallArea = 2 * (length * height) + 2 * (width * height);
-      price += wallArea * prices.sandwichPerM2;
-    }
-
-    return Math.round(price);
+    return calculatePrice({ length, width, height, showFoundation, hasSandwichPanels }, openingsCount, prices);
   },
 
   getConfigurationData: (openingsCount) => {
