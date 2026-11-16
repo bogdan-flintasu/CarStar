@@ -1,39 +1,47 @@
-# WS-E status (openings) — branch ws-e
+# WS-E status (openings) — branch ws-e2b (part 2; part 1 = ws-e, merged)
 
-## Part 1 done: E1, E3, E4, E5, E10 (+ F handoff: ClosingsStep selectors / countOpenings)
-- E1 ids are `nanoid()`; `_nextId` removed. Persist `version: 1` + `migrate` repairs duplicate v0 ids.
-- E4 `Opening` is now in metres: `{ id, type, wallId, offsetX, sill, width, height }` (offsetX = wall start ->
-  left edge, sill = floor -> bottom edge). Doors/industrial doors: `sill = 0` always.
-  One `clampOpening(opening, wall?)` used by add, update, drag, resize, migration and shared links.
-- E5 corner handles anchor the opposite edges (`resizeOpening`); door bottom handles change width only.
-- E3 frame edges + industrial-door dividers are memoised `BufferGeometry`s, disposed on change.
-- E10 drag/resize track `pointermove/up/cancel` on `window` from pointer-down (no mesh-only handlers).
-- Side-wall openings now face outward (local +Z = wall normal); handle placement uses the localX·axisH sign.
-- Tests: `src/components/3d/openings/openingMath.test.ts`, `src/stores/useOpeningsStore.test.ts` (actions,
-  reload id uniqueness, v0->v1 migration). The store test stubs `window.localStorage`.
+## Part 1 done: E1, E3, E4, E5, E10 (see git log of ws-e). Opening = `{ id, type, wallId, offsetX, sill, width, height }` in metres.
 
-## Exported interfaces
-- `@/stores/useOpeningsStore`: types `Opening, OpeningType, WallId, WallSpan, WallSpans, LegacyOpening`;
-  `clampOpening, resizeOpening, DEFAULT_DIMENSIONS, MIN_OPENING_SIZE, isFloorStanding`;
-  `addOpening(o): string` (returns id), `updateOpening` clamps, `setWallSpans(spans)`,
-  `setOpenings(list)` accepts legacy + metric shapes (validates, clamps, dedupes ids).
-- `src/components/3d/openings/wallSpans.ts`: `getWallDescriptors/getWallDescriptor/getWallSpans(w,h,l)`.
-  TEMPORARY copy of the old magic numbers, the only place E6 has to swap for D1's `layout.walls`.
-- `src/components/3d/openings/openingMath.ts`: pure math (`normalizeOpenings`, `legacyToOpening`, `openingCentre`).
+## Part 2: E2 hole fn (done, tests), E6/E7/E8/E9/E11 (see "Part 2 progress" below)
 
-## Decisions
-- v0 -> v1 migration and `setOpenings` use spans from the configurator store's hall dims (default 12x3x12).
-  add/update use `wallSpans`, pushed by `<WallOpenings>`.
-- No re-clamp when the hall changes (deferred to E8, so a temporary shrink doesn't silently move openings).
-- Max width/height = full wall length/height. Column/frame conflicts are left to E7.
-- E2 depth mask unchanged (part 2).
+## E2 / E9 integration for WS-D (two lines, exact API)
+Pure functions in `@/components/3d/openings/wallShapeWithHoles` (no React; imports three + `@/lib/hall` types only):
+```ts
+wallGeometryWithHoles(wall: WallDescriptor, openings: Pick<Opening,'offsetX'|'sill'|'width'|'height'>[]): THREE.BufferGeometry
+wallMeshTransform(wall: WallDescriptor): { position: Vec3; rotationY: number }
+```
+Per wall mesh (D3), openings of that wall = `useOpeningsStore(s => s.openings).filter(o => o.wallId === wall.id)`:
+```tsx
+const geometry = useMemo(() => wallGeometryWithHoles(wall, wallOpenings), [wall, wallOpenings]);  // dispose on change
+<mesh geometry={geometry} position={wallMeshTransform(wall).position} rotation-y={wall.yaw} />
+```
+- The slab is `wall.thickness` thick INWARDS from the exterior face; face at local z = 0; the mirrored left wall is handled
+  inside (local x = spanH - h; mesh origin = far corner), so use `wallMeshTransform`, never `wall.origin` directly.
+- Gable: hole clipped under the slope, inset 2 mm from the outline (earcut); overlaps merge into their bounding box.
+- Pass `realHoles` to `<WallOpenings realHoles />` once walls have holes: it removes the depth mask (E2). Without it only
+  windows lose the mask (they show the wall through the glass).
+- E9 needs NO change in ConfiguratorEngine: `WallOpenings`/`PlacementMarkers` hide themselves when walls are hidden
+  (same rule as the engine: `currentStep === 2 || wallsVisible`); pass `visible` to override.
+- E6: `WallOpenings`/`PlacementMarkers` take an optional `layout?: HallLayout` (else they compute it from the
+  configurator store). If D already has `layout`, pass `layout={layout}` (hall dims props are now ignored).
 
+## Part 2 progress (all in code + Vitest, 261 tests green; tsc/build OK; lint 3 errors = baseline, none in E files)
+- E6: `wallSpans.ts` derives spans from `computeHallLayout` (`spansFromHallState`, `layoutFromHallState`); `WallSpan` gained
+  `apex` (gable), `supports`, `supportHalfWidth`, `blockers`. `clampOpening` keeps openings under the gable slope (moves
+  sideways before it shrinks). Old magic numbers and `computePullMain` are gone. Legacy GLB hall still has its own geometry,
+  so openings sit on D1's walls, not on the old model, until D2-D8 land.
+- E7: `validateOpenings(openings, spans) -> OpeningConflict[]` (`overlap|support|blocker`; supports = columns/frames behind
+  the wall, blockers = side-wall downpipes). Store field `conflicts`; 3D openings turn red; ClosingsStep shows a banner + red rows.
+- E8: `setWallSpans` re-clamps every opening when the layout changes (only if the spans really changed); what clamping can't
+  fix stays in `conflicts`. Temporary slider shrinks therefore DO move openings (they don't snap back on growing).
+- E9: `WallOpenings`/`PlacementMarkers` hide with the walls by themselves (no engine change). E11: click anywhere on a wall
+  (invisible hit mesh following the gable), 0.1 m snap, ghost preview (red on conflict); the "+" markers stay as a hint.
+- E2: depth mask removed for windows; `realHoles` drops it for all.
 ## Handoffs
-- B: the saved `openingsList` is the metric shape above. Validators must accept it (and may accept legacy).
-- D (part 2): E9 + E2 integration lines will be posted here.
-
-## Verification
-- tsc OK, `pnpm test` 28/28, build OK, lint: 0 errors/warnings in E files (repo total 4 errors, all in D/F files).
-- Browser: not run in part 1 (unattended). Covered by unit tests; manual check planned for part 2 milestone.
-
-## Part 2 (not started): E2, E6, E7, E8, E9, E11
+- F: gate "Continuă" on `useOpeningsStore(selectHasOpeningConflicts)` (exported from `@/stores/useOpeningsStore`); conflict list in `conflicts`.
+- D: the E2 lines above; optionally pass `layout={layout}`, `realHoles` to `<WallOpenings>` and `layout` to `<PlacementMarkers>`.
+- B: persisted shape unchanged (metric, v1). `WallSpan` extras are not persisted.
+## Decisions
+- Overlapping holes merge into their bounding box; E8 re-clamps (not "remember the original"); conflicts are never auto-fixed.
+- Column conflict = opening covers part of a column flange; downpipe clearance 0.1 m each side.
+- Browser check NOT done: the model stayed at "0%" in the hidden pane (>2 min). Covered by 261 tests, tsc, build.

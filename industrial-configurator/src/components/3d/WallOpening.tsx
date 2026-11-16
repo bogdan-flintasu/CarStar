@@ -4,17 +4,22 @@ import { useRef, useCallback, useMemo, useEffect, useState } from 'react';
 import { ThreeEvent, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useOpeningsStore, resizeOpening } from '@/stores/useOpeningsStore';
-import type { Opening, WallId } from '@/stores/useOpeningsStore';
+import type { Opening } from '@/stores/useOpeningsStore';
+import { wallPointToWorld } from '@/lib/hall';
+import type { WallDescriptor } from '@/lib/hall';
 import type { ResizeHandle, WallSpan } from './openings/types';
 import { openingCentre } from './openings/openingMath';
-import { getWallDescriptor } from './openings/wallSpans';
+import { isMirrored } from './openings/wallShapeWithHoles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface WallOpeningProps {
   opening: Opening;
-  hallWidth: number;
-  hallHeight: number;
-  hallLength: number;
+  /** Face of the wall the opening sits on (`layout.walls`). */
+  wall: WallDescriptor;
+  /** Overlaps a column, a downpipe or another opening (E7): drawn in red. */
+  conflict?: boolean;
+  /** The wall has a real hole (E2): no depth mask needed. */
+  realHoles?: boolean;
 }
 
 // ─── Material configs ─────────────────────────────────────────────────────────
@@ -23,6 +28,7 @@ const WINDOW_OPACITY = 0.35;
 const DOOR_COLOR = '#8B6914';
 const GARAGE_DOOR_COLOR = '#666666';
 const SELECTED_EMISSIVE = '#F5A623';
+const CONFLICT_COLOR = '#E5252A';
 const HANDLE_COLOR = '#ffffff';
 const HANDLE_SIZE = 0.08;
 const FRAME_THICKNESS = 0.04;
@@ -30,20 +36,6 @@ const GARAGE_DIVIDER_COUNT = 3;
 const HANDLES: readonly ResizeHandle[] = ['tl', 'tr', 'bl', 'br'];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/** Rotation that maps the opening's local +Z onto the wall's outward normal (so it renders outside). */
-function getWallRotation(wallId: WallId): [number, number, number] {
-  switch (wallId) {
-    case 'PereteFata':
-      return [0, 0, 0];
-    case 'PereteSpate':
-      return [0, Math.PI, 0];
-    case 'PereteSTG':
-      return [0, -Math.PI / 2, 0];
-    case 'PereteDR':
-      return [0, Math.PI / 2, 0];
-  }
-}
 
 /** Horizontal divider lines of an industrial door, as one line-segments geometry. */
 function buildDividerGeometry(width: number, height: number): THREE.BufferGeometry {
@@ -65,7 +57,7 @@ function buildEdgesGeometry(width: number, height: number): THREE.EdgesGeometry 
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
-export default function WallOpening({ opening, hallWidth, hallHeight, hallLength }: WallOpeningProps) {
+export default function WallOpening({ opening, wall, conflict = false, realHoles = false }: WallOpeningProps) {
   const { camera, gl } = useThree();
 
   const selectedId = useOpeningsStore((s) => s.selectedOpeningId);
@@ -79,28 +71,20 @@ export default function WallOpening({ opening, hallWidth, hallHeight, hallLength
   /** Removes the window listeners of the running drag/resize. */
   const endSessionRef = useRef<(() => void) | null>(null);
 
-  const wall = useMemo(
-    () => getWallDescriptor(opening.wallId, hallWidth, hallHeight, hallLength),
-    [opening.wallId, hallWidth, hallHeight, hallLength],
+  const span: WallSpan = useMemo(
+    () => ({ length: wall.spanH, height: wall.spanV, apex: wall.apexV > wall.spanV ? wall.apexV : undefined }),
+    [wall],
   );
-  const span: WallSpan = useMemo(() => ({ length: wall.spanH, height: wall.spanV }), [wall]);
 
   // Group sits at the opening centre on the wall face.
   const worldPos = useMemo<[number, number, number]>(() => {
     const c = openingCentre(opening);
-    return [
-      wall.originX + wall.axisH[0] * c.x,
-      wall.originY + c.y,
-      wall.originZ + wall.axisH[2] * c.x,
-    ];
+    return [...wallPointToWorld(wall, c.x, c.y)] as [number, number, number];
   }, [wall, opening]);
 
-  const rotation = useMemo(() => getWallRotation(opening.wallId), [opening.wallId]);
-  /** +1 when the group's local +X runs along increasing offsetX, -1 when reversed (left wall). */
-  const xSign = useMemo(() => {
-    const localX = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(...rotation));
-    return localX.dot(new THREE.Vector3(...wall.axisH)) < 0 ? -1 : 1;
-  }, [rotation, wall]);
+  // Local +Z = the wall's outward normal. On the mirrored (left) wall local +X runs against `axisH`.
+  const rotation = useMemo<[number, number, number]>(() => [0, wall.yaw, 0], [wall]);
+  const xSign = isMirrored(wall) ? -1 : 1;
 
   // ── Geometry (memoised and disposed: no per-render GPU buffers) ─────────
   const edgesGeometry = useMemo(
@@ -219,13 +203,13 @@ export default function WallOpening({ opening, hallWidth, hallHeight, hallLength
       opacity: opening.type === 'window' ? WINDOW_OPACITY : 1,
       color:
         opening.type === 'window' ? WINDOW_COLOR : opening.type === 'door' ? DOOR_COLOR : GARAGE_DOOR_COLOR,
-      emissive: isSelected ? SELECTED_EMISSIVE : '#000000',
-      emissiveIntensity: isSelected ? 0.3 : 0,
+      emissive: conflict ? CONFLICT_COLOR : isSelected ? SELECTED_EMISSIVE : '#000000',
+      emissiveIntensity: conflict ? 0.6 : isSelected ? 0.3 : 0,
       metalness: opening.type === 'garageDoor' ? 0.7 : 0.1,
       roughness: opening.type === 'window' ? 0.1 : 0.6,
       side: THREE.DoubleSide as THREE.Side,
     }),
-    [opening.type, isSelected],
+    [opening.type, isSelected, conflict],
   );
 
   const handlePositions = useMemo(() => {
@@ -240,11 +224,14 @@ export default function WallOpening({ opening, hallWidth, hallHeight, hallLength
 
   return (
     <group position={worldPos} rotation={rotation}>
-      {/* Depth mask — writes depth only, hiding the wall behind the opening (replaced by real holes in E2). */}
-      <mesh renderOrder={-1} position={[0, 0, 0.015]}>
-        <planeGeometry args={[opening.width - 0.02, opening.height - 0.02]} />
-        <meshBasicMaterial colorWrite={false} depthWrite={true} side={THREE.FrontSide} />
-      </mesh>
+      {/* Depth mask for walls without real holes: hides the wall behind opaque doors. Windows keep the wall
+          visible through the glass (the mask would show the clear colour instead of the hall). */}
+      {!realHoles && opening.type !== 'window' && (
+        <mesh renderOrder={-1} position={[0, 0, 0.015]}>
+          <planeGeometry args={[opening.width - 0.02, opening.height - 0.02]} />
+          <meshBasicMaterial colorWrite={false} depthWrite={true} side={THREE.FrontSide} />
+        </mesh>
+      )}
 
       {/* Main opening mesh */}
       <mesh
@@ -261,7 +248,7 @@ export default function WallOpening({ opening, hallWidth, hallHeight, hallLength
 
       {/* Frame border */}
       <lineSegments renderOrder={2} position={[0, 0, 0.03]} geometry={edgesGeometry}>
-        <lineBasicMaterial color={isSelected || interaction ? '#F5A623' : '#333333'} />
+        <lineBasicMaterial color={conflict ? CONFLICT_COLOR : isSelected || interaction ? '#F5A623' : '#333333'} />
       </lineSegments>
 
       {/* Industrial door: horizontal panel dividers */}
