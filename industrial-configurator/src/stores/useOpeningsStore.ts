@@ -2,24 +2,25 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { nanoid } from 'nanoid';
+import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
+import type { Opening, OpeningType, WallId, WallSpans, LegacyOpening } from '@/components/3d/openings/types';
+import { clampOpening, normalizeOpenings } from '@/components/3d/openings/openingMath';
+import { getWallSpans } from '@/components/3d/openings/wallSpans';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-export type OpeningType = 'window' | 'door' | 'garageDoor';
-export type WallId = 'PereteSTG' | 'PereteDR' | 'PereteFata' | 'PereteSpate';
+export type { Opening, OpeningType, WallId, WallSpan, WallSpans, LegacyOpening } from '@/components/3d/openings/types';
+export {
+  clampOpening,
+  resizeOpening,
+  DEFAULT_DIMENSIONS,
+  MIN_OPENING_SIZE,
+  isFloorStanding,
+} from '@/components/3d/openings/openingMath';
 
-export interface Opening {
-  id: string;
-  type: OpeningType;
-  wallId: WallId;
-  /** Normalized horizontal position on wall surface (0–1) */
-  posX: number;
-  /** Normalized vertical position on wall surface (0–1) */
-  posY: number;
-  /** Width in meters */
-  width: number;
-  /** Height in meters */
-  height: number;
-}
+/** Persisted schema version. v0: normalised posX/posY. v1: metres (offsetX/sill) + unique random ids. */
+export const OPENINGS_STORE_VERSION = 1;
+export const OPENINGS_STORAGE_KEY = 'carstar-openings-storage';
 
 interface OpeningsState {
   openings: Opening[];
@@ -31,10 +32,14 @@ interface OpeningsState {
   showMarkers: boolean;
   /** The wall currently hovered in the 3D scene */
   hoveredWallId: WallId | null;
+  /** Wall rectangles of the rendered hall, pushed by the 3D layer (`WallOpenings`). Not persisted. */
+  wallSpans: WallSpans | null;
 
   // Actions
-  addOpening: (opening: Omit<Opening, 'id'>) => void;
+  /** Adds a clamped opening, selects it and returns its id. */
+  addOpening: (opening: Omit<Opening, 'id'>) => string;
   removeOpening: (id: string) => void;
+  /** Merges `updates` and clamps the result to its wall. */
   updateOpening: (id: string, updates: Partial<Omit<Opening, 'id'>>) => void;
   setActiveTool: (tool: OpeningType | null) => void;
   selectOpening: (id: string | null) => void;
@@ -42,109 +47,112 @@ interface OpeningsState {
   setShowMarkers: (v: boolean) => void;
   setHoveredWallId: (wallId: WallId | null) => void;
   clearHoveredWallId: () => void;
-  setOpenings: (openings: Opening[]) => void;
+  setWallSpans: (spans: WallSpans) => void;
+  /** Replaces all openings from untrusted data (shared links). Accepts legacy and current shapes. */
+  setOpenings: (openings: ReadonlyArray<Opening | LegacyOpening>) => void;
   resetOpenings: () => void;
 }
 
-// ─── Default dimensions per type ──────────────────────────────────────────────
-export const DEFAULT_DIMENSIONS: Record<OpeningType, { width: number; height: number }> = {
-  window: { width: 1, height: 1 },
-  door: { width: 1, height: 2.1 },
-  garageDoor: { width: 3, height: 3 },
-};
+/** Wall spans derived from the hall dimensions in the configurator store. */
+function spansFromConfigurator(): WallSpans {
+  const { width, height, length } = useConfiguratorStore.getState();
+  return getWallSpans(width, height, length);
+}
 
-let _nextId = 1;
-let _clearHoverTimeout: NodeJS.Timeout | null = null;
+const newId = () => nanoid();
+
+let _clearHoverTimeout: ReturnType<typeof setTimeout> | null = null;
 
 export const useOpeningsStore = create<OpeningsState>()(
   persist(
-    (set) => ({
-  openings: [],
-  activeTool: null,
-  selectedOpeningId: null,
-  isDragging: false,
-  showMarkers: false,
-  hoveredWallId: null,
-
-  addOpening: (opening) =>
-    set((state) => ({
-      openings: [
-        ...state.openings,
-        { ...opening, id: `opening-${_nextId++}` },
-      ],
-      // Auto-select the newly placed opening
-      selectedOpeningId: `opening-${_nextId - 1}`,
-    })),
-
-  removeOpening: (id) =>
-    set((state) => ({
-      openings: state.openings.filter((o) => o.id !== id),
-      selectedOpeningId: state.selectedOpeningId === id ? null : state.selectedOpeningId,
-    })),
-
-  updateOpening: (id, updates) =>
-    set((state) => ({
-      openings: state.openings.map((o) =>
-        o.id === id ? { ...o, ...updates } : o
-      ),
-    })),
-
-  setActiveTool: (tool) =>
-    set(() => ({
-      activeTool: tool,
-      // Deselect any selected opening when switching tools
-      selectedOpeningId: null,
-    })),
-
-  selectOpening: (id) =>
-    set(() => ({
-      selectedOpeningId: id,
-    })),
-
-  setIsDragging: (v) =>
-    set(() => ({ isDragging: v })),
-
-  setShowMarkers: (v) =>
-    set(() => ({ showMarkers: v })),
-
-  setHoveredWallId: (wallId) => {
-    if (_clearHoverTimeout) {
-      clearTimeout(_clearHoverTimeout);
-      _clearHoverTimeout = null;
-    }
-    set({ hoveredWallId: wallId });
-  },
-
-  clearHoveredWallId: () => {
-    if (_clearHoverTimeout) clearTimeout(_clearHoverTimeout);
-    _clearHoverTimeout = setTimeout(() => {
-      set({ hoveredWallId: null });
-    }, 150);
-  },
-
-  setOpenings: (openings) => {
-    set({ openings });
-    _nextId = Math.max(_nextId, ...openings.map(o => parseInt(o.id.replace('op-', '')) || 0)) + 1;
-  },
-
-  resetOpenings: () => {
-    set({
+    (set, get) => ({
       openings: [],
       activeTool: null,
       selectedOpeningId: null,
       isDragging: false,
       showMarkers: false,
       hoveredWallId: null,
-    });
-    _nextId = 1;
-  },
+      wallSpans: null,
+
+      addOpening: (opening) => {
+        const id = newId();
+        const spans = get().wallSpans ?? spansFromConfigurator();
+        const clamped = clampOpening({ ...opening, id }, spans[opening.wallId]);
+        set((state) => ({ openings: [...state.openings, clamped], selectedOpeningId: id }));
+        return id;
+      },
+
+      removeOpening: (id) =>
+        set((state) => ({
+          openings: state.openings.filter((o) => o.id !== id),
+          selectedOpeningId: state.selectedOpeningId === id ? null : state.selectedOpeningId,
+        })),
+
+      updateOpening: (id, updates) =>
+        set((state) => {
+          const spans = state.wallSpans ?? spansFromConfigurator();
+          return {
+            openings: state.openings.map((o) => {
+              if (o.id !== id) return o;
+              const merged: Opening = { ...o, ...updates, id };
+              return clampOpening(merged, spans[merged.wallId]);
+            }),
+          };
+        }),
+
+      setActiveTool: (tool) => set({ activeTool: tool, selectedOpeningId: null }),
+
+      selectOpening: (id) => set({ selectedOpeningId: id }),
+
+      setIsDragging: (v) => set({ isDragging: v }),
+
+      setShowMarkers: (v) => set({ showMarkers: v }),
+
+      setHoveredWallId: (wallId) => {
+        if (_clearHoverTimeout) {
+          clearTimeout(_clearHoverTimeout);
+          _clearHoverTimeout = null;
+        }
+        set({ hoveredWallId: wallId });
+      },
+
+      clearHoveredWallId: () => {
+        if (_clearHoverTimeout) clearTimeout(_clearHoverTimeout);
+        _clearHoverTimeout = setTimeout(() => {
+          set({ hoveredWallId: null });
+        }, 150);
+      },
+
+      setWallSpans: (spans) => set({ wallSpans: spans }),
+
+      // Shared links set the hall dimensions right before this call, so derive the spans from the
+      // configurator store rather than from `wallSpans`, which may belong to a previous hall.
+      setOpenings: (openings) =>
+        set({
+          openings: normalizeOpenings(openings, spansFromConfigurator(), newId),
+          selectedOpeningId: null,
+        }),
+
+      resetOpenings: () =>
+        set({
+          openings: [],
+          activeTool: null,
+          selectedOpeningId: null,
+          isDragging: false,
+          showMarkers: false,
+          hoveredWallId: null,
+        }),
     }),
     {
-      name: 'carstar-openings-storage', // name of the item in the storage (must be unique)
-      // Optional: ignore non-serializable state like active dragging flags
-      partialize: (state) => ({
-        openings: state.openings,
-      }),
-    }
-  )
+      name: OPENINGS_STORAGE_KEY,
+      version: OPENINGS_STORE_VERSION,
+      partialize: (state) => ({ openings: state.openings }),
+      // v0 → v1: normalised posX/posY → metres; repair the duplicate `opening-N` ids left by E1.
+      // The configurator store is created (and hydrated from localStorage) before this module.
+      migrate: (persisted) => {
+        const openings = (persisted as { openings?: unknown } | null)?.openings;
+        return { openings: normalizeOpenings(openings, spansFromConfigurator(), newId) };
+      },
+    },
+  ),
 );
