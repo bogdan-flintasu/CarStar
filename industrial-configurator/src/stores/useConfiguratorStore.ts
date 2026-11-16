@@ -25,6 +25,9 @@ interface ConfiguratorState {
   setLength: (v: number) => void;
 
   // ── Walls visibility toggle (Step 1) ─────────────────────
+  /** The user's own toggle (only meaningful in step 1). */
+  wallsToggle: boolean;
+  /** Derived: step 1 follows the toggle, every other step shows the walls. Never set directly. */
   wallsVisible: boolean;
   setWallsVisible: (v: boolean) => void;
 
@@ -37,6 +40,11 @@ interface ConfiguratorState {
   setIsIsolated: (v: boolean) => void;
   insulation: number;
   setInsulation: (v: number) => void;
+
+  // ── Runtime (not persisted) ──────────────────────────────
+  /** True once the hall has rendered its first frame; hides the loader. Set by the 3D scene. */
+  hallReady: boolean;
+  setHallReady: (v: boolean) => void;
 
   // ── Prices ───────────────────────────────────────────────
   prices: Prices;
@@ -52,27 +60,26 @@ interface ConfiguratorState {
   resetConfigurator: () => void;
 }
 
+const deriveWalls = (step: ConfigStep, toggle: boolean) => step !== 1 || toggle;
+
+/** Bump when the persisted shape changes; `migrate` below must handle older versions. */
+const STORE_VERSION = 1;
+
 export const useConfiguratorStore = create<ConfiguratorState>()(
   persist(
     (set, get) => ({
   // ── Step navigation ──────────────────────────────────────
   currentStep: 1,
-  setStep: (step) => set({ currentStep: step, wallsVisible: step !== 1 }),
+  setStep: (step) => set((s) => ({ currentStep: step, wallsVisible: deriveWalls(step, s.wallsToggle) })),
   nextStep: () =>
     set((s) => {
       const next = Math.min(4, s.currentStep + 1) as ConfigStep;
-      return {
-        currentStep: next,
-        wallsVisible: next !== 1,
-      };
+      return { currentStep: next, wallsVisible: deriveWalls(next, s.wallsToggle) };
     }),
   prevStep: () =>
     set((s) => {
       const prev = Math.max(1, s.currentStep - 1) as ConfigStep;
-      return {
-        currentStep: prev,
-        wallsVisible: prev !== 1,
-      };
+      return { currentStep: prev, wallsVisible: deriveWalls(prev, s.wallsToggle) };
     }),
 
   // ── Dimensions ───────────────────────────────────────────
@@ -84,8 +91,12 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
   setLength: (v) => set({ length: v }),
 
   // ── Walls visibility ────────────────────────────────────
+  wallsToggle: false,
   wallsVisible: false,
-  setWallsVisible: (v) => set({ wallsVisible: v }),
+  setWallsVisible: (v) => set((s) => ({ wallsToggle: v, wallsVisible: deriveWalls(s.currentStep, v) })),
+
+  hallReady: false,
+  setHallReady: (v) => set({ hallReady: v }),
 
   // ── Panels & Foundation ─────────────────────────────────
   showFoundation: true,
@@ -109,7 +120,7 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
 
   getNumberOfBays: () => {
     const { length } = get();
-    return Math.floor(length / 6); // bay span = 6m
+    return Math.ceil(length / 6 - 1e-9); // matches the engine's bay count (ceil)
   },
 
   getEstimatedPrice: (openingsCount) => {
@@ -137,6 +148,7 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
       height: 3,
       width: 12,
       length: 12,
+      wallsToggle: false,
       wallsVisible: false,
       showFoundation: true,
       hasSandwichPanels: false,
@@ -146,7 +158,29 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
   },
     }),
     {
-      name: 'carstar-configurator-storage', // name of the item in the storage (must be unique)
+      name: 'carstar-configurator-storage',
+      version: STORE_VERSION,
+      // Rehydrated manually from the configurator layout so the shell can render on the server.
+      skipHydration: true,
+      // Only the user's choices; never prices, step or derived flags.
+      partialize: (s) => ({
+        height: s.height, width: s.width, length: s.length,
+        wallsToggle: s.wallsToggle,
+        showFoundation: s.showFoundation, hasSandwichPanels: s.hasSandwichPanels,
+        isIsolated: s.isIsolated, insulation: s.insulation,
+      }),
+      migrate: (persisted) => {
+        // v0 persisted everything (prices, step, wallsVisible); drop what is no longer stored.
+        const rest = { ...((persisted ?? {}) as Record<string, unknown>) };
+        delete rest.prices;
+        delete rest.currentStep;
+        delete rest.wallsVisible;
+        return rest as never;
+      },
+      merge: (persisted, current) => {
+        const merged = { ...current, ...(persisted as object) } as ConfiguratorState;
+        return { ...merged, wallsVisible: deriveWalls(merged.currentStep, merged.wallsToggle) };
+      },
     }
   )
 );
