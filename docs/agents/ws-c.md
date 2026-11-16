@@ -16,6 +16,7 @@
 1. `$B -b -P scripts/blender/00_import_inventory.py`
 2. `$B -b ~/CarStar-assets/hala_import.blend -P scripts/blender/01_bolts.py`
 3. `$B -b ~/CarStar-assets/hala_c1_bolts.blend -P scripts/blender/02_strip_cladding.py`
+Re-verified end to end from `da.glb`: same numbers, committed JSON byte-identical (deterministic).
 
 ## Decisions
 - No git-lfs: all `.blend`/previews live in `~/CarStar-assets/` (outside git); only small JSON + scripts committed.
