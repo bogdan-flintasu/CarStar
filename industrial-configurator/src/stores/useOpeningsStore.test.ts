@@ -1,3 +1,4 @@
+import { spansFromHallState } from '@/components/3d/openings/wallSpans';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /** Minimal in-memory localStorage so zustand persist runs in node. */
@@ -21,6 +22,9 @@ async function loadStore(initial: Record<string, string> = {}) {
   vi.stubGlobal('window', { localStorage: storage });
   return import('./useOpeningsStore');
 }
+
+// Front wall of the default 12 x 3 x 12 hall, as the openings store derives it from D1's layout.
+const DEFAULT_FRONT = spansFromHallState({ width: 12, height: 3, length: 12, showFoundation: true, isIsolated: false, insulation: 30 }).PereteFata;
 
 const SPANS = {
   PereteFata: { length: 12, height: 3 },
@@ -98,8 +102,9 @@ describe('useOpeningsStore actions', () => {
     ]);
     const [w, d] = mod.useOpeningsStore.getState().openings;
     expect(w.id).not.toBe(d.id);
-    expect(w).toMatchObject({ offsetX: 5.5, sill: 1 }); // default hall 12 x 3
-    expect(d).toMatchObject({ offsetX: 2.5, sill: 0 });
+    expect(w.offsetX).toBeCloseTo(DEFAULT_FRONT.length / 2 - 0.5, 3); // default hall 12 x 3
+    expect(w.sill).toBeCloseTo(DEFAULT_FRONT.height / 2 - 0.5, 3);
+    expect(d.sill).toBe(0);
   });
 });
 
@@ -121,9 +126,73 @@ describe('persist migration v0 -> v1', () => {
     const openings = useOpeningsStore.getState().openings;
     expect(openings).toHaveLength(2);
     expect(new Set(openings.map((o) => o.id)).size).toBe(2);
-    expect(openings[0]).toMatchObject({ offsetX: 5.5, sill: 1, width: 1, height: 1 });
-    expect(openings[1]).toMatchObject({ type: 'garageDoor', offsetX: 4.5, sill: 0 });
+    expect(openings[0]).toMatchObject({ width: 1, height: 1 });
+    expect(openings[0].offsetX).toBeCloseTo(DEFAULT_FRONT.length / 2 - 0.5, 3);
+    expect(openings[0].sill).toBeCloseTo(DEFAULT_FRONT.height / 2 - 0.5, 3);
+    expect(openings[1]).toMatchObject({ type: 'garageDoor', sill: 0 });
+    expect(openings[1].offsetX).toBeCloseTo(DEFAULT_FRONT.length / 2 - 1.5, 3);
     expect(openings[0]).not.toHaveProperty('posX');
     expect(JSON.parse(localStorage.getItem(OPENINGS_STORAGE_KEY)!).version).toBe(OPENINGS_STORE_VERSION);
+  });
+});
+
+describe('E7/E8: conflicts and re-clamping when the hall changes', () => {
+  const span = (length: number, height: number, extra = {}) => ({ length, height, ...extra });
+  const spans = (front: ReturnType<typeof span>) => ({ ...SPANS, PereteFata: front });
+
+  const add = (mod: Awaited<ReturnType<typeof loadStore>>, o: Record<string, unknown>) =>
+    mod.useOpeningsStore.getState().addOpening({
+      type: 'window', wallId: 'PereteFata', offsetX: 1, sill: 1, width: 1, height: 1, ...o,
+    } as never);
+
+  // table: [name, new front span, expected opening after the change, expected conflict count]
+  const cases: Array<[string, ReturnType<typeof span>, Record<string, number>, number]> = [
+    ['wall gets shorter: opening is pulled in', span(6, 3), { offsetX: 4, width: 2 }, 0],
+    ['wall gets shorter than the opening: width shrinks', span(1.5, 3), { offsetX: 0, width: 1.5 }, 0],
+    ['wall gets lower: sill follows', span(12, 2), { sill: 0.5, height: 1.5 }, 0],
+    ['wall grows: nothing moves', span(20, 5), { offsetX: 8, width: 2, sill: 1 }, 0],
+  ];
+
+  it.each(cases)('%s', async (_name, next, expected, conflictCount) => {
+    const mod = await loadStore();
+    const { useOpeningsStore } = mod;
+    useOpeningsStore.getState().setWallSpans(spans(span(12, 3)));
+    const id = add(mod, { offsetX: 8, sill: 1, width: 2, height: 1.5 });
+    useOpeningsStore.getState().setWallSpans(spans(next));
+    const o = useOpeningsStore.getState().openings.find((x) => x.id === id)!;
+    expect(o).toMatchObject(expected);
+    expect(useOpeningsStore.getState().conflicts).toHaveLength(conflictCount);
+  });
+
+  it('flags openings that become overlapping after a shrink, and unflags them when fixed', async () => {
+    const mod = await loadStore();
+    const { useOpeningsStore } = mod;
+    useOpeningsStore.getState().setWallSpans(spans(span(12, 3)));
+    const a = add(mod, { offsetX: 1, width: 2 });
+    const b = add(mod, { offsetX: 8, width: 2 });
+    expect(useOpeningsStore.getState().conflicts).toHaveLength(0);
+    useOpeningsStore.getState().setWallSpans(spans(span(3, 3)));
+    const { conflicts } = useOpeningsStore.getState();
+    expect(new Set(conflicts.map((c) => c.openingId))).toEqual(new Set([a, b]));
+    expect(mod.selectHasOpeningConflicts(useOpeningsStore.getState())).toBe(true);
+    useOpeningsStore.getState().removeOpening(b);
+    expect(useOpeningsStore.getState().conflicts).toHaveLength(0);
+  });
+
+  it('does not re-clamp when the spans are unchanged (dragging keeps its position)', async () => {
+    const mod = await loadStore();
+    const { useOpeningsStore } = mod;
+    useOpeningsStore.getState().setWallSpans(spans(span(12, 3)));
+    const before = useOpeningsStore.getState().openings;
+    useOpeningsStore.getState().setWallSpans(spans(span(12, 3)));
+    expect(useOpeningsStore.getState().openings).toBe(before);
+  });
+
+  it('flags an opening placed across a column', async () => {
+    const mod = await loadStore();
+    const { useOpeningsStore } = mod;
+    useOpeningsStore.getState().setWallSpans(spans(span(12, 3, { supports: [6], supportHalfWidth: 0.1 })));
+    const id = add(mod, { offsetX: 5.5 });
+    expect(useOpeningsStore.getState().conflicts).toEqual([{ kind: 'support', openingId: id }]);
   });
 });

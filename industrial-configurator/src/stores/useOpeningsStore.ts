@@ -6,10 +6,13 @@ import { nanoid } from 'nanoid';
 import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
 import type { Opening, OpeningType, WallId, WallSpans, LegacyOpening } from '@/components/3d/openings/types';
 import { clampOpening, normalizeOpenings } from '@/components/3d/openings/openingMath';
-import { getWallSpans } from '@/components/3d/openings/wallSpans';
+import { spansFromHallState } from '@/components/3d/openings/wallSpans';
+import { validateOpenings } from '@/components/3d/openings/validateOpenings';
+import type { OpeningConflict } from '@/components/3d/openings/validateOpenings';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type { Opening, OpeningType, WallId, WallSpan, WallSpans, LegacyOpening } from '@/components/3d/openings/types';
+export type { OpeningConflict, ConflictKind } from '@/components/3d/openings/validateOpenings';
 export {
   clampOpening,
   resizeOpening,
@@ -34,6 +37,8 @@ interface OpeningsState {
   hoveredWallId: WallId | null;
   /** Wall rectangles of the rendered hall, pushed by the 3D layer (`WallOpenings`). Not persisted. */
   wallSpans: WallSpans | null;
+  /** Overlaps, column/frame crossings and downpipe clashes (E7). Derived; kept in sync by every action. */
+  conflicts: OpeningConflict[];
 
   // Actions
   /** Adds a clamped opening, selects it and returns its id. */
@@ -55,9 +60,14 @@ interface OpeningsState {
 
 /** Wall spans derived from the hall dimensions in the configurator store. */
 function spansFromConfigurator(): WallSpans {
-  const { width, height, length } = useConfiguratorStore.getState();
-  return getWallSpans(width, height, length);
+  return spansFromHallState(useConfiguratorStore.getState());
 }
+
+/** Same wall spans (compared by value), so a re-render of the engine does not re-clamp anything. */
+const sameSpans = (a: WallSpans | null, b: WallSpans) => a !== null && JSON.stringify(a) === JSON.stringify(b);
+
+/** For F: `useOpeningsStore(selectHasOpeningConflicts)` disables "Continuă" while true (E7). */
+export const selectHasOpeningConflicts = (s: { conflicts: OpeningConflict[] }) => s.conflicts.length > 0;
 
 const newId = () => nanoid();
 
@@ -73,31 +83,38 @@ export const useOpeningsStore = create<OpeningsState>()(
       showMarkers: false,
       hoveredWallId: null,
       wallSpans: null,
+      conflicts: [],
 
       addOpening: (opening) => {
         const id = newId();
         const spans = get().wallSpans ?? spansFromConfigurator();
         const clamped = clampOpening({ ...opening, id }, spans[opening.wallId]);
-        set((state) => ({ openings: [...state.openings, clamped], selectedOpeningId: id }));
+        set((state) => {
+          const openings = [...state.openings, clamped];
+          return { openings, selectedOpeningId: id, conflicts: validateOpenings(openings, spans) };
+        });
         return id;
       },
 
       removeOpening: (id) =>
-        set((state) => ({
-          openings: state.openings.filter((o) => o.id !== id),
-          selectedOpeningId: state.selectedOpeningId === id ? null : state.selectedOpeningId,
-        })),
+        set((state) => {
+          const openings = state.openings.filter((o) => o.id !== id);
+          return {
+            openings,
+            selectedOpeningId: state.selectedOpeningId === id ? null : state.selectedOpeningId,
+            conflicts: validateOpenings(openings, state.wallSpans ?? spansFromConfigurator()),
+          };
+        }),
 
       updateOpening: (id, updates) =>
         set((state) => {
           const spans = state.wallSpans ?? spansFromConfigurator();
-          return {
-            openings: state.openings.map((o) => {
-              if (o.id !== id) return o;
-              const merged: Opening = { ...o, ...updates, id };
-              return clampOpening(merged, spans[merged.wallId]);
-            }),
-          };
+          const openings = state.openings.map((o) => {
+            if (o.id !== id) return o;
+            const merged: Opening = { ...o, ...updates, id };
+            return clampOpening(merged, spans[merged.wallId]);
+          });
+          return { openings, conflicts: validateOpenings(openings, spans) };
         }),
 
       setActiveTool: (tool) => set({ activeTool: tool, selectedOpeningId: null }),
@@ -123,19 +140,27 @@ export const useOpeningsStore = create<OpeningsState>()(
         }, 150);
       },
 
-      setWallSpans: (spans) => set({ wallSpans: spans }),
+      // E8: when the hall changes, pull every opening back inside its (new) wall. What cannot be fixed by
+      // clamping (overlaps, columns, downpipes) shows up in `conflicts`.
+      setWallSpans: (spans) =>
+        set((state) => {
+          if (sameSpans(state.wallSpans, spans)) return {};
+          const openings = state.openings.map((o) => clampOpening(o, spans[o.wallId]));
+          return { wallSpans: spans, openings, conflicts: validateOpenings(openings, spans) };
+        }),
 
       // Shared links set the hall dimensions right before this call, so derive the spans from the
       // configurator store rather than from `wallSpans`, which may belong to a previous hall.
-      setOpenings: (openings) =>
-        set({
-          openings: normalizeOpenings(openings, spansFromConfigurator(), newId),
-          selectedOpeningId: null,
-        }),
+      setOpenings: (openings) => {
+        const spans = spansFromConfigurator();
+        const list = normalizeOpenings(openings, spans, newId);
+        set({ openings: list, selectedOpeningId: null, conflicts: validateOpenings(list, spans) });
+      },
 
       resetOpenings: () =>
         set({
           openings: [],
+          conflicts: [],
           activeTool: null,
           selectedOpeningId: null,
           isDragging: false,

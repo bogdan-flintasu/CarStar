@@ -37,7 +37,7 @@ const finiteOr = (v: unknown, fallback: number) =>
 /**
  * Single source of truth for opening bounds. Used by add, update, drag, resize and migration.
  * - width/height >= MIN_OPENING_SIZE and <= the wall's length/height
- * - the opening stays fully inside the wall rectangle
+ * - the opening stays fully inside the wall face (the gable outline when `wall.apex` is set)
  * - doors: sill = 0
  * Without a `wall`, only the wall-independent rules apply (min size, non-negative position, doors on floor).
  */
@@ -49,10 +49,24 @@ export function clampOpening(opening: Opening, wall?: WallSpan | null): Opening 
   let sill = isFloorStanding(opening.type) ? 0 : Math.max(0, mm(finiteOr(opening.sill, 0)));
 
   if (wall) {
+    const eave = wall.height;
+    const apex = Math.max(eave, wall.apex ?? eave);
     width = Math.min(width, wall.length);
-    height = Math.min(height, wall.height);
-    offsetX = clamp(offsetX, 0, Math.max(0, wall.length - width));
-    if (!isFloorStanding(opening.type)) sill = clamp(sill, 0, Math.max(0, wall.height - height));
+    height = Math.min(height, apex);
+    // The face is highest at the middle of a gable, so the wider the opening, the lower its top must be.
+    const topMax = eave + (apex - eave) * (1 - width / wall.length);
+    if (!isFloorStanding(opening.type)) sill = clamp(sill, 0, Math.max(0, topMax - height));
+    height = Math.min(height, Math.max(MIN_OPENING_SIZE, topMax - sill));
+    // Above the eave only the middle part of a gable is available.
+    const top = sill + height;
+    let lo = 0;
+    let hi = wall.length;
+    if (top > eave + 1e-9 && apex > eave) {
+      const reach = (wall.length / 2) * (1 - (top - eave) / (apex - eave));
+      lo = wall.length / 2 - reach;
+      hi = wall.length / 2 + reach;
+    }
+    offsetX = clamp(offsetX, lo, Math.max(lo, hi - width));
   }
 
   return { ...opening, width, height, offsetX, sill };
@@ -72,7 +86,7 @@ export function resizeOpening(
   wall?: WallSpan | null,
 ): Opening {
   const maxRight = wall ? wall.length : Infinity;
-  const maxTop = wall ? wall.height : Infinity;
+  const maxTop = wall ? Math.max(wall.height, wall.apex ?? 0) : Infinity;
   const right = start.offsetX + start.width;
   const top = start.sill + start.height;
   let { offsetX, sill, width, height } = start;

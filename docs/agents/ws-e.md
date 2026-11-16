@@ -27,8 +27,22 @@ const geometry = useMemo(() => wallGeometryWithHoles(wall, wallOpenings), [wall,
 - E6: `WallOpenings`/`PlacementMarkers` take an optional `layout?: HallLayout` (else they compute it from the
   configurator store). If D already has `layout`, pass `layout={layout}` (hall dims props are now ignored).
 
-## Part 2 progress
-- E6: `wallSpans.ts` now derives spans from `computeHallLayout` (`spansFromHallState`, `layoutFromHallState`);
-  `WallSpan` gained `apex` (gable), `supports`, `supportHalfWidth`, `blockers`. `clampOpening` keeps openings under the gable slope.
-- E7: `validateOpenings(openings, spans) -> OpeningConflict[]` (`overlap|support|blocker`); store field `conflicts` (kept in sync).
-- E8: `setWallSpans` re-clamps every opening when the layout changes; leftovers show up in `conflicts`.
+## Part 2 progress (all in code + Vitest, 261 tests green; tsc/build OK; lint 3 errors = baseline, none in E files)
+- E6: `wallSpans.ts` derives spans from `computeHallLayout` (`spansFromHallState`, `layoutFromHallState`); `WallSpan` gained
+  `apex` (gable), `supports`, `supportHalfWidth`, `blockers`. `clampOpening` keeps openings under the gable slope (moves
+  sideways before it shrinks). Old magic numbers and `computePullMain` are gone. Legacy GLB hall still has its own geometry,
+  so openings sit on D1's walls, not on the old model, until D2-D8 land.
+- E7: `validateOpenings(openings, spans) -> OpeningConflict[]` (`overlap|support|blocker`; supports = columns/frames behind
+  the wall, blockers = side-wall downpipes). Store field `conflicts`; 3D openings turn red; ClosingsStep shows a banner + red rows.
+- E8: `setWallSpans` re-clamps every opening when the layout changes (only if the spans really changed); what clamping can't
+  fix stays in `conflicts`. Temporary slider shrinks therefore DO move openings (they don't snap back on growing).
+- E9: `WallOpenings`/`PlacementMarkers` hide with the walls by themselves (no engine change). E11: click anywhere on a wall
+  (invisible hit mesh following the gable), 0.1 m snap, ghost preview (red on conflict); the "+" markers stay as a hint.
+- E2: depth mask removed for windows; `realHoles` prop drops it for all (see integration above).
+## Handoffs
+- F: gate "Continuă" on `useOpeningsStore(selectHasOpeningConflicts)` (exported from `@/stores/useOpeningsStore`); conflict list in `conflicts`.
+- D: the E2 lines above; optionally pass `layout={layout}`, `realHoles` to `<WallOpenings>` and `layout` to `<PlacementMarkers>`.
+- B: persisted shape unchanged (metric, v1). `WallSpan` extras are not persisted.
+## Decisions
+- Overlapping holes merge into their bounding box; E8 re-clamps (not "remember the original"); conflicts are never auto-fixed.
+- Column conflict = opening covers any part of a column's flange width; downpipe clearance 0.1 m each side.

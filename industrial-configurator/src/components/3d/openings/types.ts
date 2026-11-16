@@ -34,12 +34,28 @@ export interface LegacyOpening {
   height: number;
 }
 
-/** The usable rectangle of one wall, in metres. */
+/** A rectangle on a wall face, in the wall's (h, v) metres. */
+export interface WallRect {
+  h0: number;
+  h1: number;
+  v0: number;
+  v1: number;
+}
+
+/** The usable area of one wall, in metres. */
 export interface WallSpan {
   /** Horizontal length of the wall face. */
   length: number;
-  /** Eave height of the wall face (gables not included yet; see E6). */
+  /** Height of the rectangular part (up to the eave). */
   height: number;
+  /** Gable walls only: height of the apex above the floor. The face rises from `height` at both ends to `apex` at the middle. */
+  apex?: number;
+  /** `h` of every column axis behind the wall (openings must not cross them). */
+  supports?: readonly number[];
+  /** Half the width each support occupies along `h`. */
+  supportHalfWidth?: number;
+  /** Other no-go rectangles, e.g. downpipes. */
+  blockers?: readonly WallRect[];
 }
 
 export type WallSpans = Record<WallId, WallSpan>;
