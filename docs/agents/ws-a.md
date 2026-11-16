@@ -25,3 +25,9 @@
 - B: auth env vars (AUTH_SECRET, ADMIN_*) were removed from .env.example as unused; add back when auth lands.
 - Owner, later (history purge, not run): `git filter-repo --invert-paths --path industrial-configurator/public/models/da.glb --path industrial-configurator/public/models/da.gltf --path industrial-configurator/public/models/da-transformed.glb --path cloudflared.deb --path industrial-configurator/prisma/dev.db`
   (rewrites history; everyone must re-clone).
+
+## Handoffs resolved (ws-a2)
+- `.env.example` has AUTH_SECRET, ADMIN_USERNAME, ADMIN_PASSWORD_HASH (escaping + bcryptjs command), APP_BASE_URL; README updated.
+- `prisma/seed.ts` imports DEFAULT_PRICES from `../src/lib/pricing` (relative path); `pnpm db:seed` verified on a fresh DB.
+- `next-auth` removed (unused), lockfile updated.
+- Verified: tsc, 78 tests, build OK; lint = the 4 pre-existing D-owned errors, none added.

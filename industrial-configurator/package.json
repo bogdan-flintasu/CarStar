@@ -25,7 +25,6 @@
     "framer-motion": "^12.40.0",
     "nanoid": "^5.1.11",
     "next": "16.2.1",
-    "next-auth": "5.0.0-beta.31",
     "prisma": "^7.8.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
