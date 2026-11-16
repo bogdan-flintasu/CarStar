@@ -23,6 +23,8 @@ export interface GraphicsSettings {
   shadowMapSize: number;
   /** How many hall frames to clone on the landing page */
   landingFrameCount: number;
+  /** Multisample anti-aliasing: on for the tiers that can afford it */
+  antialias: boolean;
   /** Whether to enable the <Environment> IBL probe (heavy on mobile) */
   enableEnvironment: boolean;
   /** Whether to use the <Sky> component */
@@ -116,6 +118,7 @@ export function getGraphicsSettings(): GraphicsSettings {
       dpr: [1.5, 2.0],
       shadowMapSize: 2048,
       landingFrameCount: 6,
+      antialias: true,
       enableEnvironment: true,
       enableSky: true,
       isMobile: false,
@@ -152,6 +155,7 @@ export function getGraphicsSettings(): GraphicsSettings {
       dpr: [MIN_DPR, 1.25],
       shadowMapSize: MIN_SHADOW,
       landingFrameCount: 3,
+      antialias: false,
       enableEnvironment: false,
       enableSky: true,
     },
@@ -159,6 +163,7 @@ export function getGraphicsSettings(): GraphicsSettings {
       dpr: [1.25, 1.5],
       shadowMapSize: 1024,
       landingFrameCount: 4,
+      antialias: false,
       enableEnvironment: true,
       enableSky: true,
     },
@@ -166,6 +171,7 @@ export function getGraphicsSettings(): GraphicsSettings {
       dpr: [1.5, MAX_DPR],
       shadowMapSize: MAX_SHADOW,
       landingFrameCount: 6,
+      antialias: true,
       enableEnvironment: true,
       enableSky: true,
     },
@@ -173,6 +179,7 @@ export function getGraphicsSettings(): GraphicsSettings {
       dpr: [MAX_DPR, MAX_DPR],
       shadowMapSize: MAX_SHADOW,
       landingFrameCount: 6,
+      antialias: true,
       enableEnvironment: true,
       enableSky: true,
     },

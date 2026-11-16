@@ -9,6 +9,8 @@ import { useThree } from '@react-three/fiber';
 import type { BufferGeometry, InstancedMesh, Material, Matrix4 } from 'three';
 
 interface KitInstancesProps {
+  /** Object name in the scene graph (the kit piece). */
+  name: string;
   geometry: BufferGeometry;
   material: Material;
   matrices: readonly Matrix4[];
@@ -19,7 +21,7 @@ interface KitInstancesProps {
 /** Buffer sizes grow in powers of two, so dragging a slider re-allocates only a few times. */
 const capacityFor = (count: number) => 2 ** Math.ceil(Math.log2(Math.max(count, 1)));
 
-export default function KitInstances({ geometry, material, matrices, castShadow, receiveShadow }: KitInstancesProps) {
+export default function KitInstances({ name, geometry, material, matrices, castShadow, receiveShadow }: KitInstancesProps) {
   const mesh = useRef<InstancedMesh>(null);
   const invalidate = useThree((state) => state.invalidate);
   const capacity = capacityFor(matrices.length);
@@ -32,17 +34,21 @@ export default function KitInstances({ geometry, material, matrices, castShadow,
     instances.instanceMatrix.needsUpdate = true;
     instances.computeBoundingSphere();
     invalidate();
-  }, [matrices, capacity, invalidate]);
+  }, [matrices, capacity, geometry, material, invalidate]);
 
   // Geometry and material are shared (dispose={null}); only this mesh's own instance buffer is released here.
   useEffect(() => {
     const instances = mesh.current;
-    return () => instances?.dispose();
+    return () => {
+      instances?.dispose();
+    };
   }, [capacity]);
 
   return (
     <instancedMesh
+      key={capacity}
       ref={mesh}
+      name={name}
       args={[geometry, material, capacity]}
       castShadow={castShadow}
       receiveShadow={receiveShadow}
