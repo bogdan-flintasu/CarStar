@@ -83,8 +83,11 @@ export const GUTTER_WIDTH = 0.11;
 /** Eave gutter depth. Source: 0.054. */
 export const GUTTER_DEPTH = 0.054;
 
-/** Height of the outlet shoe under each downpipe; the pipe itself starts on top of it. Kit `DownpipeShoe`: 0.066. */
-export const DOWNPIPE_SHOE_HEIGHT = 0.07;
+/** The downpipe stops this far above the floor and discharges through its shoe (an elbow). Source: 0.292. */
+export const DOWNPIPE_DISCHARGE_HEIGHT = 0.292;
+
+/** Drop from the gutter's top edge to the top of the downpipe; the kit's `DownpipeOutlet` bridges it. Source: 0.0971. */
+export const DOWNPIPE_OUTLET_DROP = 0.0971;
 
 /** Downpipes stand this far in from each end of the side wall (source: only at the four corners). */
 export const DOWNPIPE_END_INSET = 0.15;

@@ -9,11 +9,11 @@ import {
   BASE_PLATE_THICKNESS,
   COUNT_EPSILON,
   DOWNPIPE_END_INSET,
-  DOWNPIPE_SHOE_HEIGHT,
+  DOWNPIPE_DISCHARGE_HEIGHT,
+  DOWNPIPE_OUTLET_DROP,
   EAVE_JOINT_HEIGHT,
   FRAME_FLANGE_WIDTH,
   GIRT_END_CLEARANCE,
-  GUTTER_DEPTH,
   GUTTER_WIDTH,
   MAX_GIRT_SPACING,
   ROOF_OVERHANG,
@@ -118,6 +118,7 @@ function placeRoof(side: Side, section: HallSection, ends: HallEnds): RoofPlane 
     eave: [sign(side) * edgeX, section.roofUndersideY(edgeX)],
     ridge: [0, section.roofUndersideY(0)],
     thickness: section.panelThickness,
+    plumbThickness: section.roofTopY(0) - section.roofUndersideY(0),
     zFront,
     zBack,
     slopeLength,
@@ -147,13 +148,18 @@ function placeRainwater(section: HallSection, ends: HallEnds): { gutters: HallGu
     zFrom: ends.frontOuter,
     zTo: ends.backOuter,
   }));
+  const pipeEnds = [
+    { end: 'front', z: ends.frontOuter - DOWNPIPE_END_INSET },
+    { end: 'back', z: ends.backOuter + DOWNPIPE_END_INSET },
+  ] as const;
   const downpipes = SIDES.flatMap((side) =>
-    [ends.frontOuter - DOWNPIPE_END_INSET, ends.backOuter + DOWNPIPE_END_INSET].map((z) => ({
+    pipeEnds.map(({ end, z }) => ({
       side,
+      end,
       x: sign(side) * (wallX + GUTTER_WIDTH / 2),
       z,
-      topY: gutterY - GUTTER_DEPTH,
-      bottomY: DOWNPIPE_SHOE_HEIGHT,
+      topY: gutterY - DOWNPIPE_OUTLET_DROP,
+      bottomY: DOWNPIPE_DISCHARGE_HEIGHT,
     })),
   );
   return { gutters, downpipes };

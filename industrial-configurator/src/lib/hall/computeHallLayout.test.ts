@@ -238,8 +238,11 @@ describe('computeHallLayout: cladding, slab and site', () => {
     }
   });
 
-  it('starts each downpipe on top of its outlet shoe', () => {
-    for (const pipe of layoutOf({ length: 30 }).downpipes) expect(pipe.bottomY).toBeGreaterThan(0);
+  it('stops each downpipe above the floor and puts one at each end of both eaves', () => {
+    const pipes = layoutOf({ length: 30 }).downpipes;
+    for (const pipe of pipes) expect(pipe.bottomY).toBeGreaterThan(0);
+    expect(pipes.map((pipe) => `${pipe.side}-${pipe.end}`).sort()).toEqual(['left-back', 'left-front', 'right-back', 'right-front']);
+    for (const pipe of pipes) expect(pipe.z > -15).toBe(pipe.end === 'front');
   });
 
   it.each([3, 3.5, 4, 5, 6])('spaces the cladding fixings up a %s m column', (height) => {

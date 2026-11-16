@@ -116,6 +116,8 @@ export interface RoofPlane {
   /** Underside at the ridge (x = 0). */
   ridge: Vec2;
   thickness: number;
+  /** The same thickness measured plumb: the top surface is this far above the underside. */
+  plumbThickness: number;
   zFront: number;
   zBack: number;
   slopeLength: number;
@@ -141,9 +143,11 @@ export interface HallGutter {
   zTo: number;
 }
 
-/** One downpipe on its axis. The pipe runs from the top of its outlet shoe (`bottomY`) up to the gutter. */
+/** One downpipe on its axis, under the gutter's centreline: from its shoe (`bottomY`) up to the gutter outlet (`topY`). */
 export interface HallDownpipe {
   side: Side;
+  /** Which end of the hall it stands at; its shoe discharges away from that gable. */
+  end: 'front' | 'back';
   x: number;
   z: number;
   topY: number;
