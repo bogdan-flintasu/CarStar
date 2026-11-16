@@ -1,0 +1,1916 @@
+{
+ "coords": "glTF (Y up, metres); source = one 12 m frame at z=0 + one 6 m bay of purlins/gutters",
+ "constants": {
+  "pitch_deg": 10.003,
+  "apex_x": 0.0041,
+  "hall_centre_x_from_columns": 0.0048,
+  "column_axis_x_left": -6.1403,
+  "column_bottom_y": 0.02,
+  "column_top_y": 5.815,
+  "eave_anchor_E_minus_haunch_anchor": [
+   0.1492,
+   0.2585,
+   0.0
+  ],
+  "apex_anchor_A": [
+   0.0041,
+   7.1309,
+   0.0001
+  ],
+  "rafter_len_E_to_A": 6.0877,
+  "rafter_depth_vertical": 0.3046,
+  "purlin_seats_left": [
+   {
+    "x": -6.2245,
+    "along_flange_from_E": -0.237,
+    "above_rafter_top": 0.0014
+   },
+   {
+    "x": -4.687,
+    "along_flange_from_E": 1.3242,
+    "above_rafter_top": 0.0015
+   },
+   {
+    "x": -3.1685,
+    "along_flange_from_E": 2.8662,
+    "above_rafter_top": 0.0014
+   },
+   {
+    "x": -1.652,
+    "along_flange_from_E": 4.4061,
+    "above_rafter_top": 0.0014
+   },
+   {
+    "x": -0.1024,
+    "along_flange_from_E": 5.9795,
+    "above_rafter_top": 0.0014
+   }
+  ],
+  "gutter_anchor_minus_haunch_anchor": [
+   -0.3123,
+   0.5886,
+   -6.1389
+  ],
+  "downpipe_anchor_minus_haunch_anchor": [
+   -0.3674,
+   -5.5229,
+   0.0976
+  ],
+  "downpipe_anchor_minus_gutter_anchor": [
+   -0.0551,
+   -6.1115,
+   6.2365
+  ],
+  "downpipe_top_minus_gutter_anchor_y": -0.0971,
+  "gutter_overhang_front_back": [
+   0.1547,
+   0.1388
+  ],
+  "gutter_section_w_h": [
+   0.1102,
+   0.0539
+  ],
+  "gutter_centreline_minus_anchor_x_left": -0.0551,
+  "column_inner_face_minus_axis": 0.1502,
+  "girt_cleat_anchor_minus_column_base": [
+   -0.1502,
+   0.2922,
+   0.0
+  ],
+  "ridge_cap_anchor_minus_apex": [
+   0.0022,
+   0.4063,
+   -6.1389
+  ]
+ },
+ "pieces": {
+  "Column": {
+   "tris": 135,
+   "sockets": 0,
+   "stretch": "Y",
+   "anchor": "base centre (column axis, bottom of steel)"
+  },
+  "BasePlate": {
+   "tris": 130,
+   "sockets": 8,
+   "stretch": "",
+   "anchor": "plate bottom on column axis (ground)"
+  },
+  "EaveHaunch": {
+   "tris": 693,
+   "sockets": 12,
+   "stretch": "",
+   "anchor": "column axis at column top"
+  },
+  "Rafter": {
+   "tris": 108,
+   "sockets": 0,
+   "stretch": "X",
+   "anchor": "eave end of the bottom flange; +X along the bottom flange"
+  },
+  "RidgeJoint": {
+   "tris": 150,
+   "sockets": 8,
+   "stretch": "",
+   "anchor": "apex of the rafter bottom-flange lines"
+  },
+  "Purlin": {
+   "tris": 35,
+   "sockets": 0,
+   "stretch": "Z",
+   "anchor": "seat point: centre of the bottom face, start end"
+  },
+  "PurlinCleat": {
+   "tris": 33,
+   "sockets": 4,
+   "stretch": "",
+   "anchor": "purlin seat point at the frame plane"
+  },
+  "GirtCleat": {
+   "tris": 76,
+   "sockets": 2,
+   "stretch": "",
+   "anchor": "outer column flange face, bottom of the angle"
+  },
+  "Gutter": {
+   "tris": 172,
+   "sockets": 0,
+   "stretch": "Z",
+   "anchor": "inner top edge (building side), start end"
+  },
+  "GutterEndCap": {
+   "tris": 214,
+   "sockets": 0,
+   "stretch": "",
+   "anchor": "gutter centreline, top, at the gutter end"
+  },
+  "Downpipe": {
+   "tris": 100,
+   "sockets": 0,
+   "stretch": "Y",
+   "anchor": "bottom centre"
+  },
+  "DownpipeShoe": {
+   "tris": 241,
+   "sockets": 0,
+   "stretch": "",
+   "anchor": "top centre (= Downpipe bottom)"
+  },
+  "DownpipeOutlet": {
+   "tris": 100,
+   "sockets": 0,
+   "stretch": "",
+   "anchor": "bottom centre (= Downpipe top)"
+  },
+  "RidgeCap": {
+   "tris": 30,
+   "sockets": 0,
+   "stretch": "Z",
+   "anchor": "apex, bottom of the flashing, start end"
+  },
+  "Bolt": {
+   "tris": 56,
+   "sockets": 0,
+   "stretch": "",
+   "anchor": "bolt centre, axis +Y"
+  },
+  "Column_LOD1": {
+   "tris": 60,
+   "sockets": 0,
+   "stretch": "Y",
+   "anchor": "base centre (column axis, bottom of steel)"
+  },
+  "BasePlate_LOD1": {
+   "tris": 64,
+   "sockets": 0,
+   "stretch": "",
+   "anchor": "plate bottom on column axis (ground)"
+  },
+  "EaveHaunch_LOD1": {
+   "tris": 229,
+   "sockets": 0,
+   "stretch": "",
+   "anchor": "column axis at column top"
+  },
+  "Rafter_LOD1": {
+   "tris": 59,
+   "sockets": 0,
+   "stretch": "X",
+   "anchor": "eave end of the bottom flange; +X along the bottom flange"
+  },
+  "RidgeJoint_LOD1": {
+   "tris": 68,
+   "sockets": 0,
+   "stretch": "",
+   "anchor": "apex of the rafter bottom-flange lines"
+  },
+  "Purlin_LOD1": {
+   "tris": 30,
+   "sockets": 0,
+   "stretch": "Z",
+   "anchor": "seat point: centre of the bottom face, start end"
+  },
+  "PurlinCleat_LOD1": {
+   "tris": 12,
+   "sockets": 0,
+   "stretch": "",
+   "anchor": "purlin seat point at the frame plane"
+  },
+  "GirtCleat_LOD1": {
+   "tris": 35,
+   "sockets": 0,
+   "stretch": "",
+   "anchor": "outer column flange face, bottom of the angle"
+  },
+  "Gutter_LOD1": {
+   "tris": 108,
+   "sockets": 0,
+   "stretch": "Z",
+   "anchor": "inner top edge (building side), start end"
+  },
+  "GutterEndCap_LOD1": {
+   "tris": 60,
+   "sockets": 0,
+   "stretch": "",
+   "anchor": "gutter centreline, top, at the gutter end"
+  },
+  "Downpipe_LOD1": {
+   "tris": 28,
+   "sockets": 0,
+   "stretch": "Y",
+   "anchor": "bottom centre"
+  },
+  "DownpipeShoe_LOD1": {
+   "tris": 71,
+   "sockets": 0,
+   "stretch": "",
+   "anchor": "top centre (= Downpipe bottom)"
+  },
+  "DownpipeOutlet_LOD1": {
+   "tris": 15,
+   "sockets": 0,
+   "stretch": "",
+   "anchor": "bottom centre (= Downpipe top)"
+  },
+  "RidgeCap_LOD1": {
+   "tris": 18,
+   "sockets": 0,
+   "stretch": "Z",
+   "anchor": "apex, bottom of the flashing, start end"
+  },
+  "PanelSwatch": {
+   "tris": 2,
+   "sockets": 0,
+   "stretch": "",
+   "anchor": "unit quad in XY"
+  },
+  "ConcreteSwatch": {
+   "tris": 2,
+   "sockets": 0,
+   "stretch": "",
+   "anchor": "unit quad in XZ"
+  }
+ },
+ "instances": [
+  {
+   "piece": "Column",
+   "src": [
+    "stalp_1"
+   ],
+   "side": "L",
+   "rot": "I",
+   "t": [
+    -6.1403,
+    0.02,
+    0.0001
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    5.795,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "Column",
+   "src": [
+    "stalp_2"
+   ],
+   "side": "R",
+   "rot": "RY180",
+   "t": [
+    6.1498,
+    0.02,
+    0.0
+   ],
+   "q_xyzw": [
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "s": [
+    1.0,
+    5.795,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "BasePlate",
+   "src": [
+    "baza_stalp",
+    "aripioara_sustinere",
+    "aripioara_sustinere001",
+    "aripioara_sustinere002",
+    "aripioara_sustinere003",
+    "aripioara_sustinere004",
+    "aripioarea_sustinere"
+   ],
+   "side": "L",
+   "rot": "I",
+   "t": [
+    -6.1403,
+    0.0,
+    0.0001
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 8
+  },
+  {
+   "piece": "BasePlate",
+   "src": [
+    "baza_stalp001",
+    "aripioara_sustinere005",
+    "aripioara_sustinere006",
+    "aripioara_sustinere007",
+    "aripioara_sustinere008",
+    "aripioara_sustinere009",
+    "aripioarea_sustinere001"
+   ],
+   "side": "R",
+   "rot": "RY180",
+   "t": [
+    6.1536,
+    0.0,
+    0.0
+   ],
+   "q_xyzw": [
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    10.5,
+    10.5
+   ],
+   "bolts": 8
+  },
+  {
+   "piece": "EaveHaunch",
+   "src": [
+    "suruburi_sus",
+    "suruburi_sus001",
+    "prelungire_stalp",
+    "stalp_sus_1001",
+    "aripioara_laterala_sus",
+    "plane_inclinat",
+    "aripioara_sustinere_sus",
+    "aripioara_sustinere_sus001",
+    "aripa_lateral",
+    "plane_aripioara001",
+    "suruburi_laterale020",
+    "ureche010"
+   ],
+   "side": "L",
+   "rot": "I",
+   "t": [
+    -6.1403,
+    5.815,
+    0.0001
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 12
+  },
+  {
+   "piece": "EaveHaunch",
+   "src": [
+    "suruburi_sus003",
+    "suruburi_sus002",
+    "prelungire_stalp001",
+    "stalp_sus001",
+    "aripioara_laterla_sus",
+    "plane_inclinat003",
+    "aripioara_sustinere_sus002",
+    "aripioara_sustinere_sus003",
+    "aripioara_lateral",
+    "plane_aripioara",
+    "suruburi_laterale019",
+    "ureche004"
+   ],
+   "side": "R",
+   "rot": "RY180",
+   "t": [
+    6.1498,
+    5.8158,
+    -0.0
+   ],
+   "q_xyzw": [
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    66.7,
+    4.0
+   ],
+   "bolts": 12
+  },
+  {
+   "piece": "RidgeJoint",
+   "src": [
+    "plane_sus_1",
+    "plane_sus_2",
+    "plane_inclinat001",
+    "plane_inclinat002",
+    "plane_inclinat004",
+    "plane_inclinat005",
+    "aripioara_sus",
+    "aripioara_mijloc_1",
+    "plane_drept_sus",
+    "plane_sus_drept"
+   ],
+   "side": "C",
+   "rot": "I",
+   "t": [
+    0.0041,
+    7.1309,
+    0.0001
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 8
+  },
+  {
+   "piece": "Gutter",
+   "src": [
+    "jgheabSTG",
+    "jgheabSTG_prelungire",
+    "jgheab_spateSTG"
+   ],
+   "side": "L",
+   "rot": "I",
+   "t": [
+    -6.4525,
+    6.4027,
+    -6.1388
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    6.2936
+   ],
+   "err_mm": [
+    3.9,
+    2.9
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "Gutter",
+   "src": [
+    "jgheabDR",
+    "jgheabDR_prelungire",
+    "jgheab_spateDR"
+   ],
+   "side": "R",
+   "rot": "RY180",
+   "t": [
+    6.4619,
+    6.4027,
+    0.1547
+   ],
+   "q_xyzw": [
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    6.2935
+   ],
+   "err_mm": [
+    3.7,
+    2.9
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "GutterEndCap",
+   "src": [
+    "capat__gheabSTG"
+   ],
+   "side": "L",
+   "rot": "I",
+   "t": [
+    -6.5076,
+    6.4036,
+    0.1548
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "GutterEndCap",
+   "src": [
+    "capat_jgheabDR"
+   ],
+   "side": "R",
+   "rot": "I",
+   "t": [
+    6.517,
+    6.4045,
+    0.1537
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "RidgeCap",
+   "src": [
+    "coltar_acoperis"
+   ],
+   "side": "C",
+   "rot": "I",
+   "t": [
+    0.0064,
+    7.5372,
+    -6.1389
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    6.2938
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "Purlin",
+   "src": [
+    "Grinda003"
+   ],
+   "side": "L",
+   "rot": "I",
+   "t": [
+    -6.2245,
+    6.3384,
+    -6.0
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    6.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "Purlin",
+   "src": [
+    "Grinda002"
+   ],
+   "side": "L",
+   "rot": "I",
+   "t": [
+    -4.6875,
+    6.6095,
+    -6.0
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    6.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "Purlin",
+   "src": [
+    "Grinda001"
+   ],
+   "side": "L",
+   "rot": "I",
+   "t": [
+    -3.1687,
+    6.8774,
+    -6.0
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    6.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "Purlin",
+   "src": [
+    "Grinda"
+   ],
+   "side": "L",
+   "rot": "I",
+   "t": [
+    -1.6521,
+    7.1449,
+    -6.0
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    6.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "Purlin",
+   "src": [
+    "Grinda004"
+   ],
+   "side": "L",
+   "rot": "I",
+   "t": [
+    -0.103,
+    7.4181,
+    -6.0
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    6.0
+   ],
+   "err_mm": [
+    0.1,
+    0.0
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "Purlin",
+   "src": [
+    "Grinda009"
+   ],
+   "side": "R",
+   "rot": "RY180",
+   "t": [
+    6.2321,
+    6.3384,
+    -0.0
+   ],
+   "q_xyzw": [
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    6.0
+   ],
+   "err_mm": [
+    1.9,
+    1.9
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "Purlin",
+   "src": [
+    "Grinda010"
+   ],
+   "side": "R",
+   "rot": "RY180",
+   "t": [
+    4.6945,
+    6.6096,
+    -0.0
+   ],
+   "q_xyzw": [
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    6.0
+   ],
+   "err_mm": [
+    1.9,
+    1.9
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "Purlin",
+   "src": [
+    "Grinda007"
+   ],
+   "side": "R",
+   "rot": "RY180",
+   "t": [
+    3.1761,
+    6.8774,
+    -0.0
+   ],
+   "q_xyzw": [
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    6.0
+   ],
+   "err_mm": [
+    1.9,
+    1.9
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "Purlin",
+   "src": [
+    "Grinda006"
+   ],
+   "side": "R",
+   "rot": "RY180",
+   "t": [
+    1.6595,
+    7.1449,
+    -0.0
+   ],
+   "q_xyzw": [
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    6.0
+   ],
+   "err_mm": [
+    1.9,
+    1.9
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "Purlin",
+   "src": [
+    "Grinda005"
+   ],
+   "side": "R",
+   "rot": "RY180",
+   "t": [
+    0.1095,
+    7.4183,
+    -0.0
+   ],
+   "q_xyzw": [
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    6.0
+   ],
+   "err_mm": [
+    1.9,
+    1.9
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "PurlinCleat",
+   "src": [
+    "suruburi_laterale004"
+   ],
+   "side": "L",
+   "rot": "I",
+   "t": [
+    -6.2245,
+    6.3384,
+    0.0001
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 2
+  },
+  {
+   "piece": "PurlinCleat",
+   "src": [
+    "suruburi_laterale005"
+   ],
+   "side": "L",
+   "rot": "I",
+   "t": [
+    -4.687,
+    6.6096,
+    0.0001
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 2
+  },
+  {
+   "piece": "PurlinCleat",
+   "src": [
+    "suruburi_laterale006"
+   ],
+   "side": "L",
+   "rot": "I",
+   "t": [
+    -3.1685,
+    6.8774,
+    0.0001
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 2
+  },
+  {
+   "piece": "PurlinCleat",
+   "src": [
+    "suruburi_laterale007"
+   ],
+   "side": "L",
+   "rot": "I",
+   "t": [
+    -1.652,
+    7.1449,
+    0.0001
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 2
+  },
+  {
+   "piece": "PurlinCleat",
+   "src": [
+    "suruburi_laterale008"
+   ],
+   "side": "L",
+   "rot": "I",
+   "t": [
+    -0.1024,
+    7.4182,
+    0.0001
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 2
+  },
+  {
+   "piece": "PurlinCleat",
+   "src": [
+    "suruburi_laterale013"
+   ],
+   "side": "R",
+   "rot": "RY180",
+   "t": [
+    6.234,
+    6.3384,
+    -0.0001
+   ],
+   "q_xyzw": [
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 2
+  },
+  {
+   "piece": "PurlinCleat",
+   "src": [
+    "suruburi_laterale014"
+   ],
+   "side": "R",
+   "rot": "RY180",
+   "t": [
+    4.6965,
+    6.6096,
+    -0.0001
+   ],
+   "q_xyzw": [
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 2
+  },
+  {
+   "piece": "PurlinCleat",
+   "src": [
+    "suruburi_laterale015"
+   ],
+   "side": "R",
+   "rot": "RY180",
+   "t": [
+    3.178,
+    6.8774,
+    -0.0001
+   ],
+   "q_xyzw": [
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 2
+  },
+  {
+   "piece": "PurlinCleat",
+   "src": [
+    "suruburi_laterale016"
+   ],
+   "side": "R",
+   "rot": "RY180",
+   "t": [
+    1.6615,
+    7.1449,
+    -0.0001
+   ],
+   "q_xyzw": [
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 2
+  },
+  {
+   "piece": "PurlinCleat",
+   "src": [
+    "suruburi_laterale017"
+   ],
+   "side": "R",
+   "rot": "RY180",
+   "t": [
+    0.1115,
+    7.4183,
+    -0.0001
+   ],
+   "q_xyzw": [
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 2
+  },
+  {
+   "piece": "GirtCleat",
+   "src": [
+    "suruburi_laterale",
+    "ureche008"
+   ],
+   "side": "L",
+   "rot": "I",
+   "t": [
+    -6.2904,
+    0.3122,
+    0.0001
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 2
+  },
+  {
+   "piece": "GirtCleat",
+   "src": [
+    "suruburi_laterale001",
+    "ureche007"
+   ],
+   "side": "L",
+   "rot": "RX180",
+   "t": [
+    -6.2905,
+    1.8429,
+    0.0001
+   ],
+   "q_xyzw": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    64.5,
+    60.7
+   ],
+   "bolts": 2
+  },
+  {
+   "piece": "GirtCleat",
+   "src": [
+    "suruburi_laterale002",
+    "ureche006"
+   ],
+   "side": "L",
+   "rot": "I",
+   "t": [
+    -6.2906,
+    3.7658,
+    0.0001
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 2
+  },
+  {
+   "piece": "GirtCleat",
+   "src": [
+    "suruburi_laterale003",
+    "ureche005"
+   ],
+   "side": "L",
+   "rot": "RX180",
+   "t": [
+    -6.2906,
+    5.5608,
+    0.0001
+   ],
+   "q_xyzw": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    64.5,
+    60.7
+   ],
+   "bolts": 2
+  },
+  {
+   "piece": "GirtCleat",
+   "src": [
+    "suruburi_laterale009",
+    "ureche001"
+   ],
+   "side": "R",
+   "rot": "RY180",
+   "t": [
+    6.3001,
+    0.31,
+    0.0
+   ],
+   "q_xyzw": [
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    64.5,
+    60.7
+   ],
+   "bolts": 2
+  },
+  {
+   "piece": "GirtCleat",
+   "src": [
+    "suruburi_laterale010",
+    "ureche002"
+   ],
+   "side": "R",
+   "rot": "RZ180",
+   "t": [
+    6.3001,
+    1.846,
+    -0.0
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    1.0,
+    0.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 2
+  },
+  {
+   "piece": "GirtCleat",
+   "src": [
+    "suruburi_laterale011",
+    "ureche003"
+   ],
+   "side": "R",
+   "rot": "RY180",
+   "t": [
+    6.3001,
+    3.769,
+    0.0
+   ],
+   "q_xyzw": [
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    64.5,
+    60.7
+   ],
+   "bolts": 2
+  },
+  {
+   "piece": "GirtCleat",
+   "src": [
+    "suruburi_laterale012",
+    "ureche009"
+   ],
+   "side": "R",
+   "rot": "RZ180",
+   "t": [
+    6.3001,
+    5.564,
+    -0.0
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    1.0,
+    0.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 2
+  },
+  {
+   "piece": "Downpipe",
+   "src": [
+    "burlan"
+   ],
+   "side": "L",
+   "rot": "I",
+   "t": [
+    -6.5076,
+    0.2921,
+    0.0977
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    6.0144,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "Downpipe",
+   "src": [
+    "burlan_spateSTG.001"
+   ],
+   "side": "L",
+   "rot": "RY180",
+   "t": [
+    -6.5076,
+    0.292,
+    -6.0817
+   ],
+   "q_xyzw": [
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "s": [
+    1.0,
+    6.0144,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "Downpipe",
+   "src": [
+    "burlanDR"
+   ],
+   "side": "R",
+   "rot": "I",
+   "t": [
+    6.5171,
+    0.2921,
+    0.0977
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    6.0144,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "Downpipe",
+   "src": [
+    "burlan_spateDR"
+   ],
+   "side": "R",
+   "rot": "RY180",
+   "t": [
+    6.517,
+    0.292,
+    -6.0817
+   ],
+   "q_xyzw": [
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "s": [
+    1.0,
+    6.0144,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "DownpipeShoe",
+   "src": [
+    "Cylinder004"
+   ],
+   "side": "L",
+   "rot": "I",
+   "t": [
+    -6.5076,
+    0.2921,
+    0.0978
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.6,
+    0.5
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "DownpipeShoe",
+   "src": [
+    "Cylinder003"
+   ],
+   "side": "L",
+   "rot": "RY180",
+   "t": [
+    -6.5077,
+    0.292,
+    -6.0818
+   ],
+   "q_xyzw": [
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.6,
+    0.5
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "DownpipeShoe",
+   "src": [
+    "Cylinder002"
+   ],
+   "side": "R",
+   "rot": "I",
+   "t": [
+    6.5171,
+    0.2922,
+    0.0977
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.6,
+    0.5
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "DownpipeShoe",
+   "src": [
+    "Cylinder005"
+   ],
+   "side": "R",
+   "rot": "RY180",
+   "t": [
+    6.517,
+    0.292,
+    -6.0818
+   ],
+   "q_xyzw": [
+    0.0,
+    1.0,
+    0.0,
+    0.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.6,
+    0.5
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "DownpipeOutlet",
+   "src": [
+    "capat_burlanSTG"
+   ],
+   "side": "L",
+   "rot": "I",
+   "t": [
+    -6.5076,
+    6.3065,
+    0.0977
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "DownpipeOutlet",
+   "src": [
+    "capat_burlan_spateSTG"
+   ],
+   "side": "L",
+   "rot": "I",
+   "t": [
+    -6.5076,
+    6.3064,
+    -6.0817
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "DownpipeOutlet",
+   "src": [
+    "capat_burlanDR"
+   ],
+   "side": "R",
+   "rot": "I",
+   "t": [
+    6.5171,
+    6.3065,
+    0.0977
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "DownpipeOutlet",
+   "src": [
+    "capat_burlan_spateDR"
+   ],
+   "side": "R",
+   "rot": "I",
+   "t": [
+    6.517,
+    6.3064,
+    -6.0817
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ],
+   "s": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "Rafter",
+   "src": [
+    "stalp_sus_1"
+   ],
+   "side": "L",
+   "rot": "I",
+   "t": [
+    -5.9911,
+    6.0735,
+    0.0001
+   ],
+   "q_xyzw": [
+    0.0,
+    0.0,
+    0.087182,
+    0.996192
+   ],
+   "s": [
+    6.0877,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    0.0,
+    0.0
+   ],
+   "bolts": 0
+  },
+  {
+   "piece": "Rafter",
+   "src": [
+    "stalp_sus"
+   ],
+   "side": "R",
+   "rot": "RY180",
+   "t": [
+    6.0006,
+    6.0735,
+    0.0001
+   ],
+   "q_xyzw": [
+    0.087182,
+    0.996192,
+    0.0,
+    0.0
+   ],
+   "s": [
+    6.089,
+    1.0,
+    1.0
+   ],
+   "err_mm": [
+    1.3,
+    1.2
+   ],
+   "bolts": 0
+  }
+ ],
+ "frame_tris": 10840,
+ "frame_bolts": 84,
+ "frame_tris_lod1": 2402,
+ "lod1_err_mm": {
+  "Column": 0.0,
+  "BasePlate": 10.0,
+  "EaveHaunch": 12.2,
+  "Rafter": 2.5,
+  "RidgeJoint": 15.0,
+  "Purlin": 0.0,
+  "PurlinCleat": 15.5,
+  "GirtCleat": 12.1,
+  "Gutter": 1.0,
+  "GutterEndCap": 3.8,
+  "Downpipe": 0.8,
+  "DownpipeShoe": 3.5,
+  "DownpipeOutlet": 7.0,
+  "RidgeCap": 0.0
+ }
+}
