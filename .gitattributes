@@ -1,1 +1,5 @@
-*.gltf filter=lfs diff=lfs merge=lfs -text
+# Binary assets: no text diff/merge. (git-lfs is not used; big sources live in ~/CarStar-assets/.)
+*.glb binary
+*.gltf text eol=lf
+*.webp binary
+*.png binary

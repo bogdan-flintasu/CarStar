@@ -1,9 +1,13 @@
 import type { NextConfig } from "next";
 
+const allowedDevOrigins = (process.env.ALLOWED_DEV_ORIGINS ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 const nextConfig: NextConfig = {
   devIndicators: false,
-  allowedDevOrigins: ['ladder-couch-unvocal.ngrok-free.dev'],
+  allowedDevOrigins,
 };
 
 export default nextConfig;
-

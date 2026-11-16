@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CarStar industrial hall configurator
 
-## Getting Started
+Next.js 16 + React Three Fiber configurator for steel/sandwich-panel halls. Prices and saved
+configurations live in SQLite via Prisma 7.
 
-First, run the development server:
+## Setup (fresh clone)
+
+Requires Node >= 20 (<27) and pnpm 12 (`corepack enable` picks the version from `packageManager`).
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd industrial-configurator
+pnpm install                 # also runs `prisma generate` (postinstall)
+cp .env.example .env
+pnpm prisma migrate deploy   # creates prisma/dev.db from prisma/migrations
+pnpm db:seed                 # default prices (optional: /api/prices self-seeds too)
+pnpm dev                     # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Clean-install check: `rm -rf node_modules src/generated && pnpm install && pnpm build`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Script | What it does |
+|--------|--------------|
+| `pnpm dev` / `build` / `start` | Next.js |
+| `pnpm lint` | ESLint (generated code in `src/generated` is ignored) |
+| `pnpm test` | Vitest (`vitest run --passWithNoTests`) |
+| `pnpm db:seed` | Seed default prices |
+| `pnpm prisma migrate dev --name <x>` | Create a new migration after editing `prisma/schema.prisma` |
 
-## Learn More
+CI (`.github/workflows/ci.yml`): install, `tsc --noEmit`, lint, test, build.
 
-To learn more about Next.js, take a look at the following resources:
+## Environment variables
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+See `.env.example`: `DATABASE_URL` (SQLite file), `RESEND_*` (contact email),
+`ALLOWED_DEV_ORIGINS` (optional, comma-separated tunnel hosts for `next dev`).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Layout
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/app` pages and API routes, `src/components/3d` R3F scene, `src/components/configurator` UI steps
+- `src/stores` Zustand stores, `src/lib` helpers, `prisma/` schema, migrations, seed
+- `public/models` shipping GLBs only. Blender sources (`*.blend`) are not in git; they live in
+  `~/CarStar-assets/` and are rebuilt by `scripts/blender/*.py`.
