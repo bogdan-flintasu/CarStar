@@ -55,3 +55,16 @@ Thumbs.db
 
 # ─── Certificates / keys (local) ────────────────────────────────────────────
 *.pem
+
+# ─── Local databases ────────────────────────────────────────────────────────
+*.db
+*.db-journal
+
+# ─── Blender sources (live outside git in ~/CarStar-assets/, rebuilt from scripts/blender/*.py)
+*.blend
+*.blend1
+assets/blender/**/*.blend
+
+# ─── Generated / downloaded junk ────────────────────────────────────────────
+*.deb
+industrial-configurator/src/generated/

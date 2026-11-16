@@ -41,7 +41,6 @@ interface OpeningsState {
   setIsDragging: (v: boolean) => void;
   setShowMarkers: (v: boolean) => void;
   setHoveredWallId: (wallId: WallId | null) => void;
-  setHoveredWallId: (wallId: WallId | null) => void;
   clearHoveredWallId: () => void;
   setOpenings: (openings: Opening[]) => void;
   resetOpenings: () => void;
