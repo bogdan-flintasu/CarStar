@@ -85,7 +85,7 @@ function scoreCpu(): number {
 }
 
 function scoreMemory(): number {
-  const mem = (navigator as any).deviceMemory as number | undefined;
+  const mem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
   if (!mem) return 2;         // unknown → assume mid-range
   if (mem >= 8) return 3;
   if (mem >= 4) return 2;
