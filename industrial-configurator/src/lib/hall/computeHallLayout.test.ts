@@ -238,6 +238,22 @@ describe('computeHallLayout: cladding, slab and site', () => {
     }
   });
 
+  it('starts each downpipe on top of its outlet shoe', () => {
+    for (const pipe of layoutOf({ length: 30 }).downpipes) expect(pipe.bottomY).toBeGreaterThan(0);
+  });
+
+  it.each([3, 3.5, 4, 5, 6])('spaces the cladding fixings up a %s m column', (height) => {
+    const layout = layoutOf({ height });
+    const levels = layout.girtLevels;
+    expect(levels.length).toBeGreaterThanOrEqual(2);
+    expect(levels[0]).toBeGreaterThan(0);
+    expect(levels[levels.length - 1]).toBeLessThan(layout.columns[0].topY);
+    for (let i = 1; i < levels.length; i++) {
+      expect(levels[i] - levels[i - 1]).toBeGreaterThan(0);
+      expect(levels[i] - levels[i - 1]).toBeLessThanOrEqual(1.5 + 1e-9);
+    }
+  });
+
   it('bounds the building, not the apron', () => {
     const layout = layoutOf({ length: 30, width: 15, height: 5 });
     expect(layout.bounds.min).toEqual([-layout.halfWidths.roofEdge, 0, layout.roof.left.zBack]);

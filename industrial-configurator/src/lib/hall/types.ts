@@ -141,6 +141,7 @@ export interface HallGutter {
   zTo: number;
 }
 
+/** One downpipe on its axis. The pipe runs from the top of its outlet shoe (`bottomY`) up to the gutter. */
 export interface HallDownpipe {
   side: Side;
   x: number;
@@ -180,6 +181,8 @@ export interface HallLayout {
   rafterLength: number;
   purlins: readonly HallPurlin[];
   purlinsPerSide: number;
+  /** Heights of the cladding fixings (girt cleats) on the outer face of every column. */
+  girtLevels: readonly number[];
   walls: Readonly<Record<WallKey, WallDescriptor>>;
   roof: Readonly<Record<Side, RoofPlane>>;
   slab: HallSlab;

@@ -9,16 +9,19 @@ import {
   BASE_PLATE_THICKNESS,
   COUNT_EPSILON,
   DOWNPIPE_END_INSET,
+  DOWNPIPE_SHOE_HEIGHT,
   EAVE_JOINT_HEIGHT,
   FRAME_FLANGE_WIDTH,
+  GIRT_END_CLEARANCE,
   GUTTER_DEPTH,
   GUTTER_WIDTH,
+  MAX_GIRT_SPACING,
   ROOF_OVERHANG,
   SLAB_APRON,
   SLAB_THICKNESS,
 } from './constants';
 import { resolveHallParams } from './params';
-import { computeSection, type HallSection } from './section';
+import { computeSection, spreadEvenly, type HallSection } from './section';
 import type {
   HallColumn,
   HallDownpipe,
@@ -99,6 +102,12 @@ function placePurlins(section: HallSection, ends: HallEnds): HallPurlin[] {
   );
 }
 
+/** Cladding fixings up each column, as few rows as the panel span allows. */
+function placeGirtLevels(height: number): number[] {
+  const columnTop = height - EAVE_JOINT_HEIGHT;
+  return spreadEvenly(GIRT_END_CLEARANCE, columnTop - GIRT_END_CLEARANCE, MAX_GIRT_SPACING);
+}
+
 function placeRoof(side: Side, section: HallSection, ends: HallEnds): RoofPlane {
   const edgeX = section.halfWidths.roofEdge;
   const zFront = ends.frontOuter + ROOF_OVERHANG;
@@ -144,7 +153,7 @@ function placeRainwater(section: HallSection, ends: HallEnds): { gutters: HallGu
       x: sign(side) * (wallX + GUTTER_WIDTH / 2),
       z,
       topY: gutterY - GUTTER_DEPTH,
-      bottomY: 0,
+      bottomY: DOWNPIPE_SHOE_HEIGHT,
     })),
   );
   return { gutters, downpipes };
@@ -174,6 +183,7 @@ export function computeHallLayout(input: HallParams): HallLayout {
     rafterLength: section.rafterLength,
     purlins: placePurlins(section, ends),
     purlinsPerSide: section.purlinSeatXs.length,
+    girtLevels: placeGirtLevels(params.height),
     walls: computeWalls(section, ends, frames),
     roof,
     slab: placeSlab(section, ends),

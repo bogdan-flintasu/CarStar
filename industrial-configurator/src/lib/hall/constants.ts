@@ -55,6 +55,12 @@ export const EAVE_PURLIN_INSET = 0.07;
 /** Gap between the outer column face and the side cladding (girt cleats). Source: cleat 0.12 deep. */
 export const GIRT_DEPTH = 0.12;
 
+/** Largest vertical spacing of the cladding fixings (girt cleats) on a column; wall panels span up to about 1.5 m. */
+export const MAX_GIRT_SPACING = 1.5;
+
+/** The lowest and the highest cleat stay this far from the floor and from the top of the column steel. */
+export const GIRT_END_CLEARANCE = 0.3;
+
 /** Thickness of single-skin trapezoidal sheeting, used when no sandwich panels are selected (T40 profile depth). */
 export const SHEET_THICKNESS = 0.04;
 
@@ -76,6 +82,9 @@ export const GUTTER_WIDTH = 0.11;
 
 /** Eave gutter depth. Source: 0.054. */
 export const GUTTER_DEPTH = 0.054;
+
+/** Height of the outlet shoe under each downpipe; the pipe itself starts on top of it. Kit `DownpipeShoe`: 0.066. */
+export const DOWNPIPE_SHOE_HEIGHT = 0.07;
 
 /** Downpipes stand this far in from each end of the side wall (source: only at the four corners). */
 export const DOWNPIPE_END_INSET = 0.15;
