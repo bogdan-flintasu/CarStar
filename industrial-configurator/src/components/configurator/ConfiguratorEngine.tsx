@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
 import { ConfiguratorScene, Ground, ControlledOrbitControls } from '@/components/3d/Configurator';
 import { Canvas } from '@react-three/fiber';
@@ -9,13 +10,43 @@ import PlacementMarkers from '@/components/3d/PlacementMarkers';
 import WallOpenings from '@/components/3d/WallOpenings';
 import DimensionLines from '@/components/3d/DimensionLines';
 import { getGraphicsSettings } from '@/lib/hardwareTier';
+import { useShallow } from 'zustand/react/shallow';
+import { clampHallDimensions, computeHallLayout } from '@/lib/hall';
+import HallStatsProbe from '@/components/3d/hall/HallStatsProbe';
+import { useHallUrlParams } from '@/components/3d/hall/useHallUrlParams';
 
 export default function ConfiguratorEngine() {
   const {
     height, width, length,
     showFoundation, isIsolated, insulation,
     wallsVisible, currentStep
-  } = useConfiguratorStore();
+  } = useConfiguratorStore(
+    useShallow((s) => ({
+      height: s.height,
+      width: s.width,
+      length: s.length,
+      showFoundation: s.showFoundation,
+      isIsolated: s.isIsolated,
+      insulation: s.insulation,
+      wallsVisible: s.wallsVisible,
+      currentStep: s.currentStep,
+    })),
+  );
+
+  // Dev only: /configurator?w=13.5&h=4&l=30&step=1 sets the dimensions directly.
+  useHallUrlParams();
+
+  // The hall's geometry. Today only the dev stats read it; the engine built on it replaces ConfiguratorScene.
+  const layout = useMemo(
+    () =>
+      computeHallLayout({
+        ...clampHallDimensions({ width, height, length }),
+        foundation: showFoundation,
+        panels: isIsolated,
+        insulationMm: insulation,
+      }),
+    [width, height, length, showFoundation, isIsolated, insulation],
+  );
 
   // In step 2 (Panels), we temporarily force walls to be visible 
   // so the user can see the effect of the toggles
@@ -93,6 +124,9 @@ export default function ConfiguratorEngine() {
       {/* Openings system — placement markers + rendered openings */}
       <PlacementMarkers hallWidth={width} hallHeight={height} hallLength={length} />
       <WallOpenings hallWidth={width} hallHeight={height} hallLength={length} />
+
+      {/* Dev only: publishes window.__hallStats after every frame */}
+      {process.env.NODE_ENV !== 'production' && <HallStatsProbe layout={layout} engine="legacy" />}
     </Canvas>
   );
 }
