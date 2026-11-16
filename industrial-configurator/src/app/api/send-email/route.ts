@@ -10,6 +10,8 @@ import {
   sendEmailSchema,
 } from '@/lib/validation/email';
 import { buildLeadEmailHtml, buildLeadLog, buildLeadSubject } from '../_lib/emailTemplate';
+import { getCurrentPrices } from '../_lib/prices';
+import { resolveEmailSummary } from '../_lib/serverPrice';
 
 const MAX_BODY_BYTES = 16 * 1024;
 
@@ -36,15 +38,17 @@ export async function POST(req: NextRequest) {
   // Only links to our own /configuration/<token> pages, for tokens that exist.
   // The link in the email is rebuilt server-side from the token.
   let link: string | null = null;
+  let storedData: unknown = undefined;
   if (input.configurationLink) {
     const origin = normalizeOrigin(process.env.APP_BASE_URL) ?? req.nextUrl.origin;
     const token = parseConfigurationLink(input.configurationLink, origin);
-    const exists =
-      token && (await prisma.configuration.findUnique({ where: { token }, select: { id: true } }));
-    if (!token || !exists) {
+    const saved =
+      token && (await prisma.configuration.findUnique({ where: { token }, select: { data: true } }));
+    if (!token || !saved) {
       return NextResponse.json({ error: 'Invalid configuration link' }, { status: 400 });
     }
     link = buildConfigurationLink(origin, token);
+    storedData = saved.data;
   }
 
   const apiKey = process.env.RESEND_API_KEY;
@@ -52,6 +56,15 @@ export async function POST(req: NextRequest) {
   const toEmail = process.env.RESEND_TO_EMAIL || 'contact@yourdomain.com';
 
   try {
+    // B5: the quoted price is recomputed with DB prices, never taken from the client.
+    const lead = {
+      ...input,
+      configurationSummary: resolveEmailSummary(
+        storedData,
+        input.configurationSummary,
+        await getCurrentPrices(),
+      ),
+    };
     if (apiKey) {
       const { Resend } = await import('resend');
       const resend = new Resend(apiKey);
@@ -59,12 +72,12 @@ export async function POST(req: NextRequest) {
         from: fromEmail,
         to: [toEmail],
         replyTo: input.email,
-        subject: buildLeadSubject(input),
-        html: buildLeadEmailHtml(input, link),
+        subject: buildLeadSubject(lead),
+        html: buildLeadEmailHtml(lead, link),
       });
       if (error) throw new Error(error.message);
     } else {
-      console.log(buildLeadLog(input, link, fromEmail, toEmail));
+      console.log(buildLeadLog(lead, link, fromEmail, toEmail));
     }
     return NextResponse.json({ success: true });
   } catch (error) {
