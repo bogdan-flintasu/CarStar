@@ -88,12 +88,12 @@ export default function LandingScene({ onReady }: { onReady?: () => void }) {
       <ambientLight intensity={0.4} />
       {gfx.enableSky && <Sky distance={450000} sunPosition={[-5, 10, 5]} inclination={0} azimuth={0.25} />}
       {gfx.enableEnvironment && <Environment preset="city" />}
-      <Ground layout={LANDING_LAYOUT} textured={!gfx.isMobile} />
+      <Ground layout={LANDING_LAYOUT} textured={gfx.tier !== 'low'} />
 
       <Hall
         layout={LANDING_LAYOUT}
-        detail={gfx.tier === 'low' || gfx.tier === 'medium' ? 'light' : 'full'}
-        texturedConcrete={!gfx.isMobile}
+        detail={gfx.tier === 'low' ? 'light' : 'full'}
+        texturedConcrete={gfx.tier !== 'low'}
       />
 
       <ScrollCamera />

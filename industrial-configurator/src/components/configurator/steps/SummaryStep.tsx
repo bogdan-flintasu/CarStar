@@ -130,14 +130,14 @@ export default function SummaryStep() {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.3 }}
-      className="flex flex-col h-full"
+      className="flex flex-col"
     >
       {/* Header */}
       <div className="mb-4">
         <h3 className="text-sm font-bold text-black uppercase mb-1">Sumar</h3>
       </div>
 
-      <div className="space-y-3 flex-1 overflow-y-auto pr-1">
+      <div className="space-y-3 flex-1">
         {/* Price highlight */}
         <div className="bg-white border border-gray-200 rounded-lg p-4 text-center shadow-sm">
           <div className="text-xs text-gray-500 uppercase tracking-wider mb-1 font-bold">

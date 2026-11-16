@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useEffect, useState, useSyncExternalStore } from 'react';
+import { ReactNode, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
 import { useShallow } from 'zustand/react/shallow';
@@ -48,6 +48,20 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
   useEffect(() => {
     void useConfiguratorStore.persist.rehydrate();
   }, []);
+
+  // The configurator is a fixed app shell: the document itself must never scroll or rubber-band
+  // (on phones, a swipe outside the panel would otherwise move the whole page).
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.add('app-shell');
+    return () => root.classList.remove('app-shell');
+  }, []);
+
+  // Each step starts at the top of the panel, wherever the previous step was scrolled to.
+  const panelScrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    panelScrollRef.current?.scrollTo({ top: 0 });
+  }, [currentStep]);
 
   // Fetch prices from DB on mount
   useEffect(() => {
@@ -120,10 +134,12 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden relative">
-        
+      {/* Mobile: canvas on top, panel below it (both in flow, so the canvas is never hidden behind the panel).
+          Desktop: canvas left, panel right. */}
+      <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden relative">
+
         {/* 3D Canvas Area */}
-        <div className="flex-1 relative">
+        <div className="flex-1 min-h-0 relative touch-none">
           <div className="absolute inset-0">
             {children}
           </div>
@@ -161,34 +177,36 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
               </div>
             </div>
           )}
+
+          {/* Mobile Toggle Button (only visible on small screens when panel is closed) */}
+          {!isMobilePanelOpen && (
+            <button
+              onClick={() => setIsMobilePanelOpen(true)}
+              className="md:hidden absolute bottom-5 left-1/2 -translate-x-1/2 bg-[#F5A623] text-black font-bold px-6 py-3 rounded-full shadow-lg z-20 flex items-center gap-2 whitespace-nowrap"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+              </svg>
+              Personalizează Hala
+            </button>
+          )}
         </div>
 
-        {/* Mobile Toggle Button (only visible on small screens when panel is closed) */}
-        {!isMobilePanelOpen && (
-          <button
-            onClick={() => setIsMobilePanelOpen(true)}
-            className="md:hidden absolute bottom-24 left-1/2 -translate-x-1/2 bg-[#F5A623] text-black font-bold px-6 py-3 rounded-full shadow-lg z-20 flex items-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-            </svg>
-            Personalizează Hala
-          </button>
-        )}
-
         {/* Sidebar Area (Bottom Sheet on Mobile) */}
-        <div 
+        <div
           className={`
-            fixed md:relative bottom-[70px] left-0 right-0 md:bottom-auto md:left-auto md:right-auto
-            w-full md:w-[420px] 
-            ${isMobilePanelOpen ? 'h-[45vh]' : 'h-0 overflow-hidden'} md:h-full 
-            shrink-0 bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.1)] md:shadow-xl z-30 
-            flex flex-col border-t md:border-t-0 md:border-l border-gray-200 
-            transition-all duration-300 ease-in-out
+            relative w-full md:w-[420px]
+            ${isMobilePanelOpen ? 'h-[46dvh]' : 'h-0'} md:h-full
+            shrink-0 overflow-hidden bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.1)] md:shadow-xl z-30
+            flex flex-col md:border-l border-gray-200
+            transition-[height] duration-300 ease-in-out
             rounded-t-3xl md:rounded-none
           `}
         >
-          <div className="p-6 pb-24 md:p-8 overflow-y-auto h-full pt-4 md:pt-[130px] no-scrollbar">
+          <div
+            ref={panelScrollRef}
+            className="flex-1 min-h-0 px-5 pb-8 pt-3 md:p-8 md:pt-[130px] overflow-y-auto overflow-x-hidden overscroll-contain no-scrollbar"
+          >
             {/* Mobile close button / drag handle area */}
             <div 
               className="md:hidden flex justify-center pb-4 cursor-pointer"

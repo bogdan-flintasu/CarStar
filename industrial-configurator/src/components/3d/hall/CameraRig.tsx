@@ -55,7 +55,14 @@ export default function CameraRig({ layout, enabled = true, frameKey }: CameraRi
 
     if (framingDue.current) {
       framingDue.current = false;
-      const halfFov = camera instanceof PerspectiveCamera ? (camera.fov * Math.PI) / 360 : Math.PI / 4;
+      // Fit the hall's bounding sphere inside the narrower of the two view angles: on a portrait phone
+      // the horizontal angle is the limiting one, and framing by the vertical one would crop the hall's sides.
+      let halfFov = Math.PI / 4;
+      if (camera instanceof PerspectiveCamera) {
+        const halfV = (camera.fov * Math.PI) / 360;
+        const halfH = Math.atan(Math.tan(halfV) * camera.aspect);
+        halfFov = Math.min(halfV, halfH);
+      }
       const distance = (radius / Math.sin(halfFov)) * FRAMING_MARGIN;
       orbit.target.copy(centre);
       followed.current.copy(centre);

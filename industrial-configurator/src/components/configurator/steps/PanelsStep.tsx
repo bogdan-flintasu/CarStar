@@ -23,14 +23,14 @@ export default function PanelsStep() {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.3 }}
-      className="flex flex-col h-full"
+      className="flex flex-col"
     >
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-sm font-bold text-black uppercase mb-1">Structură</h3>
       </div>
 
-      <div className="space-y-8 flex-1 overflow-y-auto pr-2 pb-8">
+      <div className="space-y-8 flex-1 pb-8">
         {/* Foundation Options */}
         <div>
           <div className="mb-3">
