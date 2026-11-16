@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useShallow } from 'zustand/react/shallow';
 import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
+import { countOpenings } from '@/lib/pricing';
 import { useOpeningsStore } from '@/stores/useOpeningsStore';
 
 export default function SummaryStep() {
@@ -12,15 +14,19 @@ export default function SummaryStep() {
     isIsolated, insulation,
     getFloorArea, getNumberOfBays, getEstimatedPrice, getConfigurationData,
     prevStep,
-  } = useConfiguratorStore();
+  } = useConfiguratorStore(useShallow((s) => ({
+    length: s.length, width: s.width, height: s.height,
+    showFoundation: s.showFoundation, hasSandwichPanels: s.hasSandwichPanels,
+    isIsolated: s.isIsolated, insulation: s.insulation,
+    getFloorArea: s.getFloorArea, getNumberOfBays: s.getNumberOfBays,
+    getEstimatedPrice: s.getEstimatedPrice, getConfigurationData: s.getConfigurationData,
+    prevStep: s.prevStep,
+  })));
 
   const openings = useOpeningsStore((s) => s.openings);
 
-  const windowCount = openings.filter((o) => o.type === 'window').length;
-  const doorCount = openings.filter((o) => o.type === 'door').length;
-  const garageDoorCount = openings.filter((o) => o.type === 'garageDoor').length;
-
-  const counts = { windows: windowCount, doors: doorCount, garageDoors: garageDoorCount };
+  const counts = countOpenings(openings);
+  const { windows: windowCount, doors: doorCount, garageDoors: garageDoorCount } = counts;
   const estimatedPrice = getEstimatedPrice(counts);
   const floorArea = getFloorArea();
   const numberOfBays = getNumberOfBays();
