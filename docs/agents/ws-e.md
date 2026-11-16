@@ -17,9 +17,7 @@ const geometry = useMemo(() => wallGeometryWithHoles(wall, wallOpenings), [wall,
 ```
 - The slab is `wall.thickness` thick INWARDS from the exterior face; face at local z = 0; the mirrored left wall is handled
   inside (local x = spanH - h; mesh origin = far corner), so use `wallMeshTransform`, never `wall.origin` directly.
-- Gable walls: hole is clipped under the slope; holes are inset 2 mm from the outline (earcut); overlapping openings
-  are merged into their bounding box (a blocked conflict anyway, E7).
-- Re-build the geometry only when that wall's openings change (store `openings` array identity changes on every edit).
+- Gable: hole clipped under the slope, inset 2 mm from the outline (earcut); overlaps merge into their bounding box.
 - Pass `realHoles` to `<WallOpenings realHoles />` once walls have holes: it removes the depth mask (E2). Without it only
   windows lose the mask (they show the wall through the glass).
 - E9 needs NO change in ConfiguratorEngine: `WallOpenings`/`PlacementMarkers` hide themselves when walls are hidden
@@ -38,11 +36,12 @@ const geometry = useMemo(() => wallGeometryWithHoles(wall, wallOpenings), [wall,
   fix stays in `conflicts`. Temporary slider shrinks therefore DO move openings (they don't snap back on growing).
 - E9: `WallOpenings`/`PlacementMarkers` hide with the walls by themselves (no engine change). E11: click anywhere on a wall
   (invisible hit mesh following the gable), 0.1 m snap, ghost preview (red on conflict); the "+" markers stay as a hint.
-- E2: depth mask removed for windows; `realHoles` prop drops it for all (see integration above).
+- E2: depth mask removed for windows; `realHoles` drops it for all.
 ## Handoffs
 - F: gate "Continuă" on `useOpeningsStore(selectHasOpeningConflicts)` (exported from `@/stores/useOpeningsStore`); conflict list in `conflicts`.
 - D: the E2 lines above; optionally pass `layout={layout}`, `realHoles` to `<WallOpenings>` and `layout` to `<PlacementMarkers>`.
 - B: persisted shape unchanged (metric, v1). `WallSpan` extras are not persisted.
 ## Decisions
 - Overlapping holes merge into their bounding box; E8 re-clamps (not "remember the original"); conflicts are never auto-fixed.
-- Column conflict = opening covers any part of a column's flange width; downpipe clearance 0.1 m each side.
+- Column conflict = opening covers part of a column flange; downpipe clearance 0.1 m each side.
+- Browser check NOT done: the model stayed at "0%" in the hidden pane (>2 min). Covered by 261 tests, tsc, build.
