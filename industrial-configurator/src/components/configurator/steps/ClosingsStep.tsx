@@ -77,6 +77,9 @@ export default function ClosingsStep() {
   const removeOpening = useOpeningsStore((s) => s.removeOpening);
   const selectOpening = useOpeningsStore((s) => s.selectOpening);
   const wallSpans = useOpeningsStore((s) => s.wallSpans);
+  const conflicts = useOpeningsStore((s) => s.conflicts);
+  const conflictKinds = new Map<string, Set<string>>();
+  for (const c of conflicts) conflictKinds.set(c.openingId, (conflictKinds.get(c.openingId) ?? new Set()).add(c.kind));
 
   const selectedOpening = openings.find((o) => o.id === selectedOpeningId) || null;
   // Inputs are bounded by the selected wall; the store clamps every update to it as well.
@@ -240,6 +243,13 @@ export default function ClosingsStep() {
           </motion.div>
         )}
 
+        {conflicts.length > 0 && (
+          <div role="alert" className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+            {conflictKinds.size === 1 ? '1 deschidere are' : `${conflictKinds.size} deschideri au`} conflicte (suprapunere,
+            stâlp/cadru sau burlan). Mută sau redimensionează deschiderile marcate cu roșu înainte de a continua.
+          </div>
+        )}
+
         {/* Openings list */}
         {openings.length > 0 && (
           <div className="space-y-1.5">
@@ -253,7 +263,9 @@ export default function ClosingsStep() {
                   key={o.id}
                   onClick={() => selectOpening(o.id)}
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-all cursor-pointer ${
-                    selectedOpeningId === o.id
+                    conflictKinds.has(o.id)
+                      ? 'bg-red-50 border-2 border-red-500 text-red-700'
+                      : selectedOpeningId === o.id
                       ? 'bg-orange-50 border-2 border-[var(--color-primary)] text-black'
                       : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
                   }`}
