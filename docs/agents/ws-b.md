@@ -1,6 +1,9 @@
-# WS-B status (security & API) — branch ws-b (based on main b737f1d)
+# WS-B status (security & API) — part 1 merged (ws-b); part 2 on branch ws-b2
 
-## Done: B1, B2, B3, B4, B6 (+ B7). B5 not started (next run; F6 calculatePrice is available).
+## Done: B1-B7 (all).
+- B5 `withServerPrice(data, prices)` (`api/_lib/serverPrice.ts`, uses F6 `calculatePrice` + DB prices via
+  `getCurrentPrices()`) recomputes `estimatedPrice`, `floorArea`, `openings` on POST configurations and send-email.
+  Openings: `openingsList` if non-empty, else validated counts. Email with a link prices the *saved* config.
 - B1 `/admin/login` → `POST /api/auth/login` (bcrypt check, 10 tries/15 min/IP) sets httpOnly, SameSite=Strict,
   HMAC-SHA256-signed cookie `carstar_admin_session` (8 h). `POST /api/auth/logout`. `src/proxy.ts` redirects
   `/admin*` to login, returns 401 for `/api/admin/*`; handlers re-check with `requireAdmin()`. No credentials in client bundle.
@@ -12,7 +15,7 @@
   `configurationLink` must be `${APP_BASE_URL or request origin}/configuration/<12-char token>` for an existing
   token (else 400) and is rebuilt server-side; honeypot field `website`; 5 req/10 min/IP.
 - B6 `POST /api/configurations`: `createConfigurationSchema`, 64 KB cap (413), 30 req/10 min/IP.
-- Verified: tsc OK, 78/78 tests, build OK, 0 lint problems in B files; curl + browser login/logout on :3002.
+- Verified: tsc OK, 91/91 tests (B5: serverPrice + route tests with mocked Prisma), build OK, 0 lint in api/.
 
 ## Exported interfaces
 - `@/lib/validation` (client-safe): `configurationDataSchema`, `createConfigurationSchema`, `openingSchema`
@@ -27,6 +30,8 @@
 - Schemas strip unknown keys (config data) but reject extras on prices/login. Ranges only, no step checks.
 - Rate limits are in-memory per process; client IP from first X-Forwarded-For hop (trust only behind a proxy).
 - Without APP_BASE_URL the request origin is the allowed link origin; set APP_BASE_URL in production.
+- B5: GET /api/configurations/[token] returns the price stored at save time (no repricing of old quotes);
+  `numberOfBays` stays client-informational. Price DB failure -> 500 (no silent fallback to defaults).
 
 ## Handoffs
 - A (.env.example): `AUTH_SECRET="<openssl rand -base64 48>"` (>= 32 chars), `ADMIN_USERNAME="admin"`,
@@ -34,4 +39,4 @@
   generate: `node -e "console.log(require('bcryptjs').hashSync(process.argv[1],12))" '<password>'`),
   `APP_BASE_URL="https://your-domain"`. `next-auth` is unused and can be removed. seed.ts: import DEFAULT_PRICES from `@/lib/pricing`.
 - F (SummaryStep): add a hidden honeypot input `website` (send its value), show 400/429 errors to the user.
-- B5 (next run): recompute `estimatedPrice` server-side with `calculatePrice` in POST configurations + send-email.
+- F: client price may differ from the stored/emailed one if prices change mid-session; the server value wins.

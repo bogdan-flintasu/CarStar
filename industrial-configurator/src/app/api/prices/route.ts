@@ -1,19 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getOrSeedPrices } from '../_lib/prices';
+import { getCurrentPrices } from '../_lib/prices';
 
 // GET – Current prices, public (the configurator needs them). Auto-seeds defaults.
 export async function GET() {
   try {
-    const { structurePerM3, foundationPerM2, sandwichPerM2, windowPerUnit, doorPerUnit, bigDoorPerUnit } =
-      await getOrSeedPrices();
-    return NextResponse.json({
-      structurePerM3,
-      foundationPerM2,
-      sandwichPerM2,
-      windowPerUnit,
-      doorPerUnit,
-      bigDoorPerUnit,
-    });
+    return NextResponse.json(await getCurrentPrices());
   } catch (error) {
     console.error('Failed to fetch prices:', error);
     return NextResponse.json({ error: 'Failed to fetch prices' }, { status: 500 });
