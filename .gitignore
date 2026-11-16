@@ -68,3 +68,4 @@ assets/blender/**/*.blend
 # ─── Generated / downloaded junk ────────────────────────────────────────────
 *.deb
 industrial-configurator/src/generated/
+.claude/worktrees/
