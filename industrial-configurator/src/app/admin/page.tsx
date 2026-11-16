@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface PricesData {
   id: string;
@@ -23,76 +24,9 @@ interface ConfigData {
   userPhone: string | null;
 }
 
-// ─── Login Screen ─────────────────────────────────────────────────────────────
-function LoginScreen({ onLogin }: { onLogin: () => void }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (username === 'admin' && password === 'admin') {
-      onLogin();
-    } else {
-      setError('Credențiale invalide');
-      setTimeout(() => setError(''), 3000);
-    }
-  };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 50%, #0f0f0f 100%)' }}>
-      <div className="w-full max-w-md mx-4">
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-block text-3xl font-extrabold tracking-tight select-none mb-2">
-            <span className="text-white">Car</span>
-            <span className="text-[#F5A623]">Star</span>
-          </Link>
-          <p className="text-gray-500 text-sm font-medium">Panou de Administrare</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
-          <h2 className="text-xl font-bold text-white mb-6">Autentificare</h2>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1.5">Utilizator</label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-600 outline-none focus:border-[#F5A623]/50 transition-colors"
-                placeholder="admin"
-                autoFocus
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1.5">Parolă</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-gray-600 outline-none focus:border-[#F5A623]/50 transition-colors"
-                placeholder="••••••"
-              />
-            </div>
-          </div>
-
-          {error && (
-            <div className="mt-4 px-4 py-2.5 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm font-medium">
-              {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            className="w-full mt-6 py-3 rounded-xl bg-[#F5A623] text-black font-bold text-sm hover:bg-[#e6951a] transition-colors cursor-pointer shadow-lg shadow-[#F5A623]/20"
-          >
-            Intră în Panou
-          </button>
-        </form>
-      </div>
-    </div>
-  );
+interface ConfigPage {
+  items: ConfigData[];
+  nextCursor: string | null;
 }
 
 // ─── Price Field ──────────────────────────────────────────────────────────────
@@ -133,34 +67,86 @@ function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<'prices' | 'configs'>('prices');
   const [prices, setPrices] = useState<PricesData | null>(null);
   const [configs, setConfigs] = useState<ConfigData[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  /** fetch() for admin endpoints: an expired session sends the user back to login. */
+  const adminFetch = useCallback(
+    async (input: string, init?: RequestInit) => {
+      const res = await fetch(input, { ...init, cache: 'no-store' });
+      if (res.status === 401) {
+        router.replace('/admin/login?next=/admin');
+        throw new Error('Session expired');
+      }
+      return res;
+    },
+    [router],
+  );
 
   // Fetch prices
   useEffect(() => {
-    fetch('/api/prices')
+    adminFetch('/api/admin/prices')
       .then((r) => r.json())
       .then((data) => setPrices(data))
       .catch((err) => console.error('Failed to load prices:', err))
       .finally(() => setLoading(false));
-  }, []);
+  }, [adminFetch]);
 
-  // Fetch configs when tab switches
+  const loadConfigs = useCallback(
+    async (cursor: string | null) => {
+      const qs = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
+      const res = await adminFetch(`/api/admin/configurations${qs}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return (await res.json()) as ConfigPage;
+    },
+    [adminFetch],
+  );
+
+  // Fetch the first page of configs when the tab opens
   useEffect(() => {
-    if (activeTab === 'configs') {
-      fetch('/api/configurations')
-        .then((r) => r.json())
-        .then((data) => setConfigs(data))
-        .catch((err) => console.error('Failed to load configs:', err));
+    if (activeTab !== 'configs') return;
+    loadConfigs(null)
+      .then((page) => {
+        setConfigs(page.items);
+        setNextCursor(page.nextCursor);
+      })
+      .catch((err) => console.error('Failed to load configs:', err));
+  }, [activeTab, loadConfigs]);
+
+  const handleLoadMore = async () => {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const page = await loadConfigs(nextCursor);
+      setConfigs((prev) => [...prev, ...page.items]);
+      setNextCursor(page.nextCursor);
+    } catch (err) {
+      console.error('Failed to load configs:', err);
+    } finally {
+      setLoadingMore(false);
     }
-  }, [activeTab]);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } finally {
+      router.replace('/admin/login');
+      router.refresh();
+    }
+  };
 
   const handleSavePrices = async () => {
     if (!prices) return;
     setSaving(true);
+    setSaveError('');
     try {
-      const res = await fetch('/api/prices', {
+      const res = await adminFetch('/api/admin/prices', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -172,6 +158,14 @@ function AdminDashboard() {
           bigDoorPerUnit: prices.bigDoorPerUnit,
         }),
       });
+      if (!res.ok) {
+        setSaveError(
+          res.status === 400
+            ? 'Valori invalide: fiecare preț trebuie să fie un număr între 0 și 1.000.000.'
+            : 'Salvarea a eșuat. Încearcă din nou.',
+        );
+        return;
+      }
       const updated = await res.json();
       setPrices(updated);
       setSaved(true);
@@ -209,12 +203,21 @@ function AdminDashboard() {
             <span className="text-gray-600">|</span>
             <span className="text-sm font-medium text-gray-400">Admin</span>
           </div>
-          <Link
-            href="/"
-            className="text-sm text-gray-500 hover:text-white transition-colors font-medium"
-          >
-            ← Înapoi la site
-          </Link>
+          <div className="flex items-center gap-6">
+            <Link
+              href="/"
+              className="text-sm text-gray-500 hover:text-white transition-colors font-medium"
+            >
+              ← Înapoi la site
+            </Link>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="text-sm text-gray-500 hover:text-white transition-colors font-medium cursor-pointer"
+            >
+              Deconectare
+            </button>
+          </div>
         </div>
       </header>
 
@@ -260,6 +263,12 @@ function AdminDashboard() {
                 {saving ? 'Se salvează...' : saved ? '✓ Salvat' : 'Salvează'}
               </button>
             </div>
+
+            {saveError && (
+              <div role="alert" className="mb-4 px-4 py-2.5 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm font-medium">
+                {saveError}
+              </div>
+            )}
 
             <div className="space-y-0">
               <PriceField
@@ -371,6 +380,18 @@ function AdminDashboard() {
                 );
               })
             )}
+            {nextCursor && (
+              <div className="pt-2 text-center">
+                <button
+                  type="button"
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  className="px-6 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-gray-300 hover:text-white hover:border-white/20 transition-colors font-medium cursor-pointer disabled:opacity-50"
+                >
+                  {loadingMore ? 'Se încarcă...' : 'Încarcă mai multe'}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -379,12 +400,8 @@ function AdminDashboard() {
 }
 
 // ─── Page Component ───────────────────────────────────────────────────────────
+// Access is enforced server-side: src/proxy.ts redirects to /admin/login without
+// a valid session, and every /api/admin/* handler re-checks it.
 export default function AdminPage() {
-  const [authenticated, setAuthenticated] = useState(false);
-
-  if (!authenticated) {
-    return <LoginScreen onLogin={() => setAuthenticated(true)} />;
-  }
-
   return <AdminDashboard />;
 }
