@@ -181,7 +181,7 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
           className={`
             fixed md:relative bottom-[70px] left-0 right-0 md:bottom-auto md:left-auto md:right-auto
             w-full md:w-[420px] 
-            ${isMobilePanelOpen ? 'h-[60vh]' : 'h-0 overflow-hidden'} md:h-full 
+            ${isMobilePanelOpen ? 'h-[45vh]' : 'h-0 overflow-hidden'} md:h-full 
             shrink-0 bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.1)] md:shadow-xl z-30 
             flex flex-col border-t md:border-t-0 md:border-l border-gray-200 
             transition-all duration-300 ease-in-out
