@@ -43,11 +43,13 @@ const WEAK_GPU_PATTERNS = [
   /adreno.*[23]\d\d/i,           // Adreno 2xx / 3xx
   /powervr sgx/i,
   /intel.*hd.*[234]\d{3}/i,      // Intel HD 2000-4000
-  /apple gpu/i,                   // Generic Apple (A9 and below report this)
   /swiftshader/i,                 // Software renderer
 ];
 
 const MID_GPU_PATTERNS = [
+  // Every iPhone/iPad reports just "Apple GPU" (Safari hides the model), from old A9s to current chips:
+  // rate it mid-range rather than weak, so phones are not all forced onto the lowest-detail models.
+  /apple gpu/i,
   /adreno.*[45]\d\d/i,            // Adreno 4xx / 5xx
   /mali-g[57]\d/i,                // Mali-G5x, G7x
   /intel.*iris/i,

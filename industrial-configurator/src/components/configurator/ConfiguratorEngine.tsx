@@ -89,7 +89,7 @@ export default function ConfiguratorEngine() {
       <ambientLight intensity={0.5} />
       {gfx.enableSky && <Sky distance={450000} sunPosition={[-5, 10, 5]} inclination={0} azimuth={0.25} />}
       {gfx.enableEnvironment && <Environment preset="city" />}
-      <Ground layout={layout} textured={!gfx.isMobile} />
+      <Ground layout={layout} textured={gfx.tier !== 'low'} />
 
       <CameraRig layout={layout} enabled={!isDraggingOpening} frameKey={framingRequests} />
 

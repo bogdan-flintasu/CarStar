@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useEffect, useCallback, useRef, useSyncExternalStore } from 'react';
+import { Suspense, useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,11 +21,6 @@ const LandingScene = dynamic(() => import('@/components/landing/LandingScene'), 
 export default function LandingPage() {
   const [hasScrolled, setHasScrolled] = useState(false);
   const [modelReady, setModelReady] = useState(false);
-  const isMobile = useSyncExternalStore(
-    () => () => {},
-    () => window.innerWidth < 768 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent),
-    () => false,
-  );
   const [useFallback, setUseFallback] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const fallbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -36,23 +31,16 @@ export default function LandingPage() {
     const originalBackground = document.body.style.backgroundColor;
     document.body.style.backgroundColor = '#0a0b0d';
 
-    let mobileTimer: ReturnType<typeof setTimeout> | undefined;
+    // Phones get the same 3D walkthrough as desktop. If it has not loaded in time (slow network,
+    // no WebGL), fall back to the static image so the page is never stuck behind the loader.
     const mobile = window.innerWidth < 768 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-    if (mobile) {
-      // Mobile: skip 3D entirely, mark as ready immediately
-      mobileTimer = setTimeout(() => setModelReady(true), 0);
-    } else {
-      // Desktop: start a 15s fallback timer — if 3D hasn't loaded, show the image
-      fallbackTimer.current = setTimeout(() => {
-        setUseFallback(true);
-        setModelReady(true); // dismiss the loading spinner
-      }, 15000);
-    }
+    fallbackTimer.current = setTimeout(() => {
+      setUseFallback(true);
+      setModelReady(true); // dismiss the loading spinner
+    }, mobile ? 20000 : 15000);
 
     return () => {
       document.body.style.backgroundColor = originalBackground;
-      if (mobileTimer) clearTimeout(mobileTimer);
       if (fallbackTimer.current) clearTimeout(fallbackTimer.current);
     };
   }, []);
@@ -81,12 +69,12 @@ export default function LandingPage() {
     setModelReady(true);
   }, []);
 
-  // Should we show the 3D canvas? Only on desktop when fallback hasn't kicked in
-  const show3D = !isMobile && !useFallback;
+  // The 3D canvas is shown on every device unless the load-time fallback kicked in.
+  const show3D = !useFallback;
 
   return (
     <div className="relative landing-theme" data-version="2">
-      {/* Full-screen loading overlay — only on desktop while 3D loads */}
+      {/* Full-screen loading overlay while the 3D scene loads */}
       <AnimatePresence>
         {!modelReady && (
           <motion.div
@@ -170,14 +158,14 @@ export default function LandingPage() {
 
       {/* Background layer */}
       {show3D ? (
-        /* Desktop: Full 3D canvas */
+        /* Full 3D canvas (desktop and mobile) */
         <div className="fixed top-0 left-0 w-full h-[120vh] z-0">
           <Suspense fallback={<div className="w-full h-full bg-[var(--color-bg-primary)]" />}>
             <LandingScene onReady={handleModelReady} />
           </Suspense>
         </div>
       ) : (
-        /* Mobile OR Desktop fallback: Static image background */
+        /* Fallback when the 3D scene did not load in time: static image */
         <div
           className="fixed top-0 left-0 w-full h-[120vh] z-0"
           style={{

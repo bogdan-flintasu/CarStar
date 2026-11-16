@@ -54,7 +54,15 @@ body {
   color: var(--color-text-primary);
 }
 
-/* ─── Scrollbar Styling ────────────────────────────────────────────────────── */
+/* App-shell routes (the configurator): the document never scrolls or rubber-bands; only inner panels do. */
+html.app-shell,
+html.app-shell body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* ─── Scrollbar Styling────────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 6px;
 }

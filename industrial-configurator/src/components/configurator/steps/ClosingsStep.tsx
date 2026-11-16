@@ -107,14 +107,14 @@ export default function ClosingsStep() {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.3 }}
-      className="flex flex-col h-full"
+      className="flex flex-col"
     >
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-sm font-bold text-black uppercase mb-1">Ferestre și Uși</h3>
       </div>
 
-      <div className="space-y-4 flex-1 overflow-y-auto">
+      <div className="space-y-4 flex-1">
         {/* Tool buttons */}
         <div className="flex gap-2">
           {tools.map((tool) => {

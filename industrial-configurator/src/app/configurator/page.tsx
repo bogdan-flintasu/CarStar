@@ -35,7 +35,7 @@ function GlobalLoader() {
 
 export default function ConfiguratorPage() {
   return (
-    <main className="w-full h-screen overflow-hidden bg-[var(--color-bg-primary)]">
+    <main className="w-full h-[100dvh] overflow-hidden bg-[var(--color-bg-primary)]">
       <GlobalLoader />
       <ConfiguratorLayout>
         <ConfiguratorEngine />
