@@ -36,6 +36,5 @@
 ## Handoffs
 - **Orchestrator/C**: `public/models/da-draco.glb` is no longer referenced by any code: it can be deleted. C: consider
   `Panel` metallicFactor ~0.35 in the GLB so `PANEL_METALNESS` in `materials.ts` can go.
-- **F**: call `requestHallFraming()` (`@/components/3d/hall/framing`) in `ConfigHeader.handleReset`; today a reset from the
-  default size does not reframe. `gfx.landingFrameCount` is removed (was only used by the old landing scene).
+- **F**: call `requestHallFraming()` (`@/components/3d/hall/framing`) in `ConfigHeader.handleReset`; `gfx.landingFrameCount` is gone.
 - Not checked at full resolution (pane is ~760 px wide): shadow acne on cladding, roof texture scale; openings in the browser.
