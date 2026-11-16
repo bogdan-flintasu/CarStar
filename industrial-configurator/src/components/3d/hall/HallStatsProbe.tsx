@@ -10,14 +10,14 @@
  *   expectedFrames, purlinsPerSide, eaveY, ridgeY
  *                          computed by computeHallLayout for `params`: what the hall should have
  *   ready                  the hall is in the scene and has been drawn
+ *
+ * `window.__hallAdvance()` renders one frame now. The canvas renders on demand through requestAnimationFrame, which
+ * a hidden or background tab never fires: automated checks call this first, then read `__hallStats`.
  */
 import { useEffect } from 'react';
 import { addAfterEffect, useThree } from '@react-three/fiber';
-import type { Object3D } from 'three';
+import type { InstancedMesh, Object3D } from 'three';
 import type { HallLayout } from '@/lib/hall';
-
-/** `legacy`: the original cloned-GLB engine (Configurator.tsx). `layout`: the engine built on computeHallLayout. */
-export type HallEngine = 'legacy' | 'layout';
 
 export interface HallStats {
   triangles: number;
@@ -28,7 +28,6 @@ export interface HallStats {
   eaveY: number;
   ridgeY: number;
   renderFrame: number;
-  engine: HallEngine;
   params: { w: number; h: number; l: number };
   ready: boolean;
 }
@@ -36,39 +35,31 @@ export interface HallStats {
 declare global {
   interface Window {
     __hallStats?: HallStats;
+    __hallAdvance?: () => void;
   }
 }
 
-/** Depth-first search that stops at the first match. */
-function findObject(root: Object3D, matches: (object: Object3D) => boolean): Object3D | undefined {
-  if (matches(root)) return root;
-  for (const child of root.children) {
-    const found = findObject(child, matches);
-    if (found) return found;
-  }
-  return undefined;
-}
-
-/** The legacy engine keeps one clone of the model per frame in an unnamed group and tags them `isBase`. */
-function countLegacyFrames(scene: Object3D): number {
-  return findObject(scene, (object) => object.userData.isBase === true)?.parent?.children.length ?? 0;
+/** Portal frames actually drawn: the instanced columns in the scene, two per frame. */
+function countFrames(scene: Object3D): number {
+  const columns = scene.getObjectByName('Column') as InstancedMesh | undefined;
+  return (columns?.count ?? 0) / 2;
 }
 
 interface HallStatsProbeProps {
   layout: HallLayout;
-  engine: HallEngine;
 }
 
-export default function HallStatsProbe({ layout, engine }: HallStatsProbeProps) {
+export default function HallStatsProbe({ layout }: HallStatsProbeProps) {
   const gl = useThree((state) => state.gl);
   const scene = useThree((state) => state.scene);
+  const advance = useThree((state) => state.advance);
 
   useEffect(() => {
     if (process.env.NODE_ENV === 'production') return;
 
     const publish = () => {
       const { triangles, calls, frame } = gl.info.render;
-      const frames = engine === 'legacy' ? countLegacyFrames(scene) : layout.frames.length;
+      const frames = countFrames(scene);
       window.__hallStats = {
         triangles,
         drawCalls: calls,
@@ -78,18 +69,19 @@ export default function HallStatsProbe({ layout, engine }: HallStatsProbeProps) 
         eaveY: layout.eaveY,
         ridgeY: layout.ridgeY,
         renderFrame: frame,
-        engine,
         params: { w: layout.params.width, h: layout.params.height, l: layout.params.length },
         ready: frames > 0 && triangles > 0,
       };
     };
 
     const unsubscribe = addAfterEffect(publish);
+    window.__hallAdvance = () => advance(performance.now(), true);
     return () => {
       unsubscribe();
       delete window.__hallStats;
+      delete window.__hallAdvance;
     };
-  }, [gl, scene, layout, engine]);
+  }, [gl, scene, layout, advance]);
 
   return null;
 }
