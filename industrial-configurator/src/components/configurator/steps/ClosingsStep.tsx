@@ -1,9 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
-import { useOpeningsStore } from '@/stores/useOpeningsStore';
+import { useOpeningsStore, MIN_OPENING_SIZE } from '@/stores/useOpeningsStore';
 import type { OpeningType } from '@/stores/useOpeningsStore';
+import { countOpenings } from '@/lib/pricing';
+import { wallLabelRo } from '@/lib/i18n/ro';
 
 // ─── Custom SVG Icons ─────────────────────────────────────────────────────────
 function WindowIcon({ className = 'w-7 h-7' }: { className?: string }) {
@@ -69,8 +70,6 @@ const LABEL_MAP: Record<OpeningType, string> = {
 };
 
 export default function ClosingsStep() {
-  const { nextStep, prevStep } = useConfiguratorStore();
-
   const activeTool = useOpeningsStore((s) => s.activeTool);
   const setActiveTool = useOpeningsStore((s) => s.setActiveTool);
   const selectedOpeningId = useOpeningsStore((s) => s.selectedOpeningId);
@@ -78,8 +77,16 @@ export default function ClosingsStep() {
   const updateOpening = useOpeningsStore((s) => s.updateOpening);
   const removeOpening = useOpeningsStore((s) => s.removeOpening);
   const selectOpening = useOpeningsStore((s) => s.selectOpening);
+  const wallSpans = useOpeningsStore((s) => s.wallSpans);
+  const conflicts = useOpeningsStore((s) => s.conflicts);
+  const conflictKinds = new Map<string, Set<string>>();
+  for (const c of conflicts) conflictKinds.set(c.openingId, (conflictKinds.get(c.openingId) ?? new Set()).add(c.kind));
 
   const selectedOpening = openings.find((o) => o.id === selectedOpeningId) || null;
+  // Inputs are bounded by the selected wall; the store clamps every update to it as well.
+  const selectedWall = selectedOpening && wallSpans ? wallSpans[selectedOpening.wallId] : null;
+  const maxWidth = selectedWall ? Math.floor(selectedWall.length * 10) / 10 : undefined;
+  const maxHeight = selectedWall ? Math.floor(selectedWall.height * 10) / 10 : undefined;
 
   const tools: { type: OpeningType; label: string }[] = [
     { type: 'window', label: 'Geamuri' },
@@ -92,9 +99,7 @@ export default function ClosingsStep() {
   };
 
   // Count openings by type
-  const windowCount = openings.filter((o) => o.type === 'window').length;
-  const doorCount = openings.filter((o) => o.type === 'door').length;
-  const garageDoorCount = openings.filter((o) => o.type === 'garageDoor').length;
+  const { windows: windowCount, doors: doorCount, garageDoors: garageDoorCount } = countOpenings(openings);
 
   return (
     <motion.div
@@ -199,13 +204,13 @@ export default function ClosingsStep() {
                 <input
                   type="number"
                   value={Math.round(selectedOpening.width * 100) / 100}
-                  min={0.3}
-                  max={20}
+                  min={MIN_OPENING_SIZE}
+                  max={maxWidth}
                   step={0.1}
                   className="w-12 text-right outline-none text-black font-medium"
                   onChange={(e) => {
                     const val = parseFloat(e.target.value);
-                    if (!isNaN(val) && val >= 0.3) updateOpening(selectedOpening.id, { width: val });
+                    if (!isNaN(val) && val >= MIN_OPENING_SIZE) updateOpening(selectedOpening.id, { width: val });
                   }}
                 />
                 <span className="text-gray-500 ml-1">m</span>
@@ -219,13 +224,13 @@ export default function ClosingsStep() {
                 <input
                   type="number"
                   value={Math.round(selectedOpening.height * 100) / 100}
-                  min={0.3}
-                  max={10}
+                  min={MIN_OPENING_SIZE}
+                  max={maxHeight}
                   step={0.1}
                   className="w-12 text-right outline-none text-black font-medium"
                   onChange={(e) => {
                     const val = parseFloat(e.target.value);
-                    if (!isNaN(val) && val >= 0.3) updateOpening(selectedOpening.id, { height: val });
+                    if (!isNaN(val) && val >= MIN_OPENING_SIZE) updateOpening(selectedOpening.id, { height: val });
                   }}
                 />
                 <span className="text-gray-500 ml-1">m</span>
@@ -234,9 +239,16 @@ export default function ClosingsStep() {
 
             {/* Wall info */}
             <div className="text-xs text-gray-500 font-medium pt-3 border-t border-gray-100">
-              Perete: {selectedOpening.wallId.replace('PereteFata', 'Față').replace('PereteSpate', 'Spate').replace('PereteSTG', 'Stânga').replace('PereteDR', 'Dreapta')}
+              Perete: {wallLabelRo(selectedOpening.wallId)}
             </div>
           </motion.div>
+        )}
+
+        {conflicts.length > 0 && (
+          <div role="alert" className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+            {conflictKinds.size === 1 ? '1 deschidere are' : `${conflictKinds.size} deschideri au`} conflicte (suprapunere,
+            stâlp/cadru sau burlan). Mută sau redimensionează deschiderile marcate cu roșu înainte de a continua.
+          </div>
         )}
 
         {/* Openings list */}
@@ -252,7 +264,9 @@ export default function ClosingsStep() {
                   key={o.id}
                   onClick={() => selectOpening(o.id)}
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-all cursor-pointer ${
-                    selectedOpeningId === o.id
+                    conflictKinds.has(o.id)
+                      ? 'bg-red-50 border-2 border-red-500 text-red-700'
+                      : selectedOpeningId === o.id
                       ? 'bg-orange-50 border-2 border-[var(--color-primary)] text-black'
                       : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
                   }`}
@@ -264,7 +278,7 @@ export default function ClosingsStep() {
                     </span>
                   </div>
                   <span className="text-xs text-gray-400 font-medium">
-                    {o.wallId.replace('PereteFata', 'Față').replace('PereteSpate', 'Spate').replace('PereteSTG', 'Stânga').replace('PereteDR', 'Dreapta')}
+                    {wallLabelRo(o.wallId)}
                   </span>
                 </button>
               );

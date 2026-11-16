@@ -1,8 +1,11 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState, useSyncExternalStore } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
+import { useShallow } from 'zustand/react/shallow';
+import { useOpeningsStore } from '@/stores/useOpeningsStore';
+import { calculatePrice, countOpenings } from '@/lib/pricing';
 import { getGraphicsSettings } from '@/lib/hardwareTier';
 import ConfigHeader from './ConfigHeader';
 import ConfigFooter from './ConfigFooter';
@@ -11,23 +14,39 @@ import PanelsStep from './steps/PanelsStep';
 import ClosingsStep from './steps/ClosingsStep';
 import SummaryStep from './steps/SummaryStep';
 
+function readDismissed(): boolean {
+  try {
+    return !!sessionStorage.getItem('desktop-banner-dismissed');
+  } catch {
+    return false;
+  }
+}
+
 export default function ConfiguratorLayout({ children }: { children: ReactNode }) {
-  const { currentStep, setStep, length, width, height, getEstimatedPrice, setPrices } = useConfiguratorStore();
-  const [isMounted, setIsMounted] = useState(false);
+  const currentStep = useConfiguratorStore((s) => s.currentStep);
+  const setStep = useConfiguratorStore((s) => s.setStep);
+  const setPrices = useConfiguratorStore((s) => s.setPrices);
+  const length = useConfiguratorStore((s) => s.length);
+  const width = useConfiguratorStore((s) => s.width);
+  const height = useConfiguratorStore((s) => s.height);
+  const showFoundation = useConfiguratorStore((s) => s.showFoundation);
+  const hasSandwichPanels = useConfiguratorStore((s) => s.hasSandwichPanels);
+  const prices = useConfiguratorStore((s) => s.prices);
+  // false on the server and during hydration, true afterwards (avoids persist hydration mismatch)
+  const isMounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(true);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
   // Desktop recommendation banner (dismissible, per-session)
-  const [showDesktopBanner, setShowDesktopBanner] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const showDesktopBanner = isMounted && !bannerDismissed && getGraphicsSettings().isMobile && !readDismissed();
+
+  // Persisted state is rehydrated on the client only (skipHydration), so the shell renders on the server.
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const gfx = getGraphicsSettings();
-    if (gfx.isMobile && !sessionStorage.getItem('desktop-banner-dismissed')) {
-      setShowDesktopBanner(true);
-    }
+    void useConfiguratorStore.persist.rehydrate();
   }, []);
 
   // Fetch prices from DB on mount
@@ -49,13 +68,15 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
       .catch((err) => console.error('Failed to fetch prices:', err));
   }, [setPrices]);
   
-  // Need to get openings to calculate price
-  const { openings } = require('@/stores/useOpeningsStore').useOpeningsStore();
-  const windowCount = openings.filter((o: any) => o.type === 'window').length;
-  const doorCount = openings.filter((o: any) => o.type === 'door').length;
-  const garageDoorCount = openings.filter((o: any) => o.type === 'garageDoor').length;
-  const counts = { windows: windowCount, doors: doorCount, garageDoors: garageDoorCount };
-  const estimatedPrice = getEstimatedPrice(counts);
+  // Openings only matter for the price: subscribe to the counts, not the whole list
+  const counts = useOpeningsStore(
+    useShallow((s) => countOpenings(s.openings)),
+  );
+  const estimatedPrice = calculatePrice(
+    { length, width, height, showFoundation, hasSandwichPanels },
+    counts,
+    prices,
+  );
 
   const renderStep = () => {
     switch (currentStep) {
@@ -72,16 +93,11 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
     }
   };
 
-  if (!isMounted) {
-    // Prevent hydration mismatch by rendering a blank/loading screen on the server
-    return <div className="w-full h-screen bg-[#F8F9FA]" />;
-  }
-
   return (
     <div className="w-full h-[100dvh] flex flex-col bg-[#F8F9FA] overflow-hidden">
       {/* Header */}
       <div className="shrink-0">
-        <ConfigHeader currentStep={currentStep as any} onStepClick={setStep as any} />
+        <ConfigHeader currentStep={currentStep} onStepClick={setStep} />
       </div>
       {/* Desktop recommendation banner for mobile */}
       {showDesktopBanner && (
@@ -91,7 +107,7 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
           </p>
           <button 
             onClick={() => {
-              setShowDesktopBanner(false);
+              setBannerDismissed(true);
               sessionStorage.setItem('desktop-banner-dismissed', '1');
             }}
             className="shrink-0 text-gray-400 hover:text-gray-600 p-1"
@@ -165,7 +181,7 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
           className={`
             fixed md:relative bottom-[70px] left-0 right-0 md:bottom-auto md:left-auto md:right-auto
             w-full md:w-[420px] 
-            ${isMobilePanelOpen ? 'h-[60vh]' : 'h-0 overflow-hidden'} md:h-full 
+            ${isMobilePanelOpen ? 'h-[45vh]' : 'h-0 overflow-hidden'} md:h-full 
             shrink-0 bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.1)] md:shadow-xl z-30 
             flex flex-col border-t md:border-t-0 md:border-l border-gray-200 
             transition-all duration-300 ease-in-out

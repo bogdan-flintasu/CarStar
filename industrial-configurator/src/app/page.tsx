@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useEffect, useCallback, useRef } from 'react';
+import { Suspense, useState, useEffect, useCallback, useRef, useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,7 +21,11 @@ const LandingScene = dynamic(() => import('@/components/landing/LandingScene'), 
 export default function LandingPage() {
   const [hasScrolled, setHasScrolled] = useState(false);
   const [modelReady, setModelReady] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useSyncExternalStore(
+    () => () => {},
+    () => window.innerWidth < 768 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent),
+    () => false,
+  );
   const [useFallback, setUseFallback] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const fallbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -32,12 +36,12 @@ export default function LandingPage() {
     const originalBackground = document.body.style.backgroundColor;
     document.body.style.backgroundColor = '#0a0b0d';
 
+    let mobileTimer: ReturnType<typeof setTimeout> | undefined;
     const mobile = window.innerWidth < 768 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    setIsMobile(mobile);
 
     if (mobile) {
       // Mobile: skip 3D entirely, mark as ready immediately
-      setModelReady(true);
+      mobileTimer = setTimeout(() => setModelReady(true), 0);
     } else {
       // Desktop: start a 15s fallback timer — if 3D hasn't loaded, show the image
       fallbackTimer.current = setTimeout(() => {
@@ -48,14 +52,15 @@ export default function LandingPage() {
 
     return () => {
       document.body.style.backgroundColor = originalBackground;
+      if (mobileTimer) clearTimeout(mobileTimer);
       if (fallbackTimer.current) clearTimeout(fallbackTimer.current);
     };
   }, []);
 
   useEffect(() => {
     if (window.scrollY > 10) {
-      setHasScrolled(true);
-      return;
+      const t = setTimeout(() => setHasScrolled(true), 0);
+      return () => clearTimeout(t);
     }
     const handleScroll = () => {
       if (window.scrollY > 10) {

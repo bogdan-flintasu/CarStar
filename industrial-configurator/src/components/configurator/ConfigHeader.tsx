@@ -4,6 +4,7 @@ import Link from 'next/link';
 import StepIndicator from './StepIndicator';
 import type { ConfigStep } from '@/stores/useConfiguratorStore';
 import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
+import { requestHallFraming } from '@/components/3d/hall/framing';
 import { useOpeningsStore } from '@/stores/useOpeningsStore';
 
 interface ConfigHeaderProps {
@@ -18,6 +19,7 @@ export default function ConfigHeader({ currentStep, onStepClick }: ConfigHeaderP
   const handleReset = () => {
     resetConfigurator();
     resetOpenings();
+    requestHallFraming();
   };
 
   return (

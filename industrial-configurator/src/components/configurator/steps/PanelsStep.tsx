@@ -1,16 +1,21 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useShallow } from 'zustand/react/shallow';
 import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
 
 export default function PanelsStep() {
   const {
     showFoundation, setShowFoundation,
     hasSandwichPanels, setHasSandwichPanels,
-    isIsolated, setIsIsolated,
+    setIsIsolated,
     insulation, setInsulation,
-    nextStep, prevStep,
-  } = useConfiguratorStore();
+  } = useConfiguratorStore(useShallow((s) => ({
+    showFoundation: s.showFoundation, setShowFoundation: s.setShowFoundation,
+    hasSandwichPanels: s.hasSandwichPanels, setHasSandwichPanels: s.setHasSandwichPanels,
+    setIsIsolated: s.setIsIsolated,
+    insulation: s.insulation, setInsulation: s.setInsulation,
+  })));
 
   return (
     <motion.div

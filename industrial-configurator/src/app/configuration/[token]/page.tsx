@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
 import { useOpeningsStore } from '@/stores/useOpeningsStore';
-import type { Opening } from '@/stores/useOpeningsStore';
+import { requestHallFraming } from '@/components/3d/hall/framing';
+import { configurationDataSchema } from '@/lib/validation/configuration';
 
 export default function ConfigurationTokenPage() {
   const params = useParams();
@@ -12,15 +14,17 @@ export default function ConfigurationTokenPage() {
   const token = params.token as string;
 
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
 
-  const {
-    setLength, setWidth, setHeight,
-    setShowFoundation, setHasSandwichPanels,
-    setIsIsolated, setInsulation,
-  } = useConfiguratorStore();
-
+  const setLength = useConfiguratorStore((s) => s.setLength);
+  const setWidth = useConfiguratorStore((s) => s.setWidth);
+  const setHeight = useConfiguratorStore((s) => s.setHeight);
+  const setShowFoundation = useConfiguratorStore((s) => s.setShowFoundation);
+  const setHasSandwichPanels = useConfiguratorStore((s) => s.setHasSandwichPanels);
+  const setIsIsolated = useConfiguratorStore((s) => s.setIsIsolated);
+  const setInsulation = useConfiguratorStore((s) => s.setInsulation);
+  const resetConfigurator = useConfiguratorStore((s) => s.resetConfigurator);
   const setOpenings = useOpeningsStore((s) => s.setOpenings);
+  const resetOpenings = useOpeningsStore((s) => s.resetOpenings);
 
   useEffect(() => {
     if (!token) return;
@@ -31,26 +35,27 @@ export default function ConfigurationTokenPage() {
         return res.json();
       })
       .then((config) => {
-        const data = config.data as Record<string, unknown>;
-        const dims = data.dimensions as { length?: number; width?: number; height?: number } | undefined;
+        const parsed = configurationDataSchema.safeParse(config.data);
+        if (!parsed.success) throw new Error('Invalid configuration data');
+        const data = parsed.data;
 
-        // Restore dimensions
-        if (dims?.length) setLength(dims.length);
-        if (dims?.width) setWidth(dims.width);
-        if (dims?.height) setHeight(dims.height);
+        // Start from a clean slate so nothing from a previous session leaks in
+        resetConfigurator();
+        resetOpenings();
 
-        // Restore toggles
-        if (typeof data.foundation === 'boolean') setShowFoundation(data.foundation);
-        if (typeof data.sandwichPanels === 'boolean') setHasSandwichPanels(data.sandwichPanels);
-        if (typeof data.insulation === 'number' && data.insulation > 0) {
+        setLength(data.dimensions.length);
+        setWidth(data.dimensions.width);
+        setHeight(data.dimensions.height);
+        setShowFoundation(data.foundation);
+        setHasSandwichPanels(data.sandwichPanels);
+        if (data.insulation > 0) {
           setIsIsolated(true);
-          setInsulation(data.insulation as number);
+          setInsulation(data.insulation);
         }
+        // setOpenings normalises legacy (posX/posY) openings itself
+        setOpenings(data.openingsList);
 
-        // Restore openings if available
-        if (Array.isArray(data.openingsList)) {
-          setOpenings(data.openingsList as Opening[]);
-        }
+        requestHallFraming();
 
         // Redirect to configurator
         router.push('/configurator');
@@ -58,9 +63,8 @@ export default function ConfigurationTokenPage() {
       .catch((err) => {
         console.error('Failed to load configuration:', err);
         setError('Configurarea nu a fost găsită.');
-        setLoading(false);
       });
-  }, [token, router, setLength, setWidth, setHeight, setShowFoundation, setHasSandwichPanels, setIsIsolated, setInsulation, setOpenings]);
+  }, [token, router, resetConfigurator, resetOpenings, setLength, setWidth, setHeight, setShowFoundation, setHasSandwichPanels, setIsIsolated, setInsulation, setOpenings]);
 
   if (error) {
     return (
@@ -73,12 +77,12 @@ export default function ConfigurationTokenPage() {
           </div>
           <h1 className="text-xl font-bold text-white mb-2">Eroare</h1>
           <p className="text-gray-500 text-sm mb-6">{error}</p>
-          <a
+          <Link
             href="/"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#F5A623] text-black font-bold text-sm hover:bg-[#e6951a] transition-colors"
           >
             Înapoi la Pagina Principală
-          </a>
+          </Link>
         </div>
       </div>
     );

@@ -1,32 +1,56 @@
 'use client';
 
+import { useEffect, useMemo } from 'react';
+import type { HallLayout } from '@/lib/hall';
 import { useOpeningsStore } from '@/stores/useOpeningsStore';
 import WallOpening from './WallOpening';
+import { wallSpansFromLayout } from './openings/validateOpenings';
+import { useOpeningsLayout, useOpeningsVisible, wallById } from './openings/useOpeningsLayout';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 interface WallOpeningsProps {
-  hallWidth: number;
-  hallHeight: number;
-  hallLength: number;
+  /** The engine's layout. Omit to derive it from the configurator store. */
+  layout?: HallLayout;
+  /** Force visibility; by default openings show whenever the walls do (E9). */
+  visible?: boolean;
+  /** The wall meshes already have real holes (E2): drops the depth mask. */
+  realHoles?: boolean;
+  /** @deprecated ignored: the layout carries the hall dimensions. */
+  hallWidth?: number;
+  /** @deprecated ignored. */
+  hallHeight?: number;
+  /** @deprecated ignored. */
+  hallLength?: number;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
 /**
- * Orchestrator component that renders all openings from the Zustand store.
- * Uses shallow comparison on the openings array for optimal re-render performance.
+ * Renders all openings from the Zustand store.
+ * Also publishes the wall spans of the layout to the store, so every mutation is clamped to its wall and the
+ * openings are re-clamped and re-validated whenever the hall changes (E8).
  */
-export default function WallOpenings({ hallWidth, hallHeight, hallLength }: WallOpeningsProps) {
+export default function WallOpenings({ layout: layoutProp, visible, realHoles = false }: WallOpeningsProps) {
+  const layout = useOpeningsLayout(layoutProp);
+  const shown = useOpeningsVisible(visible);
   const openings = useOpeningsStore((s) => s.openings);
+  const conflicts = useOpeningsStore((s) => s.conflicts);
+  const setWallSpans = useOpeningsStore((s) => s.setWallSpans);
 
+  // Runs even while hidden: validation must not depend on the walls being drawn.
+  useEffect(() => {
+    setWallSpans(wallSpansFromLayout(layout));
+  }, [layout, setWallSpans]);
+
+  const conflicting = useMemo(() => new Set(conflicts.map((c) => c.openingId)), [conflicts]);
+
+  if (!shown) return null;
   return (
     <group>
       {openings.map((opening) => (
         <WallOpening
           key={opening.id}
           opening={opening}
-          hallWidth={hallWidth}
-          hallHeight={hallHeight}
-          hallLength={hallLength}
+          wall={wallById(layout, opening.wallId)}
+          conflict={conflicting.has(opening.id)}
+          realHoles={realHoles}
         />
       ))}
     </group>

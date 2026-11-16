@@ -1,0 +1,7 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "dev", "runtimeExecutable": "pnpm", "runtimeArgs": ["--dir", "industrial-configurator", "dev"], "port": 3000 },
+    { "name": "dev-lan", "runtimeExecutable": "pnpm", "runtimeArgs": ["--dir", "industrial-configurator", "dev", "--hostname", "0.0.0.0"], "port": 3000 }
+  ]
+}

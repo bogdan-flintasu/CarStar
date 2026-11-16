@@ -1,98 +1,113 @@
 'use client';
 
-import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
-import { ConfiguratorScene, Ground, ControlledOrbitControls } from '@/components/3d/Configurator';
+/**
+ * The configurator's 3D view: the hall for the current store values, on its site, with openings and dimensions.
+ * All geometry comes from one HallLayout; the canvas renders on demand, so the GPU is idle while nothing changes.
+ */
+import { useEffect, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Environment, Sky } from '@react-three/drei';
-import * as THREE from 'three';
+import { PCFShadowMap } from 'three';
+import { useShallow } from 'zustand/react/shallow';
+import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
+import { useOpeningsStore } from '@/stores/useOpeningsStore';
+import { getGraphicsSettings } from '@/lib/hardwareTier';
+import { clampHallDimensions, computeHallLayout } from '@/lib/hall';
+import Hall from '@/components/3d/hall/Hall';
+import CameraRig from '@/components/3d/hall/CameraRig';
+import { Ground, Sun } from '@/components/3d/hall/Site';
+import { requestHallFraming, useHallFramingRequests } from '@/components/3d/hall/framing';
+import HallStatsProbe from '@/components/3d/hall/HallStatsProbe';
+import { useHallUrlParams } from '@/components/3d/hall/useHallUrlParams';
 import PlacementMarkers from '@/components/3d/PlacementMarkers';
 import WallOpenings from '@/components/3d/WallOpenings';
 import DimensionLines from '@/components/3d/DimensionLines';
-import { getGraphicsSettings } from '@/lib/hardwareTier';
+
+/**
+ * A reset or a loaded configuration replaces the hall wholesale (several dimensions in one store update):
+ * that is when the camera frames it again. Single slider moves never do.
+ */
+function useFramingOnReplacedHall(): void {
+  useEffect(
+    () =>
+      useConfiguratorStore.subscribe((now, before) => {
+        const changed = [now.width !== before.width, now.height !== before.height, now.length !== before.length];
+        if (changed.filter(Boolean).length > 1) requestHallFraming();
+      }),
+    [],
+  );
+}
 
 export default function ConfiguratorEngine() {
-  const {
-    height, width, length,
-    showFoundation, isIsolated, insulation,
-    wallsVisible, currentStep
-  } = useConfiguratorStore();
+  const { height, width, length, showFoundation, isIsolated, insulation, wallsVisible, currentStep } = useConfiguratorStore(
+    useShallow((s) => ({
+      height: s.height,
+      width: s.width,
+      length: s.length,
+      showFoundation: s.showFoundation,
+      isIsolated: s.isIsolated,
+      insulation: s.insulation,
+      wallsVisible: s.wallsVisible,
+      currentStep: s.currentStep,
+    })),
+  );
+  const openings = useOpeningsStore((s) => s.openings);
+  const isDraggingOpening = useOpeningsStore((s) => s.isDragging);
+  const placingOpening = useOpeningsStore((s) => s.activeTool !== null);
+  const setHoveredWallId = useOpeningsStore((s) => s.setHoveredWallId);
 
-  // In step 2 (Panels), we temporarily force walls to be visible 
-  // so the user can see the effect of the toggles
-  const effectiveWallsVisible = currentStep === 2 ? true : wallsVisible;
+  // Dev only: /configurator?w=13.5&h=4&l=30&step=1 sets the dimensions directly.
+  useHallUrlParams();
+  useFramingOnReplacedHall();
+  const framingRequests = useHallFramingRequests();
 
+  const layout = useMemo(
+    () =>
+      computeHallLayout({
+        ...clampHallDimensions({ width, height, length }),
+        foundation: showFoundation,
+        panels: isIsolated,
+        insulationMm: insulation,
+      }),
+    [width, height, length, showFoundation, isIsolated, insulation],
+  );
+
+  // In step 2 (panels) the cladding is always shown, so the effect of the panel options is visible.
+  const claddingVisible = currentStep === 2 || wallsVisible;
   const gfx = getGraphicsSettings();
 
   return (
     <Canvas
-      camera={{ fov: 75, near: 0.1, far: 1000, position: [-6, 7, 13] as [number, number, number] }}
-      shadows={{ type: THREE.PCFShadowMap }}
-      frameloop="always"
+      camera={{ fov: 75, near: 0.1, far: 1000, position: [-6, 7, 13] }}
+      shadows={{ type: PCFShadowMap }}
+      frameloop="demand"
       dpr={gfx.dpr}
       style={{ background: '#dddddd', width: '100%', height: '100%' }}
-      gl={{ localClippingEnabled: true, powerPreference: 'high-performance', antialias: false }}
+      gl={{ powerPreference: 'high-performance', antialias: gfx.antialias }}
     >
-      {/* Lumina directionala cu umbre */}
-      <directionalLight
-        position={[5, 10, 5]}
-        intensity={0.7}
-        castShadow
-        shadow-mapSize-width={gfx.shadowMapSize}
-        shadow-mapSize-height={gfx.shadowMapSize}
-        shadow-bias={-0.005}
-        shadow-normalBias={0.005}
-        shadow-camera-left={-100}
-        shadow-camera-right={100}
-        shadow-camera-top={100}
-        shadow-camera-bottom={-100}
-        shadow-camera-near={1}
-        shadow-camera-far={100}
-      />
-      {/* Lumina ambientala */}
+      <Sun layout={layout} intensity={0.7} shadowMapSize={gfx.shadowMapSize} />
       <ambientLight intensity={0.5} />
-
-      {gfx.enableSky && (
-        <Sky
-          distance={450000}
-          sunPosition={[-5, 10, 5]}
-          inclination={0}
-          azimuth={0.25}
-        />
-      )}
-
+      {gfx.enableSky && <Sky distance={450000} sunPosition={[-5, 10, 5]} inclination={0} azimuth={0.25} />}
       {gfx.enableEnvironment && <Environment preset="city" />}
-      
-      {/* Plan pentru umbre */}
-      <mesh rotation-x={-Math.PI / 2} position-y={-0.01} receiveShadow>
-      </mesh>
+      <Ground layout={layout} textured={!gfx.isMobile} />
 
-      <Ground />
+      <CameraRig layout={layout} enabled={!isDraggingOpening} frameKey={framingRequests} />
 
-      {/* Controale orbit — disabled while dragging/resizing openings */}
-      <ControlledOrbitControls />
-
-      {/* Configurator scene — receives slider values as props */}
-      <ConfiguratorScene
-        height={height}
-        width={width}
-        length={length}
-        showFoundation={showFoundation}
-        isIsolated={isIsolated}
-        insulation={insulation}
-        wallsVisible={effectiveWallsVisible}
+      <Hall
+        layout={layout}
+        claddingVisible={claddingVisible}
+        detail={gfx.tier === 'low' ? 'light' : 'full'}
+        holes={openings}
+        onWallHover={placingOpening ? setHoveredWallId : undefined}
       />
 
-      {/* Dimension lines - shown when walls are hidden */}
-      <DimensionLines 
-        length={length} 
-        width={width} 
-        height={height} 
-        visible={!effectiveWallsVisible} 
-      />
+      <DimensionLines layout={layout} visible={!claddingVisible} />
 
-      {/* Openings system — placement markers + rendered openings */}
-      <PlacementMarkers hallWidth={width} hallHeight={height} hallLength={length} />
-      <WallOpenings hallWidth={width} hallHeight={height} hallLength={length} />
+      {/* Openings hide themselves with the cladding (same rule as above). */}
+      <PlacementMarkers layout={layout} />
+      <WallOpenings layout={layout} realHoles />
+
+      {process.env.NODE_ENV !== 'production' && <HallStatsProbe layout={layout} />}
     </Canvas>
   );
 }

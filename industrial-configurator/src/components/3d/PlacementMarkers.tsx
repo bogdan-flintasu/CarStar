@@ -1,132 +1,75 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { ThreeEvent } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
-import { useOpeningsStore, DEFAULT_DIMENSIONS } from '@/stores/useOpeningsStore';
-import type { WallId, OpeningType } from '@/stores/useOpeningsStore';
+import * as THREE from 'three';
+import { wallPointToWorld } from '@/lib/hall';
+import type { HallLayout, WallDescriptor } from '@/lib/hall';
+import { useOpeningsStore, DEFAULT_DIMENSIONS, isFloorStanding, clampOpening } from '@/stores/useOpeningsStore';
+import type { Opening, OpeningType, WallId } from '@/stores/useOpeningsStore';
+import { validateOpenings, wallSpansFromLayout } from './openings/validateOpenings';
+import { useOpeningsLayout, useOpeningsVisible } from './openings/useOpeningsLayout';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface PlacementMarkersProps {
-  hallWidth: number;
-  hallHeight: number;
-  hallLength: number;
+  /** The engine's layout. Omit to derive it from the configurator store. */
+  layout?: HallLayout;
+  /** Force visibility; by default placement shows whenever the walls do (E9). */
+  visible?: boolean;
+  /** @deprecated ignored: the layout carries the hall dimensions. */
+  hallWidth?: number;
+  /** @deprecated ignored. */
+  hallHeight?: number;
+  /** @deprecated ignored. */
+  hallLength?: number;
 }
+
+/** Placement grid, metres. */
+const SNAP = 0.1;
+const snap = (v: number) => Math.round(v / SNAP) * SNAP;
+/** Where the hit area and the ghost sit in front of the wall face; openings sit at 0.025 and win the raycast. */
+const HIT_OFFSET = 0.01;
+const GHOST_ID = '__ghost__';
+const GHOST_COLOR = '#F5A623';
+const GHOST_CONFLICT_COLOR = '#E5252A';
 
 interface MarkerPoint {
-  wallId: WallId;
-  worldPos: [number, number, number];
-  /** Normalized X on wall (0–1) */
-  normX: number;
-  /** Normalized Y on wall (0–1) */
-  normY: number;
+  wall: WallDescriptor;
+  /** Along the wall and up, in metres. */
+  h: number;
+  v: number;
 }
 
-// ─── Wall geometry helpers ────────────────────────────────────────────────────
-// These compute the actual world-space extents of each wall based on the
-// imperative positioning logic in Configurator.tsx.
-
-const THRESHOLD = 12;
-
-/** Precise offsets to make openings sit perfectly flush on the exterior face of the GLTF panels.
- *  - Front/Back walls have a panel thickness offset of ~0.048m.
- *  - Left/Right side walls have a column + panel offset of ~0.44m past the structural half-width. */
-const FRONT_BACK_WALL_OFFSET = 0.048;
-const SIDE_WALL_OFFSET = 0.44;
-
-function computePullMain(width: number): number {
-  if (width > THRESHOLD) return (width - THRESHOLD) * 0.484;
-  return -(THRESHOLD - width) * 0.487;
+/** Evenly spaced hint markers (~2 m apart) at mid-height of one wall. */
+function generateMarkers(wall: WallDescriptor): MarkerPoint[] {
+  const SPACING = 2;
+  const count = Math.max(1, Math.floor(wall.spanH / SPACING));
+  const step = wall.spanH / (count + 1);
+  return Array.from({ length: count }, (_, i) => ({ wall, h: (i + 1) * step, v: wall.spanV / 2 }));
 }
 
-/**
- * Returns the 4 walls as rectangles in world space:
- *   origin  = bottom-left corner of the wall face
- *   axisH   = unit vector along the wall's horizontal direction
- *   axisV   = (0,1,0) always
- *   spanH   = wall width in metres
- *   spanV   = wall height in metres
- *   normal  = outward-facing normal (for offsetting markers)
- */
-function getWallDescriptors(w: number, h: number, l: number) {
-  const pull = computePullMain(w);
-  const halfStruct = 6 + pull;
-
-  // Front wall (PereteFata) sits at Z ≈ 0, spans X from -halfStruct to +halfStruct
-  // Back wall (PereteSpate) sits at Z = -length
-  // Left wall (PereteSTG) sits at X = -halfStruct, spans Z from 0 to -length
-  // Right wall (PereteDR) sits at X = +halfStruct, spans Z from 0 to -length
-
-  return [
-    {
-      wallId: 'PereteFata' as WallId,
-      originX: -halfStruct, originY: 0, originZ: FRONT_BACK_WALL_OFFSET,
-      axisH: [1, 0, 0] as [number, number, number],
-      normal: [0, 0, 1] as [number, number, number],
-      spanH: halfStruct * 2,
-      spanV: h,
-    },
-    {
-      wallId: 'PereteSpate' as WallId,
-      originX: halfStruct, originY: 0, originZ: -l - FRONT_BACK_WALL_OFFSET,
-      axisH: [-1, 0, 0] as [number, number, number],
-      normal: [0, 0, -1] as [number, number, number],
-      spanH: halfStruct * 2,
-      spanV: h,
-    },
-    {
-      wallId: 'PereteSTG' as WallId,
-      originX: -halfStruct - SIDE_WALL_OFFSET, originY: 0, originZ: 0,
-      axisH: [0, 0, -1] as [number, number, number],
-      normal: [-1, 0, 0] as [number, number, number],
-      spanH: l,
-      spanV: h,
-    },
-    {
-      wallId: 'PereteDR' as WallId,
-      originX: halfStruct + SIDE_WALL_OFFSET, originY: 0, originZ: 0,
-      axisH: [0, 0, -1] as [number, number, number],
-      normal: [1, 0, 0] as [number, number, number],
-      spanH: l,
-      spanV: h,
-    },
-  ];
+/** An opening of `tool` centred on (h, v), snapped to the grid. The store clamps again on add. */
+function placementAt(tool: OpeningType, wallId: WallId, h: number, v: number): Omit<Opening, 'id'> {
+  const dims = DEFAULT_DIMENSIONS[tool];
+  return {
+    type: tool,
+    wallId,
+    offsetX: snap(h - dims.width / 2),
+    sill: isFloorStanding(tool) ? 0 : snap(v - dims.height / 2),
+    width: dims.width,
+    height: dims.height,
+  };
 }
 
-/**
- * Generate evenly-spaced marker positions on each wall (~2m apart horizontally).
- */
-function generateMarkers(w: number, h: number, l: number): MarkerPoint[] {
-  const walls = getWallDescriptors(w, h, l);
-  const markers: MarkerPoint[] = [];
-  const SPACING = 2; // metres between markers
-
-  for (const wall of walls) {
-    const countH = Math.max(1, Math.floor(wall.spanH / SPACING));
-    const stepH = 1 / (countH + 1);
-
-    for (let i = 1; i <= countH; i++) {
-      const normX = i * stepH;
-      const normY = 0.5; // vertically centred
-
-      // Position is on the wall surface (origin already includes the surface offset)
-      const worldX =
-        wall.originX +
-        wall.axisH[0] * normX * wall.spanH;
-      const worldY = normY * wall.spanV;
-      const worldZ =
-        wall.originZ +
-        wall.axisH[2] * normX * wall.spanH;
-
-      markers.push({
-        wallId: wall.wallId,
-        worldPos: [worldX, worldY, worldZ],
-        normX,
-        normY,
-      });
-    }
-  }
-
-  return markers;
+/** The wall face as an invisible, raycastable mesh (follows the gable). */
+function buildWallHitGeometry(wall: WallDescriptor): THREE.BufferGeometry {
+  const outline = wall.polygon.map(([h, v]) => new THREE.Vector2(h, v));
+  const positions = outline.flatMap((p) => wallPointToWorld(wall, p.x, p.y, HIT_OFFSET));
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geo.setIndex(THREE.ShapeUtils.triangulateShape(outline, []).flat());
+  return geo;
 }
 
 // ─── Marker Button Style ──────────────────────────────────────────────────────
@@ -150,55 +93,94 @@ const markerStyle: React.CSSProperties = {
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
-export default function PlacementMarkers({ hallWidth, hallHeight, hallLength }: PlacementMarkersProps) {
+export default function PlacementMarkers({ layout: layoutProp, visible }: PlacementMarkersProps) {
+  const layout = useOpeningsLayout(layoutProp);
+  const shown = useOpeningsVisible(visible);
   const activeTool = useOpeningsStore((s) => s.activeTool);
   const hoveredWallId = useOpeningsStore((s) => s.hoveredWallId);
   const setHoveredWallId = useOpeningsStore((s) => s.setHoveredWallId);
   const clearHoveredWallId = useOpeningsStore((s) => s.clearHoveredWallId);
   const addOpening = useOpeningsStore((s) => s.addOpening);
+  const openings = useOpeningsStore((s) => s.openings);
 
-  const markers = useMemo(
-    () =>
-      activeTool && hoveredWallId
-        ? generateMarkers(hallWidth, hallHeight, hallLength).filter((m) => m.wallId === hoveredWallId)
-        : [],
-    [activeTool, hoveredWallId, hallWidth, hallHeight, hallLength]
-  );
+  const walls = useMemo(() => Object.values(layout.walls), [layout]);
+  const spans = useMemo(() => wallSpansFromLayout(layout), [layout]);
+  const [rawGhost, setGhost] = useState<Omit<Opening, 'id'> | null>(null);
+  // The ghost belongs to one tool: switching tools hides it until the pointer moves again.
+  const ghost = rawGhost && rawGhost.type === activeTool ? rawGhost : null;
 
-  if (!activeTool || !hoveredWallId) return null;
+  const hitGeometries = useMemo(() => new Map(walls.map((w) => [w.id, buildWallHitGeometry(w)])), [walls]);
+  useEffect(() => () => hitGeometries.forEach((g) => g.dispose()), [hitGeometries]);
 
-  const handleClick = (marker: MarkerPoint, tool: OpeningType) => {
-    const dims = DEFAULT_DIMENSIONS[tool];
-    const wallDescs = getWallDescriptors(hallWidth, hallHeight, hallLength);
-    const wallDesc = wallDescs.find((wd) => wd.wallId === marker.wallId)!;
+  const ghostConflict = useMemo(() => {
+    if (!ghost) return false;
+    const candidate = clampOpening({ ...ghost, id: GHOST_ID }, spans[ghost.wallId]);
+    return validateOpenings([...openings, candidate], spans).some((c) => c.openingId === GHOST_ID);
+  }, [ghost, openings, spans]);
 
-    // For doors, posY must place the bottom edge at ground level
-    let posY = marker.normY;
-    if (tool === 'door' || tool === 'garageDoor') {
-      // posY is the centre of the opening, normalised
-      // bottom edge = posY - (dims.height / 2) / wallHeight = 0
-      // so posY = dims.height / (2 * wallHeight)
-      posY = dims.height / (2 * wallDesc.spanV);
-      // Clamp so the door doesn't go above the wall
-      posY = Math.min(posY, 1 - dims.height / (2 * wallDesc.spanV));
-    }
+  if (!activeTool || !shown) return null;
 
-    addOpening({
-      type: tool,
-      wallId: marker.wallId,
-      posX: marker.normX,
-      posY,
-      width: dims.width,
-      height: dims.height,
-    });
+  /** World hit point -> placement on `wall`, clamped like the store will. */
+  const placementFromEvent = (wall: WallDescriptor, e: ThreeEvent<PointerEvent | MouseEvent>): Omit<Opening, 'id'> => {
+    const p = e.point;
+    const o = wall.origin;
+    const h = (p.x - o[0]) * wall.axisH[0] + (p.z - o[2]) * wall.axisH[2];
+    const placed = placementAt(activeTool, wall.id, h, p.y - o[1]);
+    const { offsetX, sill, width, height } = clampOpening({ ...placed, id: GHOST_ID }, spans[wall.id]);
+    return { ...placed, offsetX, sill, width, height };
   };
+
+  const markers = hoveredWallId ? generateMarkers(walls.find((w) => w.id === hoveredWallId)!) : [];
+  const ghostWall = ghost ? walls.find((w) => w.id === ghost.wallId)! : null;
 
   return (
     <group>
+      {/* Click anywhere on a wall to place at the hit point (E11). */}
+      {walls.map((wall) => (
+        <mesh
+          key={wall.id}
+          geometry={hitGeometries.get(wall.id)}
+          onPointerMove={(e) => {
+            e.stopPropagation();
+            setHoveredWallId(wall.id);
+            setGhost(placementFromEvent(wall, e));
+          }}
+          onPointerOut={() => {
+            setGhost(null);
+            clearHoveredWallId();
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            addOpening(placementFromEvent(wall, e));
+          }}
+        >
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} side={THREE.DoubleSide} />
+        </mesh>
+      ))}
+
+      {/* Ghost preview of the opening that the next click would create. */}
+      {ghost && ghostWall && (
+        <group
+          position={wallPointToWorld(ghostWall, ghost.offsetX + ghost.width / 2, ghost.sill + ghost.height / 2, HIT_OFFSET * 2)}
+          rotation={[0, ghostWall.yaw, 0]}
+        >
+          <mesh renderOrder={5}>
+            <planeGeometry args={[ghost.width, ghost.height]} />
+            <meshBasicMaterial
+              color={ghostConflict ? GHOST_CONFLICT_COLOR : GHOST_COLOR}
+              transparent
+              opacity={0.45}
+              depthWrite={false}
+            />
+          </mesh>
+        </group>
+      )}
+
+      {/* The fixed "+" markers stay as a hint on the hovered wall. */}
       {markers.map((m, i) => (
         <Html
-          key={`marker-${m.wallId}-${i}`}
-          position={m.worldPos}
+          key={`marker-${m.wall.id}-${i}`}
+          position={wallPointToWorld(m.wall, m.h, m.v)}
           center
           zIndexRange={[100, 0]}
           style={{ pointerEvents: 'auto' }}
@@ -207,19 +189,19 @@ export default function PlacementMarkers({ hallWidth, hallHeight, hallLength }: 
             style={markerStyle}
             onClick={(e) => {
               e.stopPropagation();
-              handleClick(m, activeTool);
+              addOpening(placementAt(activeTool, m.wall.id, m.h, m.v));
             }}
             onPointerEnter={(e) => {
               (e.target as HTMLElement).style.transform = 'scale(1.2)';
               (e.target as HTMLElement).style.boxShadow = '0 4px 16px rgba(245,166,35,0.6)';
-              setHoveredWallId(m.wallId);
+              setHoveredWallId(m.wall.id);
             }}
             onPointerLeave={(e) => {
               (e.target as HTMLElement).style.transform = 'scale(1)';
               (e.target as HTMLElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.4)';
               clearHoveredWallId();
             }}
-            title={`Adaugă ${activeTool === 'window' ? 'geam' : activeTool === 'door' ? 'ușă' : 'ușă auto'} pe ${m.wallId}`}
+            title={`Adaugă ${activeTool === 'window' ? 'geam' : activeTool === 'door' ? 'ușă' : 'ușă auto'} pe ${m.wall.id}`}
           >
             +
           </div>
@@ -228,6 +210,3 @@ export default function PlacementMarkers({ hallWidth, hallHeight, hallLength }: 
     </group>
   );
 }
-
-// Re-export the wall descriptors helper for use by WallOpening
-export { getWallDescriptors };

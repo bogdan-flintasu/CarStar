@@ -1,14 +1,16 @@
 'use client';
 
-import { Suspense } from 'react';
 import { useProgress } from '@react-three/drei';
+import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
 import ConfiguratorLayout from '@/components/configurator/ConfiguratorLayout';
 import ConfiguratorEngine from '@/components/configurator/ConfiguratorEngine';
 
 function GlobalLoader() {
   const { active, progress } = useProgress();
+  const hallReady = useConfiguratorStore((s) => s.hallReady);
 
-  if (!active && progress === 100) return null;
+  // Hidden once the hall reports ready, or when assets finished loading (cached).
+  if (hallReady || (!active && progress === 100)) return null;
 
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white transition-opacity duration-500">
