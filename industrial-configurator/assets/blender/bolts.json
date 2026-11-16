@@ -1,0 +1,2509 @@
+{
+ "coords": "glTF/three.js, Y up, metres",
+ "template": {
+  "mesh": "Bolt",
+  "axis": "+Y",
+  "origin": "bolt centre",
+  "length": 0.08,
+  "head_circumradius": 0.018,
+  "tris": 56
+ },
+ "bolts": [
+  {
+   "name": "Bolt.surub.000",
+   "family": "surub",
+   "source": "surub",
+   "parent": "baza_stalp",
+   "pos": [
+    -6.3492,
+    0.0253,
+    0.1402
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3864,
+    0.9509,
+    1.3864
+   ],
+   "len": 0.0761,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.001",
+   "family": "surub",
+   "source": "surub001",
+   "parent": "baza_stalp",
+   "pos": [
+    -5.9211,
+    0.0234,
+    0.1402
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3872,
+    0.95,
+    1.3872
+   ],
+   "len": 0.076,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.002",
+   "family": "surub",
+   "source": "surub002",
+   "parent": "baza_stalp",
+   "pos": [
+    -6.2137,
+    0.0257,
+    0.1402
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3858,
+    0.9505,
+    1.3858
+   ],
+   "len": 0.076,
+   "r": 0.0249
+  },
+  {
+   "name": "Bolt.surub.003",
+   "family": "surub",
+   "source": "surub003",
+   "parent": "baza_stalp",
+   "pos": [
+    -6.0546,
+    0.0248,
+    0.1402
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3859,
+    0.9503,
+    1.3859
+   ],
+   "len": 0.076,
+   "r": 0.0249
+  },
+  {
+   "name": "Bolt.surub.004",
+   "family": "surub",
+   "source": "surub004",
+   "parent": "baza_stalp",
+   "pos": [
+    -5.9211,
+    0.0233,
+    -0.1398
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3859,
+    0.9503,
+    1.3859
+   ],
+   "len": 0.076,
+   "r": 0.0249
+  },
+  {
+   "name": "Bolt.surub.005",
+   "family": "surub",
+   "source": "surub005",
+   "parent": "baza_stalp",
+   "pos": [
+    -6.3492,
+    0.0252,
+    -0.1398
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3858,
+    0.9502,
+    1.3858
+   ],
+   "len": 0.076,
+   "r": 0.0249
+  },
+  {
+   "name": "Bolt.surub.006",
+   "family": "surub",
+   "source": "surub006",
+   "parent": "baza_stalp",
+   "pos": [
+    -6.2138,
+    0.0257,
+    -0.1398
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3858,
+    0.9507,
+    1.3858
+   ],
+   "len": 0.0761,
+   "r": 0.0249
+  },
+  {
+   "name": "Bolt.surub.007",
+   "family": "surub",
+   "source": "surub007",
+   "parent": "baza_stalp",
+   "pos": [
+    -6.0547,
+    0.0248,
+    -0.1398
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3859,
+    0.9504,
+    1.3859
+   ],
+   "len": 0.076,
+   "r": 0.0249
+  },
+  {
+   "name": "Bolt.surub.008",
+   "family": "surub",
+   "source": "surub008",
+   "parent": "suruburi_sus001",
+   "pos": [
+    -6.3404,
+    5.838,
+    0.04
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.39,
+    1.1788,
+    1.39
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.009",
+   "family": "surub",
+   "source": "surub009",
+   "parent": "suruburi_sus001",
+   "pos": [
+    -6.3404,
+    5.838,
+    -0.04
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.39,
+    1.1788,
+    1.39
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.010",
+   "family": "surub",
+   "source": "surub010",
+   "parent": "suruburi_sus001",
+   "pos": [
+    -6.0604,
+    5.838,
+    0.04
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3894,
+    1.1788,
+    1.3894
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.011",
+   "family": "surub",
+   "source": "surub011",
+   "parent": "suruburi_sus001",
+   "pos": [
+    -6.2204,
+    5.838,
+    -0.04
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3898,
+    1.1788,
+    1.3898
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.012",
+   "family": "surub",
+   "source": "surub012",
+   "parent": "suruburi_sus001",
+   "pos": [
+    -6.0604,
+    5.838,
+    -0.04
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3902,
+    1.1788,
+    1.3902
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.013",
+   "family": "surub",
+   "source": "surub013",
+   "parent": "suruburi_sus001",
+   "pos": [
+    -6.2205,
+    5.838,
+    0.04
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3891,
+    1.1788,
+    1.3891
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.014",
+   "family": "surub",
+   "source": "surub014",
+   "parent": "suruburi_sus001",
+   "pos": [
+    -5.9404,
+    5.838,
+    -0.04
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3896,
+    1.1788,
+    1.3896
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.015",
+   "family": "surub",
+   "source": "surub015",
+   "parent": "suruburi_sus001",
+   "pos": [
+    -5.8404,
+    5.838,
+    -0.04
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3894,
+    1.1788,
+    1.3894
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.016",
+   "family": "surub",
+   "source": "surub016",
+   "parent": "baza_stalp001",
+   "pos": [
+    6.3733,
+    0.0222,
+    -0.14
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3892,
+    0.9507,
+    1.3892
+   ],
+   "len": 0.0761,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.017",
+   "family": "surub",
+   "source": "surub017",
+   "parent": "baza_stalp001",
+   "pos": [
+    5.9272,
+    0.0222,
+    -0.14
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3927,
+    0.95,
+    1.3927
+   ],
+   "len": 0.076,
+   "r": 0.0251
+  },
+  {
+   "name": "Bolt.surub.018",
+   "family": "surub",
+   "source": "surub018",
+   "parent": "baza_stalp001",
+   "pos": [
+    6.2333,
+    0.0222,
+    -0.14
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.39,
+    0.9506,
+    1.39
+   ],
+   "len": 0.076,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.019",
+   "family": "surub",
+   "source": "surub019",
+   "parent": "baza_stalp001",
+   "pos": [
+    6.0673,
+    0.0222,
+    -0.14
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3899,
+    0.9508,
+    1.3899
+   ],
+   "len": 0.0761,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.020",
+   "family": "surub",
+   "source": "surub020",
+   "parent": "baza_stalp001",
+   "pos": [
+    5.9272,
+    0.0222,
+    0.14
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3898,
+    0.9503,
+    1.3898
+   ],
+   "len": 0.076,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.021",
+   "family": "surub",
+   "source": "surub021",
+   "parent": "baza_stalp001",
+   "pos": [
+    6.3733,
+    0.0222,
+    0.14
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.39,
+    0.9508,
+    1.39
+   ],
+   "len": 0.0761,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.022",
+   "family": "surub",
+   "source": "surub022",
+   "parent": "baza_stalp001",
+   "pos": [
+    6.2333,
+    0.0222,
+    0.14
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3914,
+    0.9511,
+    1.3914
+   ],
+   "len": 0.0761,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.023",
+   "family": "surub",
+   "source": "surub023",
+   "parent": "baza_stalp001",
+   "pos": [
+    6.0673,
+    0.0222,
+    0.1399
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3905,
+    0.9508,
+    1.3905
+   ],
+   "len": 0.0761,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.024",
+   "family": "surub",
+   "source": "surub024",
+   "parent": "suruburi_sus002",
+   "pos": [
+    6.35,
+    5.838,
+    -0.04
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3895,
+    1.1788,
+    1.3895
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.025",
+   "family": "surub",
+   "source": "surub025",
+   "parent": "suruburi_sus002",
+   "pos": [
+    6.0701,
+    5.838,
+    -0.04
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.39,
+    1.1788,
+    1.39
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.026",
+   "family": "surub",
+   "source": "surub026",
+   "parent": "suruburi_sus002",
+   "pos": [
+    6.35,
+    5.838,
+    0.04
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3905,
+    1.1788,
+    1.3905
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.027",
+   "family": "surub",
+   "source": "surub027",
+   "parent": "suruburi_sus002",
+   "pos": [
+    6.2301,
+    5.838,
+    0.04
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3897,
+    1.1788,
+    1.3897
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.028",
+   "family": "surub",
+   "source": "surub028",
+   "parent": "suruburi_sus002",
+   "pos": [
+    6.0701,
+    5.838,
+    0.04
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3899,
+    1.1788,
+    1.3899
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.029",
+   "family": "surub",
+   "source": "surub029",
+   "parent": "suruburi_sus002",
+   "pos": [
+    5.95,
+    5.838,
+    0.04
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3895,
+    1.1788,
+    1.3895
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.030",
+   "family": "surub",
+   "source": "surub030",
+   "parent": "suruburi_sus002",
+   "pos": [
+    5.8501,
+    5.838,
+    0.04
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3908,
+    1.1788,
+    1.3908
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.031",
+   "family": "surub",
+   "source": "surub031",
+   "parent": "suruburi_sus001",
+   "pos": [
+    -5.9439,
+    5.8387,
+    0.0365
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3908,
+    1.1788,
+    1.3908
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.032",
+   "family": "surub",
+   "source": "surub032",
+   "parent": "suruburi_sus001",
+   "pos": [
+    -5.8404,
+    5.838,
+    0.04
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3912,
+    1.1788,
+    1.3912
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.033",
+   "family": "surub",
+   "source": "surub033",
+   "parent": "suruburi_sus002",
+   "pos": [
+    6.2301,
+    5.838,
+    -0.0401
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3917,
+    1.1788,
+    1.3917
+   ],
+   "len": 0.0943,
+   "r": 0.0251
+  },
+  {
+   "name": "Bolt.surub.034",
+   "family": "surub",
+   "source": "surub034",
+   "parent": "suruburi_sus002",
+   "pos": [
+    5.9501,
+    5.8374,
+    -0.04
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3903,
+    1.1788,
+    1.3903
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub.035",
+   "family": "surub",
+   "source": "surub035",
+   "parent": "suruburi_sus002",
+   "pos": [
+    5.8501,
+    5.838,
+    -0.04
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    1.3901,
+    1.1788,
+    1.3901
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub_sus.000",
+   "family": "surub_sus",
+   "source": "surub_sus",
+   "parent": "plane_sus_2",
+   "pos": [
+    -0.0041,
+    6.9342,
+    0.04
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.70711,
+    0.70711
+   ],
+   "scale": [
+    1.39,
+    1.1788,
+    1.39
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub_sus.001",
+   "family": "surub_sus",
+   "source": "surub_sus001",
+   "parent": "plane_sus_2",
+   "pos": [
+    -0.0041,
+    7.0542,
+    0.0401
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.70711,
+    0.70711
+   ],
+   "scale": [
+    1.3906,
+    1.1788,
+    1.3906
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub_sus.002",
+   "family": "surub_sus",
+   "source": "surub_sus002",
+   "parent": "plane_sus_2",
+   "pos": [
+    -0.0041,
+    7.2042,
+    0.0401
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.70711,
+    0.70711
+   ],
+   "scale": [
+    1.3915,
+    1.1788,
+    1.3915
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub_sus.003",
+   "family": "surub_sus",
+   "source": "surub_sus003",
+   "parent": "plane_sus_2",
+   "pos": [
+    -0.0041,
+    7.3542,
+    0.0401
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.70711,
+    0.70711
+   ],
+   "scale": [
+    1.3909,
+    1.1788,
+    1.3909
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub_sus.004",
+   "family": "surub_sus",
+   "source": "surub_sus004",
+   "parent": "plane_sus_1",
+   "pos": [
+    -0.0039,
+    6.9293,
+    -0.0401
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.70711,
+    0.70711
+   ],
+   "scale": [
+    1.3916,
+    1.1788,
+    1.3916
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub_sus.005",
+   "family": "surub_sus",
+   "source": "surub_sus005",
+   "parent": "plane_sus_1",
+   "pos": [
+    -0.0039,
+    7.0493,
+    -0.0401
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.70711,
+    0.70711
+   ],
+   "scale": [
+    1.3917,
+    1.1788,
+    1.3917
+   ],
+   "len": 0.0943,
+   "r": 0.0251
+  },
+  {
+   "name": "Bolt.surub_sus.006",
+   "family": "surub_sus",
+   "source": "surub_sus006",
+   "parent": "plane_sus_1",
+   "pos": [
+    -0.0039,
+    7.1993,
+    -0.0401
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.70711,
+    0.70711
+   ],
+   "scale": [
+    1.3915,
+    1.1788,
+    1.3915
+   ],
+   "len": 0.0943,
+   "r": 0.025
+  },
+  {
+   "name": "Bolt.surub_sus.007",
+   "family": "surub_sus",
+   "source": "surub_sus007",
+   "parent": "plane_sus_1",
+   "pos": [
+    -0.0039,
+    7.3493,
+    -0.0401
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.70711,
+    0.70711
+   ],
+   "scale": [
+    1.3918,
+    1.1788,
+    1.3918
+   ],
+   "len": 0.0943,
+   "r": 0.0251
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.000",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi",
+   "parent": "Grinda003",
+   "pos": [
+    -6.2313,
+    6.3756,
+    -0.0347
+   ],
+   "quat_xyzw": [
+    -0.00238,
+    0.0,
+    -0.6416,
+    0.76704
+   ],
+   "scale": [
+    0.7303,
+    0.5928,
+    0.7303
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.001",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi",
+   "parent": "Grinda003",
+   "pos": [
+    -6.2374,
+    6.4103,
+    -0.0347
+   ],
+   "quat_xyzw": [
+    -0.00157,
+    0.0,
+    -0.64012,
+    0.76827
+   ],
+   "scale": [
+    0.7305,
+    0.5932,
+    0.7305
+   ],
+   "len": 0.0475,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.002",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi001",
+   "parent": "Grinda002",
+   "pos": [
+    -4.6944,
+    6.6469,
+    -0.0364
+   ],
+   "quat_xyzw": [
+    -0.00238,
+    0.0,
+    -0.6416,
+    0.76704
+   ],
+   "scale": [
+    0.7303,
+    0.5928,
+    0.7303
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.003",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi001",
+   "parent": "Grinda002",
+   "pos": [
+    -4.7005,
+    6.6816,
+    -0.0364
+   ],
+   "quat_xyzw": [
+    -0.00157,
+    0.0,
+    -0.64012,
+    0.76827
+   ],
+   "scale": [
+    0.7305,
+    0.5932,
+    0.7305
+   ],
+   "len": 0.0475,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.004",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi002",
+   "parent": "Grinda001",
+   "pos": [
+    -3.1749,
+    6.9113,
+    -0.0355
+   ],
+   "quat_xyzw": [
+    -0.00159,
+    0.0,
+    -0.64227,
+    0.76647
+   ],
+   "scale": [
+    0.73,
+    0.5924,
+    0.73
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.005",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi002",
+   "parent": "Grinda001",
+   "pos": [
+    -3.1811,
+    6.9461,
+    -0.0356
+   ],
+   "quat_xyzw": [
+    -0.00252,
+    0.0,
+    -0.64159,
+    0.76705
+   ],
+   "scale": [
+    0.7302,
+    0.5929,
+    0.7302
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.006",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi003",
+   "parent": "Grinda",
+   "pos": [
+    -1.6579,
+    7.1762,
+    -0.0375
+   ],
+   "quat_xyzw": [
+    -0.00238,
+    0.0,
+    -0.6416,
+    0.76704
+   ],
+   "scale": [
+    0.7303,
+    0.5928,
+    0.7303
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.007",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi003",
+   "parent": "Grinda",
+   "pos": [
+    -1.664,
+    7.2109,
+    -0.0375
+   ],
+   "quat_xyzw": [
+    -0.00157,
+    0.0,
+    -0.64012,
+    0.76827
+   ],
+   "scale": [
+    0.7305,
+    0.5932,
+    0.7305
+   ],
+   "len": 0.0475,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.008",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi004",
+   "parent": "Grinda004",
+   "pos": [
+    -0.1088,
+    7.4492,
+    -0.034
+   ],
+   "quat_xyzw": [
+    -0.00062,
+    0.0,
+    -0.64304,
+    0.76583
+   ],
+   "scale": [
+    0.7313,
+    0.5921,
+    0.7313
+   ],
+   "len": 0.0474,
+   "r": 0.0132
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.009",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi004",
+   "parent": "Grinda004",
+   "pos": [
+    -0.1149,
+    7.484,
+    -0.034
+   ],
+   "quat_xyzw": [
+    -0.00073,
+    0.0,
+    -0.64115,
+    0.76742
+   ],
+   "scale": [
+    0.7295,
+    0.5927,
+    0.7295
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.010",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi005",
+   "parent": "Grinda005",
+   "pos": [
+    0.123,
+    7.4825,
+    -0.037
+   ],
+   "quat_xyzw": [
+    -0.00132,
+    0.0,
+    0.64369,
+    0.76528
+   ],
+   "scale": [
+    0.7313,
+    0.5925,
+    0.7313
+   ],
+   "len": 0.0474,
+   "r": 0.0132
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.011",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi005",
+   "parent": "Grinda005",
+   "pos": [
+    0.1169,
+    7.4477,
+    -0.0371
+   ],
+   "quat_xyzw": [
+    -0.00105,
+    0.0,
+    0.64336,
+    0.76556
+   ],
+   "scale": [
+    0.7291,
+    0.5923,
+    0.7291
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.012",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi006",
+   "parent": "Grinda006",
+   "pos": [
+    1.6727,
+    7.2075,
+    -0.037
+   ],
+   "quat_xyzw": [
+    -0.00132,
+    0.0,
+    0.64369,
+    0.76528
+   ],
+   "scale": [
+    0.7313,
+    0.5925,
+    0.7313
+   ],
+   "len": 0.0474,
+   "r": 0.0132
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.013",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi006",
+   "parent": "Grinda006",
+   "pos": [
+    1.6666,
+    7.1727,
+    -0.037
+   ],
+   "quat_xyzw": [
+    -0.00105,
+    0.0,
+    0.64336,
+    0.76556
+   ],
+   "scale": [
+    0.7291,
+    0.5923,
+    0.7291
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.014",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi007",
+   "parent": "Grinda007",
+   "pos": [
+    3.1891,
+    6.9382,
+    -0.0401
+   ],
+   "quat_xyzw": [
+    -0.00132,
+    0.0,
+    0.64369,
+    0.76528
+   ],
+   "scale": [
+    0.7313,
+    0.5925,
+    0.7313
+   ],
+   "len": 0.0474,
+   "r": 0.0132
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.015",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi007",
+   "parent": "Grinda007",
+   "pos": [
+    3.1829,
+    6.9035,
+    -0.0401
+   ],
+   "quat_xyzw": [
+    -0.00105,
+    0.0,
+    0.64336,
+    0.76556
+   ],
+   "scale": [
+    0.7291,
+    0.5923,
+    0.7291
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.016",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi008",
+   "parent": "Grinda010",
+   "pos": [
+    4.7082,
+    6.6743,
+    -0.0406
+   ],
+   "quat_xyzw": [
+    -0.00161,
+    0.0,
+    0.64267,
+    0.76614
+   ],
+   "scale": [
+    0.731,
+    0.5924,
+    0.731
+   ],
+   "len": 0.0474,
+   "r": 0.0132
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.017",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi008",
+   "parent": "Grinda010",
+   "pos": [
+    4.702,
+    6.6394,
+    -0.0406
+   ],
+   "quat_xyzw": [
+    -0.00064,
+    0.0,
+    0.64417,
+    0.76489
+   ],
+   "scale": [
+    0.7297,
+    0.5926,
+    0.7297
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.018",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi009",
+   "parent": "Grinda009",
+   "pos": [
+    6.2446,
+    6.397,
+    -0.0444
+   ],
+   "quat_xyzw": [
+    -0.00132,
+    0.0,
+    0.64369,
+    0.76528
+   ],
+   "scale": [
+    0.7313,
+    0.5925,
+    0.7313
+   ],
+   "len": 0.0474,
+   "r": 0.0132
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.019",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi009",
+   "parent": "Grinda009",
+   "pos": [
+    6.2385,
+    6.3622,
+    -0.0445
+   ],
+   "quat_xyzw": [
+    -0.00105,
+    0.0,
+    0.64336,
+    0.76556
+   ],
+   "scale": [
+    0.7291,
+    0.5923,
+    0.7291
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.020",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi010",
+   "parent": "Grinda009",
+   "pos": [
+    6.2456,
+    6.4025,
+    -5.9698
+   ],
+   "quat_xyzw": [
+    -0.00132,
+    0.0,
+    0.64369,
+    0.76528
+   ],
+   "scale": [
+    0.7313,
+    0.5925,
+    0.7313
+   ],
+   "len": 0.0474,
+   "r": 0.0132
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.021",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi010",
+   "parent": "Grinda009",
+   "pos": [
+    6.2395,
+    6.3677,
+    -5.9699
+   ],
+   "quat_xyzw": [
+    -0.00105,
+    0.0,
+    0.64336,
+    0.76556
+   ],
+   "scale": [
+    0.7291,
+    0.5923,
+    0.7291
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.022",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi011",
+   "parent": "Grinda010",
+   "pos": [
+    4.708,
+    6.6733,
+    -5.97
+   ],
+   "quat_xyzw": [
+    -0.00081,
+    0.0,
+    0.64232,
+    0.76644
+   ],
+   "scale": [
+    0.7315,
+    0.5922,
+    0.7315
+   ],
+   "len": 0.0474,
+   "r": 0.0132
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.023",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi011",
+   "parent": "Grinda010",
+   "pos": [
+    4.7018,
+    6.6385,
+    -5.97
+   ],
+   "quat_xyzw": [
+    -0.00238,
+    0.0,
+    0.64306,
+    0.76581
+   ],
+   "scale": [
+    0.7307,
+    0.5926,
+    0.7307
+   ],
+   "len": 0.0474,
+   "r": 0.0132
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.024",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi012",
+   "parent": "Grinda007",
+   "pos": [
+    3.1899,
+    6.9427,
+    -5.9686
+   ],
+   "quat_xyzw": [
+    -0.00132,
+    0.0,
+    0.64369,
+    0.76528
+   ],
+   "scale": [
+    0.7313,
+    0.5925,
+    0.7313
+   ],
+   "len": 0.0474,
+   "r": 0.0132
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.025",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi012",
+   "parent": "Grinda007",
+   "pos": [
+    3.1837,
+    6.9079,
+    -5.9687
+   ],
+   "quat_xyzw": [
+    -0.00105,
+    0.0,
+    0.64336,
+    0.76556
+   ],
+   "scale": [
+    0.7291,
+    0.5923,
+    0.7291
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.026",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi013",
+   "parent": "Grinda006",
+   "pos": [
+    1.6734,
+    7.2109,
+    -5.9712
+   ],
+   "quat_xyzw": [
+    -0.00132,
+    0.0,
+    0.64369,
+    0.76528
+   ],
+   "scale": [
+    0.7313,
+    0.5925,
+    0.7313
+   ],
+   "len": 0.0474,
+   "r": 0.0132
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.027",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi013",
+   "parent": "Grinda006",
+   "pos": [
+    1.6672,
+    7.1762,
+    -5.9713
+   ],
+   "quat_xyzw": [
+    -0.00105,
+    0.0,
+    0.64336,
+    0.76556
+   ],
+   "scale": [
+    0.7291,
+    0.5923,
+    0.7291
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.028",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi014",
+   "parent": "Grinda005",
+   "pos": [
+    0.1227,
+    7.4806,
+    -5.9692
+   ],
+   "quat_xyzw": [
+    -0.00132,
+    0.0,
+    0.64369,
+    0.76528
+   ],
+   "scale": [
+    0.7313,
+    0.5925,
+    0.7313
+   ],
+   "len": 0.0474,
+   "r": 0.0132
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.029",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi014",
+   "parent": "Grinda005",
+   "pos": [
+    0.1166,
+    7.4459,
+    -5.9693
+   ],
+   "quat_xyzw": [
+    -0.00105,
+    0.0,
+    0.64336,
+    0.76556
+   ],
+   "scale": [
+    0.7291,
+    0.5923,
+    0.7291
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.030",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi015",
+   "parent": "Grinda003",
+   "pos": [
+    -6.2313,
+    6.3757,
+    -5.9602
+   ],
+   "quat_xyzw": [
+    -0.00238,
+    0.0,
+    -0.6416,
+    0.76704
+   ],
+   "scale": [
+    0.7303,
+    0.5928,
+    0.7303
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.031",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi015",
+   "parent": "Grinda003",
+   "pos": [
+    -6.2375,
+    6.4104,
+    -5.9602
+   ],
+   "quat_xyzw": [
+    -0.00157,
+    0.0,
+    -0.64012,
+    0.76827
+   ],
+   "scale": [
+    0.7305,
+    0.5932,
+    0.7305
+   ],
+   "len": 0.0475,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.032",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi016",
+   "parent": "Grinda002",
+   "pos": [
+    -4.6937,
+    6.643,
+    -5.9609
+   ],
+   "quat_xyzw": [
+    -0.00238,
+    0.0,
+    -0.6416,
+    0.76704
+   ],
+   "scale": [
+    0.7303,
+    0.5928,
+    0.7303
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.033",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi016",
+   "parent": "Grinda002",
+   "pos": [
+    -4.6998,
+    6.6778,
+    -5.9609
+   ],
+   "quat_xyzw": [
+    -0.00157,
+    0.0,
+    -0.64012,
+    0.76827
+   ],
+   "scale": [
+    0.7305,
+    0.5932,
+    0.7305
+   ],
+   "len": 0.0475,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.034",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi017",
+   "parent": "Grinda001",
+   "pos": [
+    -3.1748,
+    6.9108,
+    -5.9671
+   ],
+   "quat_xyzw": [
+    -0.00159,
+    0.0,
+    -0.64227,
+    0.76647
+   ],
+   "scale": [
+    0.73,
+    0.5924,
+    0.73
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.035",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi017",
+   "parent": "Grinda001",
+   "pos": [
+    -3.181,
+    6.9456,
+    -5.9671
+   ],
+   "quat_xyzw": [
+    -0.00252,
+    0.0,
+    -0.64159,
+    0.76705
+   ],
+   "scale": [
+    0.7302,
+    0.5929,
+    0.7302
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.036",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi018",
+   "parent": "Grinda",
+   "pos": [
+    -1.6584,
+    7.1792,
+    -5.9675
+   ],
+   "quat_xyzw": [
+    -0.00238,
+    0.0,
+    -0.6416,
+    0.76704
+   ],
+   "scale": [
+    0.7303,
+    0.5928,
+    0.7303
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.037",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi018",
+   "parent": "Grinda",
+   "pos": [
+    -1.6646,
+    7.2139,
+    -5.9675
+   ],
+   "quat_xyzw": [
+    -0.00157,
+    0.0,
+    -0.64012,
+    0.76827
+   ],
+   "scale": [
+    0.7305,
+    0.5932,
+    0.7305
+   ],
+   "len": 0.0475,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.038",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi019",
+   "parent": "Grinda004",
+   "pos": [
+    -0.1087,
+    7.4485,
+    -5.9674
+   ],
+   "quat_xyzw": [
+    -0.00238,
+    0.0,
+    -0.6416,
+    0.76704
+   ],
+   "scale": [
+    0.7303,
+    0.5928,
+    0.7303
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_grinzi.039",
+   "family": "suruburi_grinzi",
+   "source": "suruburi_grinzi019",
+   "parent": "Grinda004",
+   "pos": [
+    -0.1148,
+    7.4833,
+    -5.9674
+   ],
+   "quat_xyzw": [
+    -0.00157,
+    0.0,
+    -0.64012,
+    0.76827
+   ],
+   "scale": [
+    0.7305,
+    0.5932,
+    0.7305
+   ],
+   "len": 0.0475,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_perete.000",
+   "family": "suruburi_perete",
+   "source": "suruburi_perete",
+   "parent": "ureche004",
+   "pos": [
+    6.3398,
+    6.2378,
+    -0.0398
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    0.7309,
+    0.5921,
+    0.7309
+   ],
+   "len": 0.0474,
+   "r": 0.0132
+  },
+  {
+   "name": "Bolt.suruburi_perete.001",
+   "family": "suruburi_perete",
+   "source": "suruburi_perete",
+   "parent": "ureche004",
+   "pos": [
+    6.3751,
+    6.2378,
+    -0.0398
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    0.7305,
+    0.5921,
+    0.7305
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_perete.002",
+   "family": "suruburi_perete",
+   "source": "suruburi_perete001",
+   "parent": "ureche002",
+   "pos": [
+    6.3428,
+    1.8371,
+    -0.0362
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    0.7309,
+    0.5921,
+    0.7309
+   ],
+   "len": 0.0474,
+   "r": 0.0132
+  },
+  {
+   "name": "Bolt.suruburi_perete.003",
+   "family": "suruburi_perete",
+   "source": "suruburi_perete001",
+   "parent": "ureche002",
+   "pos": [
+    6.3781,
+    1.8371,
+    -0.0362
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    0.7305,
+    0.5921,
+    0.7305
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_perete.004",
+   "family": "suruburi_perete",
+   "source": "suruburi_perete002",
+   "parent": "ureche007",
+   "pos": [
+    -6.3507,
+    1.8339,
+    -0.0405
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    0.7309,
+    0.5921,
+    0.7309
+   ],
+   "len": 0.0474,
+   "r": 0.0132
+  },
+  {
+   "name": "Bolt.suruburi_perete.005",
+   "family": "suruburi_perete",
+   "source": "suruburi_perete002",
+   "parent": "ureche007",
+   "pos": [
+    -6.3154,
+    1.8339,
+    -0.0405
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    0.7305,
+    0.5921,
+    0.7305
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_perete.006",
+   "family": "suruburi_perete",
+   "source": "suruburi_perete003",
+   "parent": "ureche005",
+   "pos": [
+    -6.3503,
+    5.5519,
+    -0.0415
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    0.7309,
+    0.5921,
+    0.7309
+   ],
+   "len": 0.0474,
+   "r": 0.0132
+  },
+  {
+   "name": "Bolt.suruburi_perete.007",
+   "family": "suruburi_perete",
+   "source": "suruburi_perete003",
+   "parent": "ureche005",
+   "pos": [
+    -6.315,
+    5.5519,
+    -0.0415
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    0.7305,
+    0.5921,
+    0.7305
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_perete.008",
+   "family": "suruburi_perete",
+   "source": "suruburi_perete004",
+   "parent": "ureche006",
+   "pos": [
+    -6.3206,
+    3.7747,
+    -0.0413
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    0.7311,
+    0.5922,
+    0.7311
+   ],
+   "len": 0.0474,
+   "r": 0.0132
+  },
+  {
+   "name": "Bolt.suruburi_perete.009",
+   "family": "suruburi_perete",
+   "source": "suruburi_perete004",
+   "parent": "ureche006",
+   "pos": [
+    -6.3559,
+    3.7747,
+    -0.0413
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    0.7305,
+    0.5922,
+    0.7305
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_perete.010",
+   "family": "suruburi_perete",
+   "source": "suruburi_perete005",
+   "parent": "ureche008",
+   "pos": [
+    -6.3197,
+    0.3211,
+    -0.0401
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    0.7311,
+    0.5922,
+    0.7311
+   ],
+   "len": 0.0474,
+   "r": 0.0132
+  },
+  {
+   "name": "Bolt.suruburi_perete.011",
+   "family": "suruburi_perete",
+   "source": "suruburi_perete005",
+   "parent": "ureche008",
+   "pos": [
+    -6.355,
+    0.3211,
+    -0.0401
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    0.7305,
+    0.5922,
+    0.7305
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_perete.012",
+   "family": "suruburi_perete",
+   "source": "suruburi_perete006",
+   "parent": "ureche001",
+   "pos": [
+    6.3623,
+    0.3189,
+    -0.0382
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    0.7311,
+    0.5922,
+    0.7311
+   ],
+   "len": 0.0474,
+   "r": 0.0132
+  },
+  {
+   "name": "Bolt.suruburi_perete.013",
+   "family": "suruburi_perete",
+   "source": "suruburi_perete006",
+   "parent": "ureche001",
+   "pos": [
+    6.327,
+    0.3189,
+    -0.0382
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    0.7305,
+    0.5922,
+    0.7305
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_perete.014",
+   "family": "suruburi_perete",
+   "source": "suruburi_perete007",
+   "parent": "ureche003",
+   "pos": [
+    6.3659,
+    3.7779,
+    -0.0393
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    0.7311,
+    0.5922,
+    0.7311
+   ],
+   "len": 0.0474,
+   "r": 0.0132
+  },
+  {
+   "name": "Bolt.suruburi_perete.015",
+   "family": "suruburi_perete",
+   "source": "suruburi_perete007",
+   "parent": "ureche003",
+   "pos": [
+    6.3306,
+    3.7779,
+    -0.0393
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    0.7305,
+    0.5922,
+    0.7305
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_perete.016",
+   "family": "suruburi_perete",
+   "source": "suruburi_perete008",
+   "parent": "ureche009",
+   "pos": [
+    6.3393,
+    5.5551,
+    -0.0398
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    0.7309,
+    0.5921,
+    0.7309
+   ],
+   "len": 0.0474,
+   "r": 0.0132
+  },
+  {
+   "name": "Bolt.suruburi_perete.017",
+   "family": "suruburi_perete",
+   "source": "suruburi_perete008",
+   "parent": "ureche009",
+   "pos": [
+    6.3746,
+    5.5551,
+    -0.0398
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    0.7305,
+    0.5921,
+    0.7305
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  },
+  {
+   "name": "Bolt.suruburi_perete.018",
+   "family": "suruburi_perete",
+   "source": "suruburi_perete009",
+   "parent": "ureche010",
+   "pos": [
+    -6.3509,
+    6.2394,
+    -0.0416
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    0.7309,
+    0.5921,
+    0.7309
+   ],
+   "len": 0.0474,
+   "r": 0.0132
+  },
+  {
+   "name": "Bolt.suruburi_perete.019",
+   "family": "suruburi_perete",
+   "source": "suruburi_perete009",
+   "parent": "ureche010",
+   "pos": [
+    -6.3155,
+    6.2394,
+    -0.0416
+   ],
+   "quat_xyzw": [
+    0.0,
+    0.0,
+    -0.0,
+    1.0
+   ],
+   "scale": [
+    0.7305,
+    0.5921,
+    0.7305
+   ],
+   "len": 0.0474,
+   "r": 0.0131
+  }
+ ]
+}

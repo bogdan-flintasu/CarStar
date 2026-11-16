@@ -1,0 +1,6441 @@
+{
+ "source": "da.glb",
+ "coords": "glTF/three.js, Y up, metres",
+ "objects_total": 190,
+ "mesh_objects": 190,
+ "tris_total": 1610600,
+ "scene_bbox": {
+  "min": [
+   -15.2197,
+   -0.0158,
+   -8.3499
+  ],
+  "max": [
+   15.2303,
+   9.6076,
+   2.4717
+  ]
+ },
+ "materials": [
+  "Material_0"
+ ],
+ "images": 0,
+ "families": {
+  "surub": {
+   "count": 36,
+   "tris": 828844,
+   "min": [
+    -6.3734,
+    -0.0158,
+    -0.165
+   ],
+   "max": [
+    6.3983,
+    5.8858,
+    0.1652
+   ]
+  },
+  "surub_sus": {
+   "count": 8,
+   "tris": 193191,
+   "min": [
+    -0.0512,
+    6.9043,
+    -0.065
+   ],
+   "max": [
+    0.0432,
+    7.3791,
+    0.065
+   ]
+  },
+  "suruburi_grinzi": {
+   "count": 20,
+   "tris": 139840,
+   "min": [
+    -6.2621,
+    6.3493,
+    -5.9844
+   ],
+   "max": [
+    6.2702,
+    7.4991,
+    -0.0209
+   ]
+  },
+  "PereteFata": {
+   "count": 1,
+   "tris": 113146,
+   "min": [
+    -15.2197,
+    0.2188,
+    0.106
+   ],
+   "max": [
+    15.2301,
+    9.6076,
+    0.1548
+   ]
+  },
+  "PereteSpate": {
+   "count": 1,
+   "tris": 113146,
+   "min": [
+    -15.2196,
+    0.2189,
+    -0.124
+   ],
+   "max": [
+    15.2303,
+    9.6076,
+    -0.075
+   ]
+  },
+  "suruburi_perete": {
+   "count": 10,
+   "tris": 69920,
+   "min": [
+    -6.369,
+    0.2953,
+    -0.0546
+   ],
+   "max": [
+    6.3911,
+    6.263,
+    -0.0231
+   ]
+  },
+  "PereteDR": {
+   "count": 1,
+   "tris": 38482,
+   "min": [
+    6.419,
+    0.219,
+    -6.1133
+   ],
+   "max": [
+    6.468,
+    6.4079,
+    0.1067
+   ]
+  },
+  "jgheabSTG": {
+   "count": 1,
+   "tris": 22156,
+   "min": [
+    -6.5628,
+    6.3497,
+    -5.8587
+   ],
+   "max": [
+    -6.4528,
+    6.4036,
+    0.1548
+   ]
+  },
+  "jgheabDR": {
+   "count": 1,
+   "tris": 22154,
+   "min": [
+    6.4619,
+    6.3497,
+    -5.8588
+   ],
+   "max": [
+    6.5719,
+    6.4036,
+    0.1547
+   ]
+  },
+  "AcoperisDR": {
+   "count": 1,
+   "tris": 18918,
+   "min": [
+    0.0046,
+    6.3986,
+    -6.139
+   ],
+   "max": [
+    6.4752,
+    7.5859,
+    0.1547
+   ]
+  },
+  "AcoperisSTG": {
+   "count": 1,
+   "tris": 18918,
+   "min": [
+    -6.4658,
+    6.3986,
+    -6.139
+   ],
+   "max": [
+    0.0048,
+    7.5859,
+    0.1548
+   ]
+  },
+  "PereteSTG": {
+   "count": 1,
+   "tris": 18666,
+   "min": [
+    -6.4582,
+    0.2192,
+    -6.1136
+   ],
+   "max": [
+    -6.4098,
+    6.4077,
+    0.1064
+   ]
+  },
+  "Cylinder": {
+   "count": 4,
+   "tris": 3224,
+   "min": [
+    -6.5428,
+    0.2255,
+    -6.1415
+   ],
+   "max": [
+    6.5522,
+    0.2921,
+    0.1575
+   ]
+  },
+  "jgheab_spateDR": {
+   "count": 1,
+   "tris": 1702,
+   "min": [
+    6.4622,
+    6.3497,
+    -6.1388
+   ],
+   "max": [
+    6.5722,
+    6.4036,
+    -5.9325
+   ]
+  },
+  "jgheab_spateSTG": {
+   "count": 1,
+   "tris": 1666,
+   "min": [
+    -6.5625,
+    6.3497,
+    -6.1388
+   ],
+   "max": [
+    -6.4525,
+    6.4036,
+    -5.9326
+   ]
+  },
+  "jgheabDR_prelungire": {
+   "count": 1,
+   "tris": 924,
+   "min": [
+    6.4622,
+    6.3517,
+    -5.9325
+   ],
+   "max": [
+    6.5719,
+    6.4036,
+    -5.8588
+   ]
+  },
+  "suruburi_laterale": {
+   "count": 20,
+   "tris": 659,
+   "min": [
+    -6.3874,
+    0.31,
+    -0.075
+   ],
+   "max": [
+    6.3969,
+    7.5168,
+    0.0751
+   ]
+  },
+  "ureche": {
+   "count": 10,
+   "tris": 640,
+   "min": [
+    -6.411,
+    0.25,
+    -0.075
+   ],
+   "max": [
+    6.4205,
+    6.3083,
+    -0.0019
+   ]
+  },
+  "stalp_sus": {
+   "count": 4,
+   "tris": 610,
+   "min": [
+    -6.291,
+    6.0205,
+    -0.075
+   ],
+   "max": [
+    6.3006,
+    7.4338,
+    0.075
+   ]
+  },
+  "jgheabSTG_prelungire": {
+   "count": 1,
+   "tris": 592,
+   "min": [
+    -6.5625,
+    6.3517,
+    -5.9326
+   ],
+   "max": [
+    -6.4528,
+    6.4036,
+    -5.8587
+   ]
+  },
+  "Grinda": {
+   "count": 10,
+   "tris": 370,
+   "min": [
+    -6.2776,
+    6.3384,
+    -6.0
+   ],
+   "max": [
+    6.2852,
+    7.5185,
+    -0.0
+   ]
+  },
+  "prelungire_stalp": {
+   "count": 2,
+   "tris": 292,
+   "min": [
+    -6.291,
+    5.845,
+    -0.075
+   ],
+   "max": [
+    6.3006,
+    6.0735,
+    0.075
+   ]
+  },
+  "stalp": {
+   "count": 2,
+   "tris": 269,
+   "min": [
+    -6.2904,
+    0.02,
+    -0.075
+   ],
+   "max": [
+    6.3,
+    5.815,
+    0.0751
+   ]
+  },
+  "capat__gheabSTG": {
+   "count": 1,
+   "tris": 216,
+   "min": [
+    -6.5625,
+    6.3518,
+    0.1498
+   ],
+   "max": [
+    -6.4525,
+    6.4037,
+    0.1558
+   ]
+  },
+  "capat_jgheabDR": {
+   "count": 1,
+   "tris": 216,
+   "min": [
+    6.4622,
+    6.3527,
+    0.1487
+   ],
+   "max": [
+    6.5722,
+    6.4046,
+    0.1547
+   ]
+  },
+  "aripioara_sustinere": {
+   "count": 10,
+   "tris": 200,
+   "min": [
+    -6.4061,
+    0.02,
+    -0.195
+   ],
+   "max": [
+    6.4157,
+    0.22,
+    0.1951
+   ]
+  },
+  "aripioara_laterla_sus": {
+   "count": 1,
+   "tris": 102,
+   "min": [
+    4.1889,
+    5.8438,
+    -0.075
+   ],
+   "max": [
+    6.0012,
+    6.3907,
+    0.075
+   ]
+  },
+  "burlan": {
+   "count": 1,
+   "tris": 100,
+   "min": [
+    -6.5326,
+    0.2921,
+    0.0727
+   ],
+   "max": [
+    -6.4826,
+    6.3065,
+    0.1227
+   ]
+  },
+  "burlanDR": {
+   "count": 1,
+   "tris": 100,
+   "min": [
+    6.4921,
+    0.2921,
+    0.0727
+   ],
+   "max": [
+    6.5421,
+    6.3065,
+    0.1227
+   ]
+  },
+  "burlan_spateDR": {
+   "count": 1,
+   "tris": 100,
+   "min": [
+    6.492,
+    0.292,
+    -6.1067
+   ],
+   "max": [
+    6.542,
+    6.3064,
+    -6.0567
+   ]
+  },
+  "burlan_spateSTG": {
+   "count": 1,
+   "tris": 100,
+   "min": [
+    -6.5326,
+    0.292,
+    -6.1067
+   ],
+   "max": [
+    -6.4826,
+    6.3064,
+    -6.0567
+   ]
+  },
+  "capat_burlanDR": {
+   "count": 1,
+   "tris": 100,
+   "min": [
+    6.4776,
+    6.3065,
+    0.0623
+   ],
+   "max": [
+    6.5565,
+    6.3742,
+    0.133
+   ]
+  },
+  "capat_burlanSTG": {
+   "count": 1,
+   "tris": 100,
+   "min": [
+    -6.5471,
+    6.3065,
+    0.0623
+   ],
+   "max": [
+    -6.4682,
+    6.3742,
+    0.133
+   ]
+  },
+  "capat_burlan_spateDR": {
+   "count": 1,
+   "tris": 100,
+   "min": [
+    6.4776,
+    6.3064,
+    -6.1171
+   ],
+   "max": [
+    6.5565,
+    6.3741,
+    -6.0464
+   ]
+  },
+  "capat_burlan_spateSTG": {
+   "count": 1,
+   "tris": 100,
+   "min": [
+    -6.5471,
+    6.3064,
+    -6.1171
+   ],
+   "max": [
+    -6.4682,
+    6.374,
+    -6.0464
+   ]
+  },
+  "aripioara_laterala_sus": {
+   "count": 1,
+   "tris": 98,
+   "min": [
+    -5.9917,
+    5.8438,
+    -0.075
+   ],
+   "max": [
+    -4.1794,
+    6.3907,
+    0.075
+   ]
+  },
+  "aripioara_lateral": {
+   "count": 1,
+   "tris": 88,
+   "min": [
+    5.8097,
+    4.115,
+    -0.075
+   ],
+   "max": [
+    5.9997,
+    5.815,
+    0.075
+   ]
+  },
+  "aripa_lateral": {
+   "count": 1,
+   "tris": 85,
+   "min": [
+    -5.9901,
+    4.115,
+    -0.0749
+   ],
+   "max": [
+    -5.8001,
+    5.815,
+    0.0751
+   ]
+  },
+  "aripioara_sustinere_sus": {
+   "count": 4,
+   "tris": 80,
+   "min": [
+    -6.391,
+    5.6318,
+    -0.002
+   ],
+   "max": [
+    6.3986,
+    6.025,
+    0.0021
+   ]
+  },
+  "plane_inclinat": {
+   "count": 6,
+   "tris": 72,
+   "min": [
+    -4.2504,
+    6.3997,
+    -0.075
+   ],
+   "max": [
+    4.26,
+    7.3927,
+    0.075
+   ]
+  },
+  "beton": {
+   "count": 1,
+   "tris": 48,
+   "min": [
+    -8.5,
+    -0.0,
+    -8.3499
+   ],
+   "max": [
+    8.5,
+    0.222,
+    2.4717
+   ]
+  },
+  "suruburi_sus": {
+   "count": 4,
+   "tris": 48,
+   "min": [
+    -6.3917,
+    5.815,
+    -0.075
+   ],
+   "max": [
+    6.4012,
+    5.845,
+    0.0751
+   ]
+  },
+  "aripioarea_sustinere": {
+   "count": 2,
+   "tris": 36,
+   "min": [
+    -6.2869,
+    0.02,
+    -0.1949
+   ],
+   "max": [
+    6.2997,
+    0.22,
+    0.195
+   ]
+  },
+  "coltar_acoperis": {
+   "count": 1,
+   "tris": 30,
+   "min": [
+    -0.0055,
+    7.5372,
+    -6.1389
+   ],
+   "max": [
+    0.0182,
+    7.5888,
+    0.1549
+   ]
+  },
+  "aripioara_mijloc": {
+   "count": 1,
+   "tris": 28,
+   "min": [
+    -1.1801,
+    6.8541,
+    -0.075
+   ],
+   "max": [
+    -0.0061,
+    7.1291,
+    0.075
+   ]
+  },
+  "aripioara_sus": {
+   "count": 1,
+   "tris": 28,
+   "min": [
+    0.0156,
+    6.854,
+    -0.075
+   ],
+   "max": [
+    1.1896,
+    7.129,
+    0.075
+   ]
+  },
+  "baza_stalp": {
+   "count": 2,
+   "tris": 24,
+   "min": [
+    -6.4173,
+    0.0,
+    -0.2
+   ],
+   "max": [
+    6.4411,
+    0.02,
+    0.2001
+   ]
+  },
+  "plane_aripioara": {
+   "count": 2,
+   "tris": 24,
+   "min": [
+    -6.2808,
+    4.1134,
+    -0.075
+   ],
+   "max": [
+    6.2949,
+    4.131,
+    0.0751
+   ]
+  },
+  "plane_sus": {
+   "count": 2,
+   "tris": 24,
+   "min": [
+    -0.0109,
+    6.8293,
+    -0.1136
+   ],
+   "max": [
+    0.0191,
+    7.4493,
+    0.1065
+   ]
+  },
+  "plane_drept_sus": {
+   "count": 1,
+   "tris": 12,
+   "min": [
+    0.0191,
+    7.256,
+    -0.075
+   ],
+   "max": [
+    0.1914,
+    7.266,
+    0.075
+   ]
+  },
+  "plane_sus_drept": {
+   "count": 1,
+   "tris": 12,
+   "min": [
+    -0.1818,
+    7.2602,
+    -0.075
+   ],
+   "max": [
+    -0.0096,
+    7.2702,
+    0.075
+   ]
+  }
+ },
+ "objects": [
+  {
+   "name": "AcoperisDR",
+   "family": "AcoperisDR",
+   "parent": null,
+   "type": "MESH",
+   "mesh": "Mesh_177",
+   "tris": 18918,
+   "origin": [
+    0.0048,
+    7.5385,
+    0.1547
+   ],
+   "dims": [
+    6.4706,
+    1.1873,
+    6.2937
+   ],
+   "bbox": {
+    "min": [
+     0.0046,
+     6.3986,
+     -6.139
+    ],
+    "max": [
+     6.4752,
+     7.5859,
+     0.1547
+    ]
+   }
+  },
+  {
+   "name": "AcoperisSTG",
+   "family": "AcoperisSTG",
+   "parent": null,
+   "type": "MESH",
+   "mesh": "Mesh_34",
+   "tris": 18918,
+   "origin": [
+    0.0048,
+    7.5385,
+    0.1547
+   ],
+   "dims": [
+    6.4706,
+    1.1873,
+    6.2938
+   ],
+   "bbox": {
+    "min": [
+     -6.4658,
+     6.3986,
+     -6.139
+    ],
+    "max": [
+     0.0048,
+     7.5859,
+     0.1548
+    ]
+   }
+  },
+  {
+   "name": "Cylinder002",
+   "family": "Cylinder",
+   "parent": "burlanDR",
+   "type": "MESH",
+   "mesh": "Mesh_183",
+   "tris": 806,
+   "origin": [
+    6.4999,
+    0.2921,
+    0.1159
+   ],
+   "dims": [
+    0.0601,
+    0.0664,
+    0.0847
+   ],
+   "bbox": {
+    "min": [
+     6.4819,
+     0.2257,
+     0.0727
+    ],
+    "max": [
+     6.542,
+     0.2921,
+     0.1574
+    ]
+   }
+  },
+  {
+   "name": "Cylinder003",
+   "family": "Cylinder",
+   "parent": "burlan_spateSTG.001",
+   "type": "MESH",
+   "mesh": "Mesh_37",
+   "tris": 806,
+   "origin": [
+    -6.4905,
+    0.292,
+    -6.1
+   ],
+   "dims": [
+    0.0601,
+    0.0665,
+    0.0848
+   ],
+   "bbox": {
+    "min": [
+     -6.5326,
+     0.2255,
+     -6.1415
+    ],
+    "max": [
+     -6.4725,
+     0.292,
+     -6.0567
+    ]
+   }
+  },
+  {
+   "name": "Cylinder004",
+   "family": "Cylinder",
+   "parent": "burlan",
+   "type": "MESH",
+   "mesh": "Mesh_40",
+   "tris": 806,
+   "origin": [
+    -6.5248,
+    0.2921,
+    0.1159
+   ],
+   "dims": [
+    0.0601,
+    0.0664,
+    0.0848
+   ],
+   "bbox": {
+    "min": [
+     -6.5428,
+     0.2257,
+     0.0727
+    ],
+    "max": [
+     -6.4827,
+     0.2921,
+     0.1575
+    ]
+   }
+  },
+  {
+   "name": "Cylinder005",
+   "family": "Cylinder",
+   "parent": "burlan_spateDR",
+   "type": "MESH",
+   "mesh": "Mesh_180",
+   "tris": 806,
+   "origin": [
+    6.5342,
+    0.292,
+    -6.0999
+   ],
+   "dims": [
+    0.0601,
+    0.0664,
+    0.0848
+   ],
+   "bbox": {
+    "min": [
+     6.4921,
+     0.2256,
+     -6.1415
+    ],
+    "max": [
+     6.5522,
+     0.292,
+     -6.0567
+    ]
+   }
+  },
+  {
+   "name": "Grinda",
+   "family": "Grinda",
+   "parent": "suruburi_laterale007",
+   "type": "MESH",
+   "mesh": "Mesh_73",
+   "tris": 35,
+   "origin": [
+    -1.6433,
+    7.1449,
+    -0.0
+   ],
+   "dims": [
+    0.1062,
+    0.1001,
+    6.0
+   ],
+   "bbox": {
+    "min": [
+     -1.7052,
+     7.1449,
+     -6.0
+    ],
+    "max": [
+     -1.599,
+     7.245,
+     -0.0
+    ]
+   }
+  },
+  {
+   "name": "Grinda001",
+   "family": "Grinda",
+   "parent": "suruburi_laterale006",
+   "type": "MESH",
+   "mesh": "Mesh_69",
+   "tris": 38,
+   "origin": [
+    -3.1599,
+    6.8774,
+    -0.0
+   ],
+   "dims": [
+    0.1062,
+    0.1002,
+    6.0
+   ],
+   "bbox": {
+    "min": [
+     -3.2218,
+     6.8774,
+     -6.0
+    ],
+    "max": [
+     -3.1156,
+     6.9776,
+     -0.0
+    ]
+   }
+  },
+  {
+   "name": "Grinda002",
+   "family": "Grinda",
+   "parent": "suruburi_laterale005",
+   "type": "MESH",
+   "mesh": "Mesh_65",
+   "tris": 35,
+   "origin": [
+    -4.6787,
+    6.6095,
+    -0.0
+   ],
+   "dims": [
+    0.1062,
+    0.1002,
+    6.0
+   ],
+   "bbox": {
+    "min": [
+     -4.7406,
+     6.6095,
+     -6.0
+    ],
+    "max": [
+     -4.6344,
+     6.7097,
+     -0.0
+    ]
+   }
+  },
+  {
+   "name": "Grinda003",
+   "family": "Grinda",
+   "parent": "suruburi_laterale004",
+   "type": "MESH",
+   "mesh": "Mesh_61",
+   "tris": 35,
+   "origin": [
+    -6.2157,
+    6.3384,
+    -0.0
+   ],
+   "dims": [
+    0.1062,
+    0.1001,
+    6.0
+   ],
+   "bbox": {
+    "min": [
+     -6.2776,
+     6.3384,
+     -6.0
+    ],
+    "max": [
+     -6.1714,
+     6.4385,
+     -0.0
+    ]
+   }
+  },
+  {
+   "name": "Grinda004",
+   "family": "Grinda",
+   "parent": "suruburi_laterale008",
+   "type": "MESH",
+   "mesh": "Mesh_77",
+   "tris": 42,
+   "origin": [
+    -0.0942,
+    7.4181,
+    -0.0
+   ],
+   "dims": [
+    0.1063,
+    0.1002,
+    6.0
+   ],
+   "bbox": {
+    "min": [
+     -0.1562,
+     7.4181,
+     -6.0
+    ],
+    "max": [
+     -0.0499,
+     7.5183,
+     -0.0
+    ]
+   }
+  },
+  {
+   "name": "Grinda005",
+   "family": "Grinda",
+   "parent": "suruburi_laterale017",
+   "type": "MESH",
+   "mesh": "Mesh_116",
+   "tris": 37,
+   "origin": [
+    0.1026,
+    7.4183,
+    -0.0
+   ],
+   "dims": [
+    0.1062,
+    0.1002,
+    6.0
+   ],
+   "bbox": {
+    "min": [
+     0.0564,
+     7.4183,
+     -6.0
+    ],
+    "max": [
+     0.1626,
+     7.5185,
+     -0.0
+    ]
+   }
+  },
+  {
+   "name": "Grinda006",
+   "family": "Grinda",
+   "parent": "suruburi_laterale016",
+   "type": "MESH",
+   "mesh": "Mesh_112",
+   "tris": 37,
+   "origin": [
+    1.6526,
+    7.1449,
+    -0.0
+   ],
+   "dims": [
+    0.1062,
+    0.1001,
+    6.0
+   ],
+   "bbox": {
+    "min": [
+     1.6064,
+     7.1449,
+     -6.0
+    ],
+    "max": [
+     1.7126,
+     7.245,
+     -0.0
+    ]
+   }
+  },
+  {
+   "name": "Grinda007",
+   "family": "Grinda",
+   "parent": "suruburi_laterale015",
+   "type": "MESH",
+   "mesh": "Mesh_108",
+   "tris": 37,
+   "origin": [
+    3.1693,
+    6.8774,
+    -0.0
+   ],
+   "dims": [
+    0.1062,
+    0.1002,
+    6.0
+   ],
+   "bbox": {
+    "min": [
+     3.123,
+     6.8774,
+     -6.0
+    ],
+    "max": [
+     3.2292,
+     6.9776,
+     -0.0
+    ]
+   }
+  },
+  {
+   "name": "Grinda009",
+   "family": "Grinda",
+   "parent": "suruburi_laterale013",
+   "type": "MESH",
+   "mesh": "Mesh_100",
+   "tris": 37,
+   "origin": [
+    6.2252,
+    6.3384,
+    -0.0
+   ],
+   "dims": [
+    0.1063,
+    0.1001,
+    6.0
+   ],
+   "bbox": {
+    "min": [
+     6.1789,
+     6.3384,
+     -6.0
+    ],
+    "max": [
+     6.2852,
+     6.4385,
+     -0.0
+    ]
+   }
+  },
+  {
+   "name": "Grinda010",
+   "family": "Grinda",
+   "parent": "suruburi_laterale014",
+   "type": "MESH",
+   "mesh": "Mesh_104",
+   "tris": 37,
+   "origin": [
+    4.6877,
+    6.6096,
+    -0.0
+   ],
+   "dims": [
+    0.1062,
+    0.1002,
+    6.0
+   ],
+   "bbox": {
+    "min": [
+     4.6414,
+     6.6096,
+     -6.0
+    ],
+    "max": [
+     4.7476,
+     6.7098,
+     -0.0
+    ]
+   }
+  },
+  {
+   "name": "PereteDR",
+   "family": "PereteDR",
+   "parent": "stalp_2",
+   "type": "MESH",
+   "mesh": "Mesh_133",
+   "tris": 38482,
+   "origin": [
+    0.0,
+    0.0,
+    0.03
+   ],
+   "dims": [
+    0.049,
+    6.1889,
+    6.22
+   ],
+   "bbox": {
+    "min": [
+     6.419,
+     0.219,
+     -6.1133
+    ],
+    "max": [
+     6.468,
+     6.4079,
+     0.1067
+    ]
+   }
+  },
+  {
+   "name": "PereteFata",
+   "family": "PereteFata",
+   "parent": "stalp_2",
+   "type": "MESH",
+   "mesh": "Mesh_134",
+   "tris": 113146,
+   "origin": [
+    15.2301,
+    0.2195,
+    0.1065
+   ],
+   "dims": [
+    30.4498,
+    9.3888,
+    0.0488
+   ],
+   "bbox": {
+    "min": [
+     -15.2197,
+     0.2188,
+     0.106
+    ],
+    "max": [
+     15.2301,
+     9.6076,
+     0.1548
+    ]
+   }
+  },
+  {
+   "name": "PereteSTG",
+   "family": "PereteSTG",
+   "parent": "stalp_1",
+   "type": "MESH",
+   "mesh": "Mesh_11",
+   "tris": 18666,
+   "origin": [
+    0.0,
+    0.0,
+    0.03
+   ],
+   "dims": [
+    0.0484,
+    6.1885,
+    6.22
+   ],
+   "bbox": {
+    "min": [
+     -6.4582,
+     0.2192,
+     -6.1136
+    ],
+    "max": [
+     -6.4098,
+     6.4077,
+     0.1064
+    ]
+   }
+  },
+  {
+   "name": "PereteSpate",
+   "family": "PereteSpate",
+   "parent": "stalp_2",
+   "type": "MESH",
+   "mesh": "Mesh_135",
+   "tris": 113146,
+   "origin": [
+    15.2301,
+    0.2195,
+    -0.0756
+   ],
+   "dims": [
+    30.4499,
+    9.3887,
+    0.049
+   ],
+   "bbox": {
+    "min": [
+     -15.2196,
+     0.2189,
+     -0.124
+    ],
+    "max": [
+     15.2303,
+     9.6076,
+     -0.075
+    ]
+   }
+  },
+  {
+   "name": "aripa_lateral",
+   "family": "aripa_lateral",
+   "parent": "baza_stalp",
+   "type": "MESH",
+   "mesh": "Mesh_1",
+   "tris": 85,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.19,
+    1.7,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     -5.9901,
+     4.115,
+     -0.0749
+    ],
+    "max": [
+     -5.8001,
+     5.815,
+     0.0751
+    ]
+   }
+  },
+  {
+   "name": "aripioara_lateral",
+   "family": "aripioara_lateral",
+   "parent": "baza_stalp001",
+   "type": "MESH",
+   "mesh": "Mesh_123",
+   "tris": 88,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.19,
+    1.7,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     5.8097,
+     4.115,
+     -0.075
+    ],
+    "max": [
+     5.9997,
+     5.815,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "aripioara_laterala_sus",
+   "family": "aripioara_laterala_sus",
+   "parent": "suruburi_sus001",
+   "type": "MESH",
+   "mesh": "Mesh_43",
+   "tris": 98,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    1.8123,
+    0.5469,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     -5.9917,
+     5.8438,
+     -0.075
+    ],
+    "max": [
+     -4.1794,
+     6.3907,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "aripioara_laterla_sus",
+   "family": "aripioara_laterla_sus",
+   "parent": "suruburi_sus002",
+   "type": "MESH",
+   "mesh": "Mesh_84",
+   "tris": 102,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    1.8123,
+    0.5469,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     4.1889,
+     5.8438,
+     -0.075
+    ],
+    "max": [
+     6.0012,
+     6.3907,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "aripioara_mijloc_1",
+   "family": "aripioara_mijloc",
+   "parent": "plane_sus_2",
+   "type": "MESH",
+   "mesh": "Mesh_167",
+   "tris": 28,
+   "origin": [
+    0.0,
+    -0.0042,
+    -0.0
+   ],
+   "dims": [
+    1.174,
+    0.275,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     -1.1801,
+     6.8541,
+     -0.075
+    ],
+    "max": [
+     -0.0061,
+     7.1291,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "aripioara_sus",
+   "family": "aripioara_sus",
+   "parent": "plane_sus_1",
+   "type": "MESH",
+   "mesh": "Mesh_158",
+   "tris": 28,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    1.174,
+    0.275,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     0.0156,
+     6.854,
+     -0.075
+    ],
+    "max": [
+     1.1896,
+     7.129,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "aripioara_sustinere",
+   "family": "aripioara_sustinere",
+   "parent": "baza_stalp",
+   "type": "MESH",
+   "mesh": "Mesh_2",
+   "tris": 20,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.1157,
+    0.2,
+    0.008
+   ],
+   "bbox": {
+    "min": [
+     -6.4061,
+     0.02,
+     -0.0039
+    ],
+    "max": [
+     -6.2904,
+     0.22,
+     0.0041
+    ]
+   }
+  },
+  {
+   "name": "aripioara_sustinere001",
+   "family": "aripioara_sustinere",
+   "parent": "baza_stalp",
+   "type": "MESH",
+   "mesh": "Mesh_4",
+   "tris": 20,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.116,
+    0.2,
+    0.008
+   ],
+   "bbox": {
+    "min": [
+     -5.9868,
+     0.02,
+     -0.0039
+    ],
+    "max": [
+     -5.8708,
+     0.22,
+     0.0041
+    ]
+   }
+  },
+  {
+   "name": "aripioara_sustinere002",
+   "family": "aripioara_sustinere",
+   "parent": "baza_stalp",
+   "type": "MESH",
+   "mesh": "Mesh_5",
+   "tris": 20,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0078,
+    0.2,
+    0.12
+   ],
+   "bbox": {
+    "min": [
+     -5.9947,
+     0.02,
+     0.0751
+    ],
+    "max": [
+     -5.9869,
+     0.22,
+     0.1951
+    ]
+   }
+  },
+  {
+   "name": "aripioara_sustinere003",
+   "family": "aripioara_sustinere",
+   "parent": "baza_stalp",
+   "type": "MESH",
+   "mesh": "Mesh_6",
+   "tris": 20,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0077,
+    0.2,
+    0.12
+   ],
+   "bbox": {
+    "min": [
+     -6.2869,
+     0.02,
+     0.0751
+    ],
+    "max": [
+     -6.2792,
+     0.22,
+     0.1951
+    ]
+   }
+  },
+  {
+   "name": "aripioara_sustinere004",
+   "family": "aripioara_sustinere",
+   "parent": "baza_stalp",
+   "type": "MESH",
+   "mesh": "Mesh_7",
+   "tris": 20,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0077,
+    0.2,
+    0.12
+   ],
+   "bbox": {
+    "min": [
+     -5.9952,
+     0.02,
+     -0.1949
+    ],
+    "max": [
+     -5.9875,
+     0.22,
+     -0.0749
+    ]
+   }
+  },
+  {
+   "name": "aripioara_sustinere005",
+   "family": "aripioara_sustinere",
+   "parent": "baza_stalp001",
+   "type": "MESH",
+   "mesh": "Mesh_125",
+   "tris": 20,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.1157,
+    0.2,
+    0.008
+   ],
+   "bbox": {
+    "min": [
+     6.3,
+     0.02,
+     -0.004
+    ],
+    "max": [
+     6.4157,
+     0.22,
+     0.004
+    ]
+   }
+  },
+  {
+   "name": "aripioara_sustinere006",
+   "family": "aripioara_sustinere",
+   "parent": "baza_stalp001",
+   "type": "MESH",
+   "mesh": "Mesh_126",
+   "tris": 20,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.116,
+    0.2,
+    0.008
+   ],
+   "bbox": {
+    "min": [
+     5.8836,
+     0.02,
+     -0.004
+    ],
+    "max": [
+     5.9996,
+     0.22,
+     0.004
+    ]
+   }
+  },
+  {
+   "name": "aripioara_sustinere007",
+   "family": "aripioara_sustinere",
+   "parent": "baza_stalp001",
+   "type": "MESH",
+   "mesh": "Mesh_127",
+   "tris": 20,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0077,
+    0.2,
+    0.12
+   ],
+   "bbox": {
+    "min": [
+     5.9997,
+     0.02,
+     -0.195
+    ],
+    "max": [
+     6.0074,
+     0.22,
+     -0.075
+    ]
+   }
+  },
+  {
+   "name": "aripioara_sustinere008",
+   "family": "aripioara_sustinere",
+   "parent": "baza_stalp001",
+   "type": "MESH",
+   "mesh": "Mesh_128",
+   "tris": 20,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0077,
+    0.2,
+    0.12
+   ],
+   "bbox": {
+    "min": [
+     6.292,
+     0.02,
+     -0.195
+    ],
+    "max": [
+     6.2997,
+     0.22,
+     -0.075
+    ]
+   }
+  },
+  {
+   "name": "aripioara_sustinere009",
+   "family": "aripioara_sustinere",
+   "parent": "baza_stalp001",
+   "type": "MESH",
+   "mesh": "Mesh_129",
+   "tris": 20,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0077,
+    0.2,
+    0.12
+   ],
+   "bbox": {
+    "min": [
+     6.0003,
+     0.02,
+     0.075
+    ],
+    "max": [
+     6.008,
+     0.22,
+     0.195
+    ]
+   }
+  },
+  {
+   "name": "aripioara_sustinere_sus",
+   "family": "aripioara_sustinere_sus",
+   "parent": "baza_stalp",
+   "type": "MESH",
+   "mesh": "Mesh_3",
+   "tris": 20,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.1,
+    0.18,
+    0.004
+   ],
+   "bbox": {
+    "min": [
+     -6.3888,
+     5.6318,
+     -0.0019
+    ],
+    "max": [
+     -6.2888,
+     5.8118,
+     0.0021
+    ]
+   }
+  },
+  {
+   "name": "aripioara_sustinere_sus001",
+   "family": "aripioara_sustinere_sus",
+   "parent": "suruburi_sus001",
+   "type": "MESH",
+   "mesh": "Mesh_44",
+   "tris": 20,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.1,
+    0.18,
+    0.004
+   ],
+   "bbox": {
+    "min": [
+     -6.391,
+     5.845,
+     -0.002
+    ],
+    "max": [
+     -6.291,
+     6.025,
+     0.002
+    ]
+   }
+  },
+  {
+   "name": "aripioara_sustinere_sus002",
+   "family": "aripioara_sustinere_sus",
+   "parent": "baza_stalp001",
+   "type": "MESH",
+   "mesh": "Mesh_124",
+   "tris": 20,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.1,
+    0.18,
+    0.004
+   ],
+   "bbox": {
+    "min": [
+     6.2984,
+     5.635,
+     -0.002
+    ],
+    "max": [
+     6.3984,
+     5.815,
+     0.002
+    ]
+   }
+  },
+  {
+   "name": "aripioara_sustinere_sus003",
+   "family": "aripioara_sustinere_sus",
+   "parent": "suruburi_sus002",
+   "type": "MESH",
+   "mesh": "Mesh_85",
+   "tris": 20,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.098,
+    0.18,
+    0.004
+   ],
+   "bbox": {
+    "min": [
+     6.3006,
+     5.845,
+     -0.002
+    ],
+    "max": [
+     6.3986,
+     6.025,
+     0.002
+    ]
+   }
+  },
+  {
+   "name": "aripioarea_sustinere",
+   "family": "aripioarea_sustinere",
+   "parent": "baza_stalp",
+   "type": "MESH",
+   "mesh": "Mesh_8",
+   "tris": 18,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0077,
+    0.2,
+    0.12
+   ],
+   "bbox": {
+    "min": [
+     -6.2869,
+     0.02,
+     -0.1949
+    ],
+    "max": [
+     -6.2792,
+     0.22,
+     -0.0749
+    ]
+   }
+  },
+  {
+   "name": "aripioarea_sustinere001",
+   "family": "aripioarea_sustinere",
+   "parent": "baza_stalp001",
+   "type": "MESH",
+   "mesh": "Mesh_130",
+   "tris": 18,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0077,
+    0.2,
+    0.12
+   ],
+   "bbox": {
+    "min": [
+     6.292,
+     0.02,
+     0.075
+    ],
+    "max": [
+     6.2997,
+     0.22,
+     0.195
+    ]
+   }
+  },
+  {
+   "name": "baza_stalp",
+   "family": "baza_stalp",
+   "parent": null,
+   "type": "MESH",
+   "mesh": "Mesh_0",
+   "tris": 12,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.56,
+    0.02,
+    0.4
+   ],
+   "bbox": {
+    "min": [
+     -6.4173,
+     0.0,
+     -0.1999
+    ],
+    "max": [
+     -5.8573,
+     0.02,
+     0.2001
+    ]
+   }
+  },
+  {
+   "name": "baza_stalp001",
+   "family": "baza_stalp",
+   "parent": null,
+   "type": "MESH",
+   "mesh": "Mesh_122",
+   "tris": 12,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.5809,
+    0.02,
+    0.4
+   ],
+   "bbox": {
+    "min": [
+     5.8602,
+     0.0,
+     -0.2
+    ],
+    "max": [
+     6.4411,
+     0.02,
+     0.2
+    ]
+   }
+  },
+  {
+   "name": "beton",
+   "family": "beton",
+   "parent": null,
+   "type": "MESH",
+   "mesh": "Mesh_185",
+   "tris": 48,
+   "origin": [
+    0.0,
+    0.0,
+    2.4717
+   ],
+   "dims": [
+    17.0,
+    0.222,
+    10.8216
+   ],
+   "bbox": {
+    "min": [
+     -8.5,
+     -0.0,
+     -8.3499
+    ],
+    "max": [
+     8.5,
+     0.222,
+     2.4717
+    ]
+   }
+  },
+  {
+   "name": "burlan",
+   "family": "burlan",
+   "parent": "jgheabSTG",
+   "type": "MESH",
+   "mesh": "Mesh_39",
+   "tris": 100,
+   "origin": [
+    -6.4682,
+    6.3742,
+    0.0977
+   ],
+   "dims": [
+    0.05,
+    6.0144,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     -6.5326,
+     0.2921,
+     0.0727
+    ],
+    "max": [
+     -6.4826,
+     6.3065,
+     0.1227
+    ]
+   }
+  },
+  {
+   "name": "burlanDR",
+   "family": "burlanDR",
+   "parent": "jgheabDR",
+   "type": "MESH",
+   "mesh": "Mesh_182",
+   "tris": 100,
+   "origin": [
+    6.5565,
+    6.3742,
+    0.0977
+   ],
+   "dims": [
+    0.05,
+    6.0144,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     6.4921,
+     0.2921,
+     0.0727
+    ],
+    "max": [
+     6.5421,
+     6.3065,
+     0.1227
+    ]
+   }
+  },
+  {
+   "name": "burlan_spateDR",
+   "family": "burlan_spateDR",
+   "parent": "jgheab_spateDR",
+   "type": "MESH",
+   "mesh": "Mesh_179",
+   "tris": 100,
+   "origin": [
+    6.5564,
+    6.374,
+    -6.0842
+   ],
+   "dims": [
+    0.05,
+    6.0144,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     6.492,
+     0.292,
+     -6.1067
+    ],
+    "max": [
+     6.542,
+     6.3064,
+     -6.0567
+    ]
+   }
+  },
+  {
+   "name": "burlan_spateSTG.001",
+   "family": "burlan_spateSTG",
+   "parent": "jgheab_spateSTG",
+   "type": "MESH",
+   "mesh": "Mesh_36",
+   "tris": 100,
+   "origin": [
+    -6.4682,
+    6.374,
+    -6.0842
+   ],
+   "dims": [
+    0.05,
+    6.0144,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     -6.5326,
+     0.292,
+     -6.1067
+    ],
+    "max": [
+     -6.4826,
+     6.3064,
+     -6.0567
+    ]
+   }
+  },
+  {
+   "name": "capat__gheabSTG",
+   "family": "capat__gheabSTG",
+   "parent": "jgheabSTG",
+   "type": "MESH",
+   "mesh": "Mesh_41",
+   "tris": 216,
+   "origin": [
+    -6.5076,
+    6.3518,
+    0.1528
+   ],
+   "dims": [
+    0.11,
+    0.0519,
+    0.006
+   ],
+   "bbox": {
+    "min": [
+     -6.5625,
+     6.3518,
+     0.1498
+    ],
+    "max": [
+     -6.4525,
+     6.4037,
+     0.1558
+    ]
+   }
+  },
+  {
+   "name": "capat_burlanDR",
+   "family": "capat_burlanDR",
+   "parent": "jgheabDR",
+   "type": "MESH",
+   "mesh": "Mesh_182.001",
+   "tris": 100,
+   "origin": [
+    6.5565,
+    6.3742,
+    0.0977
+   ],
+   "dims": [
+    0.0789,
+    0.0677,
+    0.0707
+   ],
+   "bbox": {
+    "min": [
+     6.4776,
+     6.3065,
+     0.0623
+    ],
+    "max": [
+     6.5565,
+     6.3742,
+     0.133
+    ]
+   }
+  },
+  {
+   "name": "capat_burlanSTG",
+   "family": "capat_burlanSTG",
+   "parent": "jgheabSTG",
+   "type": "MESH",
+   "mesh": "Mesh_39.001",
+   "tris": 100,
+   "origin": [
+    -6.4682,
+    6.3742,
+    0.0977
+   ],
+   "dims": [
+    0.0789,
+    0.0677,
+    0.0707
+   ],
+   "bbox": {
+    "min": [
+     -6.5471,
+     6.3065,
+     0.0623
+    ],
+    "max": [
+     -6.4682,
+     6.3742,
+     0.133
+    ]
+   }
+  },
+  {
+   "name": "capat_burlan_spateDR",
+   "family": "capat_burlan_spateDR",
+   "parent": "jgheab_spateDR",
+   "type": "MESH",
+   "mesh": "Mesh_179.001",
+   "tris": 100,
+   "origin": [
+    6.5564,
+    6.374,
+    -6.0842
+   ],
+   "dims": [
+    0.0789,
+    0.0677,
+    0.0707
+   ],
+   "bbox": {
+    "min": [
+     6.4776,
+     6.3064,
+     -6.1171
+    ],
+    "max": [
+     6.5565,
+     6.3741,
+     -6.0464
+    ]
+   }
+  },
+  {
+   "name": "capat_burlan_spateSTG",
+   "family": "capat_burlan_spateSTG",
+   "parent": "jgheab_spateSTG",
+   "type": "MESH",
+   "mesh": "Mesh_36.001",
+   "tris": 100,
+   "origin": [
+    -6.4682,
+    6.374,
+    -6.0842
+   ],
+   "dims": [
+    0.0789,
+    0.0676,
+    0.0707
+   ],
+   "bbox": {
+    "min": [
+     -6.5471,
+     6.3064,
+     -6.1171
+    ],
+    "max": [
+     -6.4682,
+     6.374,
+     -6.0464
+    ]
+   }
+  },
+  {
+   "name": "capat_jgheabDR",
+   "family": "capat_jgheabDR",
+   "parent": "jgheabDR",
+   "type": "MESH",
+   "mesh": "Mesh_184",
+   "tris": 216,
+   "origin": [
+    6.5171,
+    6.3527,
+    0.1517
+   ],
+   "dims": [
+    0.11,
+    0.0519,
+    0.006
+   ],
+   "bbox": {
+    "min": [
+     6.4622,
+     6.3527,
+     0.1487
+    ],
+    "max": [
+     6.5722,
+     6.4046,
+     0.1547
+    ]
+   }
+  },
+  {
+   "name": "coltar_acoperis",
+   "family": "coltar_acoperis",
+   "parent": "plane_sus_2",
+   "type": "MESH",
+   "mesh": "Mesh_168",
+   "tris": 30,
+   "origin": [
+    0.0182,
+    7.5867,
+    0.1549
+   ],
+   "dims": [
+    0.0237,
+    0.0516,
+    6.2938
+   ],
+   "bbox": {
+    "min": [
+     -0.0055,
+     7.5372,
+     -6.1389
+    ],
+    "max": [
+     0.0182,
+     7.5888,
+     0.1549
+    ]
+   }
+  },
+  {
+   "name": "jgheabDR",
+   "family": "jgheabDR",
+   "parent": "stalp_sus001",
+   "type": "MESH",
+   "mesh": "Mesh_181",
+   "tris": 22154,
+   "origin": [
+    6.4672,
+    6.4016,
+    0.1547
+   ],
+   "dims": [
+    0.11,
+    0.0539,
+    6.0135
+   ],
+   "bbox": {
+    "min": [
+     6.4619,
+     6.3497,
+     -5.8588
+    ],
+    "max": [
+     6.5719,
+     6.4036,
+     0.1547
+    ]
+   }
+  },
+  {
+   "name": "jgheabDR_prelungire",
+   "family": "jgheabDR_prelungire",
+   "parent": "stalp_sus001",
+   "type": "MESH",
+   "mesh": "Mesh_181.001",
+   "tris": 924,
+   "origin": [
+    6.4672,
+    6.4016,
+    0.1547
+   ],
+   "dims": [
+    0.1097,
+    0.0519,
+    0.0737
+   ],
+   "bbox": {
+    "min": [
+     6.4622,
+     6.3517,
+     -5.9325
+    ],
+    "max": [
+     6.5719,
+     6.4036,
+     -5.8588
+    ]
+   }
+  },
+  {
+   "name": "jgheabSTG",
+   "family": "jgheabSTG",
+   "parent": "stalp_sus_1001",
+   "type": "MESH",
+   "mesh": "Mesh_38",
+   "tris": 22156,
+   "origin": [
+    -6.4577,
+    6.4016,
+    0.1548
+   ],
+   "dims": [
+    0.11,
+    0.0539,
+    6.0135
+   ],
+   "bbox": {
+    "min": [
+     -6.5628,
+     6.3497,
+     -5.8587
+    ],
+    "max": [
+     -6.4528,
+     6.4036,
+     0.1548
+    ]
+   }
+  },
+  {
+   "name": "jgheabSTG_prelungire",
+   "family": "jgheabSTG_prelungire",
+   "parent": "stalp_sus_1001",
+   "type": "MESH",
+   "mesh": "Mesh_38.001",
+   "tris": 592,
+   "origin": [
+    -6.4577,
+    6.4016,
+    0.1548
+   ],
+   "dims": [
+    0.1097,
+    0.0519,
+    0.0739
+   ],
+   "bbox": {
+    "min": [
+     -6.5625,
+     6.3517,
+     -5.9326
+    ],
+    "max": [
+     -6.4528,
+     6.4036,
+     -5.8587
+    ]
+   }
+  },
+  {
+   "name": "jgheab_spateDR",
+   "family": "jgheab_spateDR",
+   "parent": "stalp_sus001",
+   "type": "MESH",
+   "mesh": "Mesh_178",
+   "tris": 1702,
+   "origin": [
+    6.567,
+    6.4016,
+    -5.9325
+   ],
+   "dims": [
+    0.11,
+    0.0539,
+    0.2063
+   ],
+   "bbox": {
+    "min": [
+     6.4622,
+     6.3497,
+     -6.1388
+    ],
+    "max": [
+     6.5722,
+     6.4036,
+     -5.9325
+    ]
+   }
+  },
+  {
+   "name": "jgheab_spateSTG",
+   "family": "jgheab_spateSTG",
+   "parent": "stalp_sus_1001",
+   "type": "MESH",
+   "mesh": "Mesh_35",
+   "tris": 1666,
+   "origin": [
+    -6.4578,
+    6.4016,
+    -6.1388
+   ],
+   "dims": [
+    0.11,
+    0.0539,
+    0.2062
+   ],
+   "bbox": {
+    "min": [
+     -6.5625,
+     6.3497,
+     -6.1388
+    ],
+    "max": [
+     -6.4525,
+     6.4036,
+     -5.9326
+    ]
+   }
+  },
+  {
+   "name": "plane_aripioara",
+   "family": "plane_aripioara",
+   "parent": "baza_stalp001",
+   "type": "MESH",
+   "mesh": "Mesh_131",
+   "tris": 12,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.2898,
+    0.01,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     6.0051,
+     4.121,
+     -0.075
+    ],
+    "max": [
+     6.2949,
+     4.131,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "plane_aripioara001",
+   "family": "plane_aripioara",
+   "parent": "baza_stalp",
+   "type": "MESH",
+   "mesh": "Mesh_9",
+   "tris": 12,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.28,
+    0.01,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     -6.2808,
+     4.1134,
+     -0.0749
+    ],
+    "max": [
+     -6.0008,
+     4.1234,
+     0.0751
+    ]
+   }
+  },
+  {
+   "name": "plane_drept_sus",
+   "family": "plane_drept_sus",
+   "parent": "plane_sus_1",
+   "type": "MESH",
+   "mesh": "Mesh_159",
+   "tris": 12,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.1723,
+    0.01,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     0.0191,
+     7.256,
+     -0.075
+    ],
+    "max": [
+     0.1914,
+     7.266,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "plane_inclinat",
+   "family": "plane_inclinat",
+   "parent": "suruburi_sus001",
+   "type": "MESH",
+   "mesh": "Mesh_45",
+   "tris": 12,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0601,
+    0.2764,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     -4.2504,
+     6.3997,
+     -0.075
+    ],
+    "max": [
+     -4.1903,
+     6.6761,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "plane_inclinat001",
+   "family": "plane_inclinat",
+   "parent": "plane_sus_2",
+   "type": "MESH",
+   "mesh": "Mesh_169",
+   "tris": 12,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0602,
+    0.2764,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     -0.2141,
+     7.1163,
+     -0.075
+    ],
+    "max": [
+     -0.1539,
+     7.3927,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "plane_inclinat002",
+   "family": "plane_inclinat",
+   "parent": "plane_sus_2",
+   "type": "MESH",
+   "mesh": "Mesh_170",
+   "tris": 12,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0601,
+    0.2764,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     -1.2294,
+     6.9372,
+     -0.075
+    ],
+    "max": [
+     -1.1693,
+     7.2136,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "plane_inclinat003",
+   "family": "plane_inclinat",
+   "parent": "suruburi_sus002",
+   "type": "MESH",
+   "mesh": "Mesh_86",
+   "tris": 12,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0602,
+    0.2764,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     4.1998,
+     6.3997,
+     -0.075
+    ],
+    "max": [
+     4.26,
+     6.6761,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "plane_inclinat004",
+   "family": "plane_inclinat",
+   "parent": "plane_sus_1",
+   "type": "MESH",
+   "mesh": "Mesh_160",
+   "tris": 12,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0602,
+    0.2765,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     1.1788,
+     6.9329,
+     -0.075
+    ],
+    "max": [
+     1.239,
+     7.2094,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "plane_inclinat005",
+   "family": "plane_inclinat",
+   "parent": "plane_sus_1",
+   "type": "MESH",
+   "mesh": "Mesh_161",
+   "tris": 12,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0602,
+    0.2764,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     0.1635,
+     7.1121,
+     -0.075
+    ],
+    "max": [
+     0.2237,
+     7.3885,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "plane_sus_1",
+   "family": "plane_sus",
+   "parent": null,
+   "type": "MESH",
+   "mesh": "Mesh_157",
+   "tris": 12,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.015,
+    0.62,
+    0.22
+   ],
+   "bbox": {
+    "min": [
+     0.0041,
+     6.8293,
+     -0.1136
+    ],
+    "max": [
+     0.0191,
+     7.4493,
+     0.1064
+    ]
+   }
+  },
+  {
+   "name": "plane_sus_2",
+   "family": "plane_sus",
+   "parent": null,
+   "type": "MESH",
+   "mesh": "Mesh_166",
+   "tris": 12,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.015,
+    0.62,
+    0.22
+   ],
+   "bbox": {
+    "min": [
+     -0.0109,
+     6.8293,
+     -0.1135
+    ],
+    "max": [
+     0.0041,
+     7.4493,
+     0.1065
+    ]
+   }
+  },
+  {
+   "name": "plane_sus_drept",
+   "family": "plane_sus_drept",
+   "parent": "plane_sus_2",
+   "type": "MESH",
+   "mesh": "Mesh_171",
+   "tris": 12,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.1722,
+    0.01,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     -0.1818,
+     7.2602,
+     -0.075
+    ],
+    "max": [
+     -0.0096,
+     7.2702,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "prelungire_stalp",
+   "family": "prelungire_stalp",
+   "parent": "suruburi_sus001",
+   "type": "MESH",
+   "mesh": "Mesh_46",
+   "tris": 147,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.3,
+    0.2285,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     -6.291,
+     5.845,
+     -0.075
+    ],
+    "max": [
+     -5.991,
+     6.0735,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "prelungire_stalp001",
+   "family": "prelungire_stalp",
+   "parent": "suruburi_sus002",
+   "type": "MESH",
+   "mesh": "Mesh_87",
+   "tris": 145,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.3,
+    0.2285,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     6.0006,
+     5.845,
+     -0.075
+    ],
+    "max": [
+     6.3006,
+     6.0735,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "stalp_1",
+   "family": "stalp",
+   "parent": "baza_stalp",
+   "type": "MESH",
+   "mesh": "Mesh_10",
+   "tris": 135,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.3003,
+    5.795,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     -6.2904,
+     0.02,
+     -0.0749
+    ],
+    "max": [
+     -5.9901,
+     5.815,
+     0.0751
+    ]
+   }
+  },
+  {
+   "name": "stalp_2",
+   "family": "stalp",
+   "parent": "baza_stalp001",
+   "type": "MESH",
+   "mesh": "Mesh_132",
+   "tris": 134,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.3004,
+    5.795,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     5.9996,
+     0.02,
+     -0.075
+    ],
+    "max": [
+     6.3,
+     5.815,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "stalp_sus",
+   "family": "stalp_sus",
+   "parent": null,
+   "type": "MESH",
+   "mesh": "Mesh_176",
+   "tris": 108,
+   "origin": [
+    6.0006,
+    6.0735,
+    -0.0
+   ],
+   "dims": [
+    5.9957,
+    1.3603,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     0.0154,
+     6.0735,
+     -0.075
+    ],
+    "max": [
+     6.0111,
+     7.4338,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "stalp_sus001",
+   "family": "stalp_sus",
+   "parent": "suruburi_sus002",
+   "type": "MESH",
+   "mesh": "Mesh_88",
+   "tris": 195,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.3001,
+    0.3575,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     6.0005,
+     6.0205,
+     -0.075
+    ],
+    "max": [
+     6.3006,
+     6.378,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "stalp_sus_1",
+   "family": "stalp_sus",
+   "parent": null,
+   "type": "MESH",
+   "mesh": "Mesh_33",
+   "tris": 108,
+   "origin": [
+    -5.9911,
+    6.0735,
+    -0.0
+   ],
+   "dims": [
+    5.9958,
+    1.3603,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     -6.0017,
+     6.0735,
+     -0.075
+    ],
+    "max": [
+     -0.0059,
+     7.4338,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "stalp_sus_1001",
+   "family": "stalp_sus",
+   "parent": "suruburi_sus001",
+   "type": "MESH",
+   "mesh": "Mesh_47",
+   "tris": 199,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.3,
+    0.3575,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     -6.291,
+     6.0205,
+     -0.075
+    ],
+    "max": [
+     -5.991,
+     6.378,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "surub",
+   "family": "surub",
+   "parent": "baza_stalp",
+   "type": "MESH",
+   "mesh": "Mesh_12",
+   "tris": 21515,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0482,
+    0.076,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     -6.3733,
+     -0.0128,
+     0.1152
+    ],
+    "max": [
+     -6.3251,
+     0.0632,
+     0.1652
+    ]
+   }
+  },
+  {
+   "name": "surub001",
+   "family": "surub",
+   "parent": "baza_stalp",
+   "type": "MESH",
+   "mesh": "Mesh_13",
+   "tris": 14180,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0482,
+    0.076,
+    0.0499
+   ],
+   "bbox": {
+    "min": [
+     -5.9452,
+     -0.0146,
+     0.1152
+    ],
+    "max": [
+     -5.897,
+     0.0614,
+     0.1651
+    ]
+   }
+  },
+  {
+   "name": "surub002",
+   "family": "surub",
+   "parent": "baza_stalp",
+   "type": "MESH",
+   "mesh": "Mesh_14",
+   "tris": 21514,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0481,
+    0.076,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     -6.2378,
+     -0.0123,
+     0.1152
+    ],
+    "max": [
+     -6.1897,
+     0.0637,
+     0.1652
+    ]
+   }
+  },
+  {
+   "name": "surub003",
+   "family": "surub",
+   "parent": "baza_stalp",
+   "type": "MESH",
+   "mesh": "Mesh_15",
+   "tris": 21488,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0482,
+    0.076,
+    0.0499
+   ],
+   "bbox": {
+    "min": [
+     -6.0787,
+     -0.0132,
+     0.1152
+    ],
+    "max": [
+     -6.0305,
+     0.0628,
+     0.1651
+    ]
+   }
+  },
+  {
+   "name": "surub004",
+   "family": "surub",
+   "parent": "baza_stalp",
+   "type": "MESH",
+   "mesh": "Mesh_16",
+   "tris": 21514,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0481,
+    0.076,
+    0.0499
+   ],
+   "bbox": {
+    "min": [
+     -5.9452,
+     -0.0147,
+     -0.1648
+    ],
+    "max": [
+     -5.8971,
+     0.0613,
+     -0.1149
+    ]
+   }
+  },
+  {
+   "name": "surub005",
+   "family": "surub",
+   "parent": "baza_stalp",
+   "type": "MESH",
+   "mesh": "Mesh_17",
+   "tris": 21502,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0482,
+    0.076,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     -6.3734,
+     -0.0128,
+     -0.1648
+    ],
+    "max": [
+     -6.3252,
+     0.0632,
+     -0.1148
+    ]
+   }
+  },
+  {
+   "name": "surub006",
+   "family": "surub",
+   "parent": "baza_stalp",
+   "type": "MESH",
+   "mesh": "Mesh_18",
+   "tris": 21508,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0482,
+    0.076,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     -6.2379,
+     -0.0123,
+     -0.1648
+    ],
+    "max": [
+     -6.1897,
+     0.0637,
+     -0.1148
+    ]
+   }
+  },
+  {
+   "name": "surub007",
+   "family": "surub",
+   "parent": "baza_stalp",
+   "type": "MESH",
+   "mesh": "Mesh_19",
+   "tris": 21515,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0482,
+    0.076,
+    0.0499
+   ],
+   "bbox": {
+    "min": [
+     -6.0788,
+     -0.0132,
+     -0.1648
+    ],
+    "max": [
+     -6.0306,
+     0.0628,
+     -0.1149
+    ]
+   }
+  },
+  {
+   "name": "surub008",
+   "family": "surub",
+   "parent": "suruburi_sus001",
+   "type": "MESH",
+   "mesh": "Mesh_48",
+   "tris": 31578,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.05,
+    0.0943,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     -6.3655,
+     5.7909,
+     0.015
+    ],
+    "max": [
+     -6.3155,
+     5.8852,
+     0.065
+    ]
+   }
+  },
+  {
+   "name": "surub009",
+   "family": "surub",
+   "parent": "suruburi_sus001",
+   "type": "MESH",
+   "mesh": "Mesh_50",
+   "tris": 24118,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.05,
+    0.0943,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     -6.3655,
+     5.7909,
+     -0.065
+    ],
+    "max": [
+     -6.3155,
+     5.8852,
+     -0.015
+    ]
+   }
+  },
+  {
+   "name": "surub010",
+   "family": "surub",
+   "parent": "suruburi_sus001",
+   "type": "MESH",
+   "mesh": "Mesh_51",
+   "tris": 31549,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.05,
+    0.0943,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     -6.0855,
+     5.7909,
+     0.015
+    ],
+    "max": [
+     -6.0355,
+     5.8852,
+     0.065
+    ]
+   }
+  },
+  {
+   "name": "surub011",
+   "family": "surub",
+   "parent": "suruburi_sus001",
+   "type": "MESH",
+   "mesh": "Mesh_53",
+   "tris": 24118,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.05,
+    0.0943,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     -6.2455,
+     5.7909,
+     -0.065
+    ],
+    "max": [
+     -6.1955,
+     5.8852,
+     -0.015
+    ]
+   }
+  },
+  {
+   "name": "surub012",
+   "family": "surub",
+   "parent": "suruburi_sus001",
+   "type": "MESH",
+   "mesh": "Mesh_54",
+   "tris": 24111,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.05,
+    0.0943,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     -6.0855,
+     5.7909,
+     -0.065
+    ],
+    "max": [
+     -6.0355,
+     5.8852,
+     -0.015
+    ]
+   }
+  },
+  {
+   "name": "surub013",
+   "family": "surub",
+   "parent": "suruburi_sus001",
+   "type": "MESH",
+   "mesh": "Mesh_55",
+   "tris": 24112,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.05,
+    0.0943,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     -6.2455,
+     5.7909,
+     0.015
+    ],
+    "max": [
+     -6.1955,
+     5.8852,
+     0.065
+    ]
+   }
+  },
+  {
+   "name": "surub014",
+   "family": "surub",
+   "parent": "suruburi_sus001",
+   "type": "MESH",
+   "mesh": "Mesh_56",
+   "tris": 24121,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.05,
+    0.0943,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     -5.9655,
+     5.7909,
+     -0.065
+    ],
+    "max": [
+     -5.9155,
+     5.8852,
+     -0.015
+    ]
+   }
+  },
+  {
+   "name": "surub015",
+   "family": "surub",
+   "parent": "suruburi_sus001",
+   "type": "MESH",
+   "mesh": "Mesh_57",
+   "tris": 24129,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.05,
+    0.0943,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     -5.8655,
+     5.7909,
+     -0.065
+    ],
+    "max": [
+     -5.8155,
+     5.8852,
+     -0.015
+    ]
+   }
+  },
+  {
+   "name": "surub016",
+   "family": "surub",
+   "parent": "baza_stalp001",
+   "type": "MESH",
+   "mesh": "Mesh_136",
+   "tris": 21794,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.05,
+    0.076,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     6.3483,
+     -0.0158,
+     -0.165
+    ],
+    "max": [
+     6.3983,
+     0.0602,
+     -0.115
+    ]
+   }
+  },
+  {
+   "name": "surub017",
+   "family": "surub",
+   "parent": "baza_stalp001",
+   "type": "MESH",
+   "mesh": "Mesh_137",
+   "tris": 14422,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0499,
+    0.076,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     5.9023,
+     -0.0158,
+     -0.165
+    ],
+    "max": [
+     5.9522,
+     0.0602,
+     -0.115
+    ]
+   }
+  },
+  {
+   "name": "surub018",
+   "family": "surub",
+   "parent": "baza_stalp001",
+   "type": "MESH",
+   "mesh": "Mesh_138",
+   "tris": 21773,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0499,
+    0.076,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     6.2083,
+     -0.0158,
+     -0.165
+    ],
+    "max": [
+     6.2582,
+     0.0602,
+     -0.115
+    ]
+   }
+  },
+  {
+   "name": "surub019",
+   "family": "surub",
+   "parent": "baza_stalp001",
+   "type": "MESH",
+   "mesh": "Mesh_139",
+   "tris": 21784,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.05,
+    0.076,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     6.0423,
+     -0.0158,
+     -0.165
+    ],
+    "max": [
+     6.0923,
+     0.0602,
+     -0.115
+    ]
+   }
+  },
+  {
+   "name": "surub020",
+   "family": "surub",
+   "parent": "baza_stalp001",
+   "type": "MESH",
+   "mesh": "Mesh_140",
+   "tris": 21777,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0499,
+    0.076,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     5.9023,
+     -0.0158,
+     0.115
+    ],
+    "max": [
+     5.9522,
+     0.0602,
+     0.165
+    ]
+   }
+  },
+  {
+   "name": "surub021",
+   "family": "surub",
+   "parent": "baza_stalp001",
+   "type": "MESH",
+   "mesh": "Mesh_141",
+   "tris": 21784,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.05,
+    0.076,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     6.3483,
+     -0.0158,
+     0.115
+    ],
+    "max": [
+     6.3983,
+     0.0602,
+     0.165
+    ]
+   }
+  },
+  {
+   "name": "surub022",
+   "family": "surub",
+   "parent": "baza_stalp001",
+   "type": "MESH",
+   "mesh": "Mesh_142",
+   "tris": 21787,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0499,
+    0.076,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     6.2083,
+     -0.0158,
+     0.115
+    ],
+    "max": [
+     6.2582,
+     0.0602,
+     0.165
+    ]
+   }
+  },
+  {
+   "name": "surub023",
+   "family": "surub",
+   "parent": "baza_stalp001",
+   "type": "MESH",
+   "mesh": "Mesh_143",
+   "tris": 21770,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.05,
+    0.076,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     6.0423,
+     -0.0158,
+     0.115
+    ],
+    "max": [
+     6.0923,
+     0.0602,
+     0.165
+    ]
+   }
+  },
+  {
+   "name": "surub024",
+   "family": "surub",
+   "parent": "suruburi_sus002",
+   "type": "MESH",
+   "mesh": "Mesh_89",
+   "tris": 24111,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.05,
+    0.0943,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     6.325,
+     5.7909,
+     -0.065
+    ],
+    "max": [
+     6.375,
+     5.8852,
+     -0.015
+    ]
+   }
+  },
+  {
+   "name": "surub025",
+   "family": "surub",
+   "parent": "suruburi_sus002",
+   "type": "MESH",
+   "mesh": "Mesh_90",
+   "tris": 24106,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.05,
+    0.0943,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     6.045,
+     5.7909,
+     -0.065
+    ],
+    "max": [
+     6.095,
+     5.8852,
+     -0.015
+    ]
+   }
+  },
+  {
+   "name": "surub026",
+   "family": "surub",
+   "parent": "suruburi_sus002",
+   "type": "MESH",
+   "mesh": "Mesh_91",
+   "tris": 24112,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.05,
+    0.0943,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     6.325,
+     5.7909,
+     0.015
+    ],
+    "max": [
+     6.375,
+     5.8852,
+     0.065
+    ]
+   }
+  },
+  {
+   "name": "surub027",
+   "family": "surub",
+   "parent": "suruburi_sus002",
+   "type": "MESH",
+   "mesh": "Mesh_92",
+   "tris": 24112,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.05,
+    0.0943,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     6.205,
+     5.7909,
+     0.015
+    ],
+    "max": [
+     6.255,
+     5.8852,
+     0.065
+    ]
+   }
+  },
+  {
+   "name": "surub028",
+   "family": "surub",
+   "parent": "suruburi_sus002",
+   "type": "MESH",
+   "mesh": "Mesh_93",
+   "tris": 24112,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.05,
+    0.0943,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     6.045,
+     5.7909,
+     0.015
+    ],
+    "max": [
+     6.095,
+     5.8852,
+     0.065
+    ]
+   }
+  },
+  {
+   "name": "surub029",
+   "family": "surub",
+   "parent": "suruburi_sus002",
+   "type": "MESH",
+   "mesh": "Mesh_94",
+   "tris": 24113,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.05,
+    0.0943,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     5.925,
+     5.7909,
+     0.015
+    ],
+    "max": [
+     5.975,
+     5.8852,
+     0.065
+    ]
+   }
+  },
+  {
+   "name": "surub030",
+   "family": "surub",
+   "parent": "suruburi_sus002",
+   "type": "MESH",
+   "mesh": "Mesh_95",
+   "tris": 24129,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.05,
+    0.0943,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     5.825,
+     5.7909,
+     0.015
+    ],
+    "max": [
+     5.875,
+     5.8852,
+     0.065
+    ]
+   }
+  },
+  {
+   "name": "surub031",
+   "family": "surub",
+   "parent": "suruburi_sus001",
+   "type": "MESH",
+   "mesh": "Mesh_58",
+   "tris": 24114,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0499,
+    0.0943,
+    0.0499
+   ],
+   "bbox": {
+    "min": [
+     -5.9689,
+     5.7915,
+     0.0115
+    ],
+    "max": [
+     -5.919,
+     5.8858,
+     0.0614
+    ]
+   }
+  },
+  {
+   "name": "surub032",
+   "family": "surub",
+   "parent": "suruburi_sus001",
+   "type": "MESH",
+   "mesh": "Mesh_59",
+   "tris": 24103,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.05,
+    0.0943,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     -5.8655,
+     5.7909,
+     0.015
+    ],
+    "max": [
+     -5.8155,
+     5.8852,
+     0.065
+    ]
+   }
+  },
+  {
+   "name": "surub033",
+   "family": "surub",
+   "parent": "suruburi_sus002",
+   "type": "MESH",
+   "mesh": "Mesh_96",
+   "tris": 24111,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.05,
+    0.0943,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     6.205,
+     5.7909,
+     -0.065
+    ],
+    "max": [
+     6.255,
+     5.8852,
+     -0.015
+    ]
+   }
+  },
+  {
+   "name": "surub034",
+   "family": "surub",
+   "parent": "suruburi_sus002",
+   "type": "MESH",
+   "mesh": "Mesh_97",
+   "tris": 24117,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.05,
+    0.0943,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     5.9251,
+     5.7902,
+     -0.065
+    ],
+    "max": [
+     5.9751,
+     5.8845,
+     -0.015
+    ]
+   }
+  },
+  {
+   "name": "surub035",
+   "family": "surub",
+   "parent": "suruburi_sus002",
+   "type": "MESH",
+   "mesh": "Mesh_98",
+   "tris": 24141,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.05,
+    0.0943,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     5.825,
+     5.7909,
+     -0.065
+    ],
+    "max": [
+     5.875,
+     5.8852,
+     -0.015
+    ]
+   }
+  },
+  {
+   "name": "surub_sus",
+   "family": "surub_sus",
+   "parent": "plane_sus_2",
+   "type": "MESH",
+   "mesh": "Mesh_172",
+   "tris": 24148,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0943,
+    0.0499,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     -0.0512,
+     6.9092,
+     0.015
+    ],
+    "max": [
+     0.0431,
+     6.9591,
+     0.065
+    ]
+   }
+  },
+  {
+   "name": "surub_sus001",
+   "family": "surub_sus",
+   "parent": "plane_sus_2",
+   "type": "MESH",
+   "mesh": "Mesh_173",
+   "tris": 24147,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0943,
+    0.0499,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     -0.0512,
+     7.0292,
+     0.015
+    ],
+    "max": [
+     0.0431,
+     7.0791,
+     0.065
+    ]
+   }
+  },
+  {
+   "name": "surub_sus002",
+   "family": "surub_sus",
+   "parent": "plane_sus_2",
+   "type": "MESH",
+   "mesh": "Mesh_174",
+   "tris": 24148,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0943,
+    0.0499,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     -0.0512,
+     7.1792,
+     0.015
+    ],
+    "max": [
+     0.0431,
+     7.2291,
+     0.065
+    ]
+   }
+  },
+  {
+   "name": "surub_sus003",
+   "family": "surub_sus",
+   "parent": "plane_sus_2",
+   "type": "MESH",
+   "mesh": "Mesh_175",
+   "tris": 24148,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0943,
+    0.0499,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     -0.0512,
+     7.3292,
+     0.015
+    ],
+    "max": [
+     0.0431,
+     7.3791,
+     0.065
+    ]
+   }
+  },
+  {
+   "name": "surub_sus004",
+   "family": "surub_sus",
+   "parent": "plane_sus_1",
+   "type": "MESH",
+   "mesh": "Mesh_162",
+   "tris": 24151,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0943,
+    0.05,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     -0.0511,
+     6.9043,
+     -0.065
+    ],
+    "max": [
+     0.0432,
+     6.9543,
+     -0.015
+    ]
+   }
+  },
+  {
+   "name": "surub_sus005",
+   "family": "surub_sus",
+   "parent": "plane_sus_1",
+   "type": "MESH",
+   "mesh": "Mesh_163",
+   "tris": 24149,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0943,
+    0.05,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     -0.0511,
+     7.0243,
+     -0.065
+    ],
+    "max": [
+     0.0432,
+     7.0743,
+     -0.015
+    ]
+   }
+  },
+  {
+   "name": "surub_sus006",
+   "family": "surub_sus",
+   "parent": "plane_sus_1",
+   "type": "MESH",
+   "mesh": "Mesh_164",
+   "tris": 24150,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0943,
+    0.05,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     -0.0511,
+     7.1743,
+     -0.065
+    ],
+    "max": [
+     0.0432,
+     7.2243,
+     -0.015
+    ]
+   }
+  },
+  {
+   "name": "surub_sus007",
+   "family": "surub_sus",
+   "parent": "plane_sus_1",
+   "type": "MESH",
+   "mesh": "Mesh_165",
+   "tris": 24150,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0943,
+    0.05,
+    0.05
+   ],
+   "bbox": {
+    "min": [
+     -0.0511,
+     7.3243,
+     -0.065
+    ],
+    "max": [
+     0.0432,
+     7.3743,
+     -0.015
+    ]
+   }
+  },
+  {
+   "name": "suruburi_grinzi",
+   "family": "suruburi_grinzi",
+   "parent": "Grinda003",
+   "type": "MESH",
+   "mesh": "Mesh_62",
+   "tris": 6992,
+   "origin": [
+    -6.2206,
+    6.3775,
+    -0.0346
+   ],
+   "dims": [
+    0.0555,
+    0.0627,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     -6.2621,
+     6.3627,
+     -0.0478
+    ],
+    "max": [
+     -6.2066,
+     6.4254,
+     -0.0216
+    ]
+   }
+  },
+  {
+   "name": "suruburi_grinzi001",
+   "family": "suruburi_grinzi",
+   "parent": "Grinda002",
+   "type": "MESH",
+   "mesh": "Mesh_66",
+   "tris": 6992,
+   "origin": [
+    -4.6836,
+    6.6488,
+    -0.0363
+   ],
+   "dims": [
+    0.0555,
+    0.0627,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     -4.7252,
+     6.634,
+     -0.0495
+    ],
+    "max": [
+     -4.6697,
+     6.6967,
+     -0.0233
+    ]
+   }
+  },
+  {
+   "name": "suruburi_grinzi002",
+   "family": "suruburi_grinzi",
+   "parent": "Grinda001",
+   "type": "MESH",
+   "mesh": "Mesh_70",
+   "tris": 6992,
+   "origin": [
+    -3.1642,
+    6.9133,
+    -0.0355
+   ],
+   "dims": [
+    0.0555,
+    0.0627,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     -3.2057,
+     6.8985,
+     -0.0487
+    ],
+    "max": [
+     -3.1502,
+     6.9612,
+     -0.0225
+    ]
+   }
+  },
+  {
+   "name": "suruburi_grinzi003",
+   "family": "suruburi_grinzi",
+   "parent": "Grinda",
+   "type": "MESH",
+   "mesh": "Mesh_74",
+   "tris": 6992,
+   "origin": [
+    -1.6472,
+    7.1781,
+    -0.0374
+   ],
+   "dims": [
+    0.0555,
+    0.0627,
+    0.0263
+   ],
+   "bbox": {
+    "min": [
+     -1.6887,
+     7.1633,
+     -0.0507
+    ],
+    "max": [
+     -1.6332,
+     7.226,
+     -0.0244
+    ]
+   }
+  },
+  {
+   "name": "suruburi_grinzi004",
+   "family": "suruburi_grinzi",
+   "parent": "Grinda004",
+   "type": "MESH",
+   "mesh": "Mesh_78",
+   "tris": 6992,
+   "origin": [
+    -0.098,
+    7.4512,
+    -0.0339
+   ],
+   "dims": [
+    0.0555,
+    0.0627,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     -0.1396,
+     7.4364,
+     -0.0471
+    ],
+    "max": [
+     -0.0841,
+     7.4991,
+     -0.0209
+    ]
+   }
+  },
+  {
+   "name": "suruburi_grinzi005",
+   "family": "suruburi_grinzi",
+   "parent": "Grinda005",
+   "type": "MESH",
+   "mesh": "Mesh_117",
+   "tris": 6992,
+   "origin": [
+    0.1123,
+    7.4843,
+    -0.037
+   ],
+   "dims": [
+    0.0555,
+    0.0627,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     0.0922,
+     7.4348,
+     -0.0502
+    ],
+    "max": [
+     0.1477,
+     7.4975,
+     -0.024
+    ]
+   }
+  },
+  {
+   "name": "suruburi_grinzi006",
+   "family": "suruburi_grinzi",
+   "parent": "Grinda006",
+   "type": "MESH",
+   "mesh": "Mesh_113",
+   "tris": 6992,
+   "origin": [
+    1.662,
+    7.2093,
+    -0.0369
+   ],
+   "dims": [
+    0.0555,
+    0.0627,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     1.6419,
+     7.1598,
+     -0.0501
+    ],
+    "max": [
+     1.6974,
+     7.2225,
+     -0.0239
+    ]
+   }
+  },
+  {
+   "name": "suruburi_grinzi007",
+   "family": "suruburi_grinzi",
+   "parent": "Grinda007",
+   "type": "MESH",
+   "mesh": "Mesh_109",
+   "tris": 6992,
+   "origin": [
+    3.1783,
+    6.9401,
+    -0.04
+   ],
+   "dims": [
+    0.0555,
+    0.0627,
+    0.0263
+   ],
+   "bbox": {
+    "min": [
+     3.1582,
+     6.8905,
+     -0.0533
+    ],
+    "max": [
+     3.2137,
+     6.9532,
+     -0.027
+    ]
+   }
+  },
+  {
+   "name": "suruburi_grinzi008",
+   "family": "suruburi_grinzi",
+   "parent": "Grinda010",
+   "type": "MESH",
+   "mesh": "Mesh_105",
+   "tris": 6992,
+   "origin": [
+    4.6974,
+    6.6761,
+    -0.0405
+   ],
+   "dims": [
+    0.0555,
+    0.0627,
+    0.0263
+   ],
+   "bbox": {
+    "min": [
+     4.6773,
+     6.6266,
+     -0.0538
+    ],
+    "max": [
+     4.7328,
+     6.6893,
+     -0.0275
+    ]
+   }
+  },
+  {
+   "name": "suruburi_grinzi009",
+   "family": "suruburi_grinzi",
+   "parent": "Grinda009",
+   "type": "MESH",
+   "mesh": "Mesh_101",
+   "tris": 6992,
+   "origin": [
+    6.2339,
+    6.3988,
+    -0.0444
+   ],
+   "dims": [
+    0.0555,
+    0.0627,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     6.2138,
+     6.3493,
+     -0.0576
+    ],
+    "max": [
+     6.2693,
+     6.412,
+     -0.0314
+    ]
+   }
+  },
+  {
+   "name": "suruburi_grinzi010",
+   "family": "suruburi_grinzi",
+   "parent": "Grinda009",
+   "type": "MESH",
+   "mesh": "Mesh_102",
+   "tris": 6992,
+   "origin": [
+    6.2348,
+    6.4044,
+    -5.9698
+   ],
+   "dims": [
+    0.0554,
+    0.0627,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     6.2148,
+     6.3548,
+     -5.983
+    ],
+    "max": [
+     6.2702,
+     6.4175,
+     -5.9568
+    ]
+   }
+  },
+  {
+   "name": "suruburi_grinzi011",
+   "family": "suruburi_grinzi",
+   "parent": "Grinda010",
+   "type": "MESH",
+   "mesh": "Mesh_106",
+   "tris": 6992,
+   "origin": [
+    4.6972,
+    6.6751,
+    -5.9699
+   ],
+   "dims": [
+    0.0554,
+    0.0627,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     4.6772,
+     6.6256,
+     -5.9831
+    ],
+    "max": [
+     4.7326,
+     6.6883,
+     -5.9569
+    ]
+   }
+  },
+  {
+   "name": "suruburi_grinzi012",
+   "family": "suruburi_grinzi",
+   "parent": "Grinda007",
+   "type": "MESH",
+   "mesh": "Mesh_110",
+   "tris": 6992,
+   "origin": [
+    3.1791,
+    6.9445,
+    -5.9686
+   ],
+   "dims": [
+    0.0555,
+    0.0627,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     3.159,
+     6.895,
+     -5.9818
+    ],
+    "max": [
+     3.2145,
+     6.9577,
+     -5.9556
+    ]
+   }
+  },
+  {
+   "name": "suruburi_grinzi013",
+   "family": "suruburi_grinzi",
+   "parent": "Grinda006",
+   "type": "MESH",
+   "mesh": "Mesh_114",
+   "tris": 6992,
+   "origin": [
+    1.6626,
+    7.2128,
+    -5.9712
+   ],
+   "dims": [
+    0.0555,
+    0.0626,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     1.6425,
+     7.1633,
+     -5.9844
+    ],
+    "max": [
+     1.698,
+     7.2259,
+     -5.9582
+    ]
+   }
+  },
+  {
+   "name": "suruburi_grinzi014",
+   "family": "suruburi_grinzi",
+   "parent": "Grinda005",
+   "type": "MESH",
+   "mesh": "Mesh_118",
+   "tris": 6992,
+   "origin": [
+    0.1119,
+    7.4825,
+    -5.9692
+   ],
+   "dims": [
+    0.0554,
+    0.0627,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     0.0919,
+     7.4329,
+     -5.9824
+    ],
+    "max": [
+     0.1473,
+     7.4956,
+     -5.9562
+    ]
+   }
+  },
+  {
+   "name": "suruburi_grinzi015",
+   "family": "suruburi_grinzi",
+   "parent": "Grinda003",
+   "type": "MESH",
+   "mesh": "Mesh_63",
+   "tris": 6992,
+   "origin": [
+    -6.2206,
+    6.3776,
+    -5.9601
+   ],
+   "dims": [
+    0.0554,
+    0.0627,
+    0.0263
+   ],
+   "bbox": {
+    "min": [
+     -6.2621,
+     6.3628,
+     -5.9734
+    ],
+    "max": [
+     -6.2067,
+     6.4255,
+     -5.9471
+    ]
+   }
+  },
+  {
+   "name": "suruburi_grinzi016",
+   "family": "suruburi_grinzi",
+   "parent": "Grinda002",
+   "type": "MESH",
+   "mesh": "Mesh_67",
+   "tris": 6992,
+   "origin": [
+    -4.6829,
+    6.6449,
+    -5.9609
+   ],
+   "dims": [
+    0.0555,
+    0.0626,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     -4.7245,
+     6.6302,
+     -5.9741
+    ],
+    "max": [
+     -4.669,
+     6.6928,
+     -5.9479
+    ]
+   }
+  },
+  {
+   "name": "suruburi_grinzi017",
+   "family": "suruburi_grinzi",
+   "parent": "Grinda001",
+   "type": "MESH",
+   "mesh": "Mesh_71",
+   "tris": 6992,
+   "origin": [
+    -3.1641,
+    6.9128,
+    -5.967
+   ],
+   "dims": [
+    0.0554,
+    0.0627,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     -3.2056,
+     6.898,
+     -5.9802
+    ],
+    "max": [
+     -3.1502,
+     6.9607,
+     -5.954
+    ]
+   }
+  },
+  {
+   "name": "suruburi_grinzi018",
+   "family": "suruburi_grinzi",
+   "parent": "Grinda",
+   "type": "MESH",
+   "mesh": "Mesh_75",
+   "tris": 6992,
+   "origin": [
+    -1.6477,
+    7.1811,
+    -5.9674
+   ],
+   "dims": [
+    0.0554,
+    0.0627,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     -1.6892,
+     7.1663,
+     -5.9806
+    ],
+    "max": [
+     -1.6338,
+     7.229,
+     -5.9544
+    ]
+   }
+  },
+  {
+   "name": "suruburi_grinzi019",
+   "family": "suruburi_grinzi",
+   "parent": "Grinda004",
+   "type": "MESH",
+   "mesh": "Mesh_79",
+   "tris": 6992,
+   "origin": [
+    -0.0979,
+    7.4504,
+    -5.9674
+   ],
+   "dims": [
+    0.0555,
+    0.0626,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     -0.1395,
+     7.4357,
+     -5.9806
+    ],
+    "max": [
+     -0.084,
+     7.4983,
+     -5.9544
+    ]
+   }
+  },
+  {
+   "name": "suruburi_laterale",
+   "family": "suruburi_laterale",
+   "parent": "baza_stalp",
+   "type": "MESH",
+   "mesh": "Mesh_20",
+   "tris": 28,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0964,
+    0.045,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     -6.3867,
+     0.3122,
+     -0.0749
+    ],
+    "max": [
+     -6.2903,
+     0.3572,
+     0.0751
+    ]
+   }
+  },
+  {
+   "name": "suruburi_laterale001",
+   "family": "suruburi_laterale",
+   "parent": "baza_stalp",
+   "type": "MESH",
+   "mesh": "Mesh_23",
+   "tris": 28,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0964,
+    0.045,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     -6.3868,
+     1.7979,
+     -0.0749
+    ],
+    "max": [
+     -6.2904,
+     1.8429,
+     0.0751
+    ]
+   }
+  },
+  {
+   "name": "suruburi_laterale002",
+   "family": "suruburi_laterale",
+   "parent": "baza_stalp",
+   "type": "MESH",
+   "mesh": "Mesh_26",
+   "tris": 28,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0964,
+    0.045,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     -6.3868,
+     3.7658,
+     -0.0749
+    ],
+    "max": [
+     -6.2904,
+     3.8108,
+     0.0751
+    ]
+   }
+  },
+  {
+   "name": "suruburi_laterale003",
+   "family": "suruburi_laterale",
+   "parent": "baza_stalp",
+   "type": "MESH",
+   "mesh": "Mesh_29",
+   "tris": 28,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0964,
+    0.045,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     -6.3868,
+     5.5158,
+     -0.0749
+    ],
+    "max": [
+     -6.2904,
+     5.5608,
+     0.0751
+    ]
+   }
+  },
+  {
+   "name": "suruburi_laterale004",
+   "family": "suruburi_laterale",
+   "parent": "suruburi_sus001",
+   "type": "MESH",
+   "mesh": "Mesh_60",
+   "tris": 33,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0616,
+    0.1063,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     -6.2773,
+     6.3306,
+     -0.075
+    ],
+    "max": [
+     -6.2157,
+     6.4369,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "suruburi_laterale005",
+   "family": "suruburi_laterale",
+   "parent": "suruburi_sus001",
+   "type": "MESH",
+   "mesh": "Mesh_64",
+   "tris": 34,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0617,
+    0.1063,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     -4.7398,
+     6.6018,
+     -0.075
+    ],
+    "max": [
+     -4.6781,
+     6.7081,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "suruburi_laterale006",
+   "family": "suruburi_laterale",
+   "parent": "suruburi_sus001",
+   "type": "MESH",
+   "mesh": "Mesh_68",
+   "tris": 33,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0617,
+    0.1063,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     -3.2213,
+     6.8696,
+     -0.075
+    ],
+    "max": [
+     -3.1596,
+     6.9759,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "suruburi_laterale007",
+   "family": "suruburi_laterale",
+   "parent": "suruburi_sus001",
+   "type": "MESH",
+   "mesh": "Mesh_72",
+   "tris": 32,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0617,
+    0.1063,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     -1.7048,
+     7.1371,
+     -0.075
+    ],
+    "max": [
+     -1.6431,
+     7.2434,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "suruburi_laterale008",
+   "family": "suruburi_laterale",
+   "parent": "suruburi_sus001",
+   "type": "MESH",
+   "mesh": "Mesh_76",
+   "tris": 34,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0617,
+    0.1063,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     -0.1553,
+     7.4104,
+     -0.075
+    ],
+    "max": [
+     -0.0936,
+     7.5167,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "suruburi_laterale009",
+   "family": "suruburi_laterale",
+   "parent": "baza_stalp001",
+   "type": "MESH",
+   "mesh": "Mesh_144",
+   "tris": 28,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0964,
+    0.045,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     6.3,
+     0.31,
+     -0.075
+    ],
+    "max": [
+     6.3964,
+     0.355,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "suruburi_laterale010",
+   "family": "suruburi_laterale",
+   "parent": "baza_stalp001",
+   "type": "MESH",
+   "mesh": "Mesh_147",
+   "tris": 28,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0964,
+    0.045,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     6.3,
+     1.801,
+     -0.075
+    ],
+    "max": [
+     6.3964,
+     1.846,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "suruburi_laterale011",
+   "family": "suruburi_laterale",
+   "parent": "baza_stalp001",
+   "type": "MESH",
+   "mesh": "Mesh_150",
+   "tris": 28,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0964,
+    0.045,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     6.3,
+     3.769,
+     -0.075
+    ],
+    "max": [
+     6.3964,
+     3.814,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "suruburi_laterale012",
+   "family": "suruburi_laterale",
+   "parent": "baza_stalp001",
+   "type": "MESH",
+   "mesh": "Mesh_153",
+   "tris": 50,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0964,
+    0.045,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     6.3,
+     5.519,
+     -0.075
+    ],
+    "max": [
+     6.3964,
+     5.564,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "suruburi_laterale013",
+   "family": "suruburi_laterale",
+   "parent": "suruburi_sus002",
+   "type": "MESH",
+   "mesh": "Mesh_99",
+   "tris": 32,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0617,
+    0.1063,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     6.2252,
+     6.3306,
+     -0.075
+    ],
+    "max": [
+     6.2869,
+     6.4369,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "suruburi_laterale014",
+   "family": "suruburi_laterale",
+   "parent": "suruburi_sus002",
+   "type": "MESH",
+   "mesh": "Mesh_103",
+   "tris": 35,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0617,
+    0.1063,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     4.6877,
+     6.6018,
+     -0.075
+    ],
+    "max": [
+     4.7494,
+     6.7081,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "suruburi_laterale015",
+   "family": "suruburi_laterale",
+   "parent": "suruburi_sus002",
+   "type": "MESH",
+   "mesh": "Mesh_107",
+   "tris": 36,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0617,
+    0.1063,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     3.1692,
+     6.8696,
+     -0.075
+    ],
+    "max": [
+     3.2309,
+     6.9759,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "suruburi_laterale016",
+   "family": "suruburi_laterale",
+   "parent": "suruburi_sus002",
+   "type": "MESH",
+   "mesh": "Mesh_111",
+   "tris": 32,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0617,
+    0.1063,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     1.6526,
+     7.1371,
+     -0.075
+    ],
+    "max": [
+     1.7143,
+     7.2434,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "suruburi_laterale017",
+   "family": "suruburi_laterale",
+   "parent": "suruburi_sus002",
+   "type": "MESH",
+   "mesh": "Mesh_115",
+   "tris": 34,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0617,
+    0.1063,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     0.1026,
+     7.4105,
+     -0.075
+    ],
+    "max": [
+     0.1643,
+     7.5168,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "suruburi_laterale019",
+   "family": "suruburi_laterale",
+   "parent": "suruburi_sus002",
+   "type": "MESH",
+   "mesh": "Mesh_119",
+   "tris": 50,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0964,
+    0.045,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     6.3005,
+     6.2017,
+     -0.075
+    ],
+    "max": [
+     6.3969,
+     6.2467,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "suruburi_laterale020",
+   "family": "suruburi_laterale",
+   "parent": "suruburi_sus001",
+   "type": "MESH",
+   "mesh": "Mesh_80",
+   "tris": 28,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.0964,
+    0.045,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     -6.3874,
+     6.2033,
+     -0.075
+    ],
+    "max": [
+     -6.291,
+     6.2483,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "suruburi_perete",
+   "family": "suruburi_perete",
+   "parent": "ureche004",
+   "type": "MESH",
+   "mesh": "Mesh_121",
+   "tris": 6992,
+   "origin": [
+    6.3399,
+    6.2487,
+    -0.0398
+   ],
+   "dims": [
+    0.0613,
+    0.0474,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     6.3269,
+     6.2141,
+     -0.0528
+    ],
+    "max": [
+     6.3882,
+     6.2615,
+     -0.0266
+    ]
+   }
+  },
+  {
+   "name": "suruburi_perete001",
+   "family": "suruburi_perete",
+   "parent": "ureche002",
+   "type": "MESH",
+   "mesh": "Mesh_149",
+   "tris": 6992,
+   "origin": [
+    6.3428,
+    1.848,
+    -0.0363
+   ],
+   "dims": [
+    0.0613,
+    0.0473,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     6.3298,
+     1.8134,
+     -0.0493
+    ],
+    "max": [
+     6.3911,
+     1.8607,
+     -0.0231
+    ]
+   }
+  },
+  {
+   "name": "suruburi_perete002",
+   "family": "suruburi_perete",
+   "parent": "ureche007",
+   "type": "MESH",
+   "mesh": "Mesh_25",
+   "tris": 6992,
+   "origin": [
+    -6.3507,
+    1.8449,
+    -0.0406
+   ],
+   "dims": [
+    0.0613,
+    0.0473,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     -6.3637,
+     1.8103,
+     -0.0536
+    ],
+    "max": [
+     -6.3024,
+     1.8576,
+     -0.0274
+    ]
+   }
+  },
+  {
+   "name": "suruburi_perete003",
+   "family": "suruburi_perete",
+   "parent": "ureche005",
+   "type": "MESH",
+   "mesh": "Mesh_31",
+   "tris": 6992,
+   "origin": [
+    -6.3503,
+    5.5628,
+    -0.0416
+   ],
+   "dims": [
+    0.0613,
+    0.0473,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     -6.3633,
+     5.5282,
+     -0.0546
+    ],
+    "max": [
+     -6.302,
+     5.5755,
+     -0.0284
+    ]
+   }
+  },
+  {
+   "name": "suruburi_perete004",
+   "family": "suruburi_perete",
+   "parent": "ureche006",
+   "type": "MESH",
+   "mesh": "Mesh_28",
+   "tris": 6992,
+   "origin": [
+    -6.3207,
+    3.7638,
+    -0.0414
+   ],
+   "dims": [
+    0.0613,
+    0.0474,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     -6.369,
+     3.751,
+     -0.0544
+    ],
+    "max": [
+     -6.3077,
+     3.7984,
+     -0.0282
+    ]
+   }
+  },
+  {
+   "name": "suruburi_perete005",
+   "family": "suruburi_perete",
+   "parent": "ureche008",
+   "type": "MESH",
+   "mesh": "Mesh_22",
+   "tris": 6992,
+   "origin": [
+    -6.3197,
+    0.3102,
+    -0.0401
+   ],
+   "dims": [
+    0.0613,
+    0.0473,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     -6.368,
+     0.2975,
+     -0.0531
+    ],
+    "max": [
+     -6.3067,
+     0.3448,
+     -0.0269
+    ]
+   }
+  },
+  {
+   "name": "suruburi_perete006",
+   "family": "suruburi_perete",
+   "parent": "ureche001",
+   "type": "MESH",
+   "mesh": "Mesh_146",
+   "tris": 6992,
+   "origin": [
+    6.3623,
+    0.308,
+    -0.0383
+   ],
+   "dims": [
+    0.0613,
+    0.0473,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     6.314,
+     0.2953,
+     -0.0513
+    ],
+    "max": [
+     6.3753,
+     0.3426,
+     -0.0251
+    ]
+   }
+  },
+  {
+   "name": "suruburi_perete007",
+   "family": "suruburi_perete",
+   "parent": "ureche003",
+   "type": "MESH",
+   "mesh": "Mesh_152",
+   "tris": 6992,
+   "origin": [
+    6.3658,
+    3.767,
+    -0.0394
+   ],
+   "dims": [
+    0.0613,
+    0.0473,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     6.3175,
+     3.7543,
+     -0.0524
+    ],
+    "max": [
+     6.3788,
+     3.8016,
+     -0.0262
+    ]
+   }
+  },
+  {
+   "name": "suruburi_perete008",
+   "family": "suruburi_perete",
+   "parent": "ureche009",
+   "type": "MESH",
+   "mesh": "Mesh_155",
+   "tris": 6992,
+   "origin": [
+    6.3393,
+    5.566,
+    -0.0398
+   ],
+   "dims": [
+    0.0613,
+    0.0473,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     6.3263,
+     5.5314,
+     -0.0528
+    ],
+    "max": [
+     6.3876,
+     5.5787,
+     -0.0266
+    ]
+   }
+  },
+  {
+   "name": "suruburi_perete009",
+   "family": "suruburi_perete",
+   "parent": "ureche010",
+   "type": "MESH",
+   "mesh": "Mesh_82",
+   "tris": 6992,
+   "origin": [
+    -6.3508,
+    6.2503,
+    -0.0416
+   ],
+   "dims": [
+    0.0613,
+    0.0473,
+    0.0262
+   ],
+   "bbox": {
+    "min": [
+     -6.3638,
+     6.2157,
+     -0.0546
+    ],
+    "max": [
+     -6.3025,
+     6.263,
+     -0.0284
+    ]
+   }
+  },
+  {
+   "name": "suruburi_sus",
+   "family": "suruburi_sus",
+   "parent": "baza_stalp",
+   "type": "MESH",
+   "mesh": "Mesh_32",
+   "tris": 12,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.5916,
+    0.015,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     -6.3917,
+     5.815,
+     -0.0749
+    ],
+    "max": [
+     -5.8001,
+     5.83,
+     0.0751
+    ]
+   }
+  },
+  {
+   "name": "suruburi_sus001",
+   "family": "suruburi_sus",
+   "parent": null,
+   "type": "MESH",
+   "mesh": "Mesh_42",
+   "tris": 12,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.5916,
+    0.015,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     -6.3917,
+     5.83,
+     -0.075
+    ],
+    "max": [
+     -5.8001,
+     5.845,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "suruburi_sus002",
+   "family": "suruburi_sus",
+   "parent": null,
+   "type": "MESH",
+   "mesh": "Mesh_83",
+   "tris": 12,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.5916,
+    0.015,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     5.8096,
+     5.83,
+     -0.075
+    ],
+    "max": [
+     6.4012,
+     5.845,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "suruburi_sus003",
+   "family": "suruburi_sus",
+   "parent": "baza_stalp001",
+   "type": "MESH",
+   "mesh": "Mesh_156",
+   "tris": 12,
+   "origin": [
+    0.0,
+    0.0,
+    -0.0
+   ],
+   "dims": [
+    0.5916,
+    0.015,
+    0.15
+   ],
+   "bbox": {
+    "min": [
+     5.8096,
+     5.815,
+     -0.075
+    ],
+    "max": [
+     6.4012,
+     5.83,
+     0.075
+    ]
+   }
+  },
+  {
+   "name": "ureche001",
+   "family": "ureche",
+   "parent": "suruburi_laterale009",
+   "type": "MESH",
+   "mesh": "Mesh_145",
+   "tris": 64,
+   "origin": [
+    6.3,
+    0.31,
+    -0.075
+   ],
+   "dims": [
+    0.12,
+    0.06,
+    0.073
+   ],
+   "bbox": {
+    "min": [
+     6.3,
+     0.25,
+     -0.075
+    ],
+    "max": [
+     6.42,
+     0.31,
+     -0.002
+    ]
+   }
+  },
+  {
+   "name": "ureche002",
+   "family": "ureche",
+   "parent": "suruburi_laterale010",
+   "type": "MESH",
+   "mesh": "Mesh_148",
+   "tris": 64,
+   "origin": [
+    6.3,
+    1.846,
+    -0.075
+   ],
+   "dims": [
+    0.12,
+    0.06,
+    0.073
+   ],
+   "bbox": {
+    "min": [
+     6.3,
+     1.846,
+     -0.075
+    ],
+    "max": [
+     6.42,
+     1.906,
+     -0.002
+    ]
+   }
+  },
+  {
+   "name": "ureche003",
+   "family": "ureche",
+   "parent": "suruburi_laterale011",
+   "type": "MESH",
+   "mesh": "Mesh_151",
+   "tris": 64,
+   "origin": [
+    6.3,
+    3.769,
+    -0.075
+   ],
+   "dims": [
+    0.12,
+    0.06,
+    0.073
+   ],
+   "bbox": {
+    "min": [
+     6.3,
+     3.709,
+     -0.075
+    ],
+    "max": [
+     6.42,
+     3.769,
+     -0.002
+    ]
+   }
+  },
+  {
+   "name": "ureche004",
+   "family": "ureche",
+   "parent": "suruburi_laterale019",
+   "type": "MESH",
+   "mesh": "Mesh_120",
+   "tris": 64,
+   "origin": [
+    6.3005,
+    6.2467,
+    -0.075
+   ],
+   "dims": [
+    0.12,
+    0.06,
+    0.073
+   ],
+   "bbox": {
+    "min": [
+     6.3005,
+     6.2467,
+     -0.075
+    ],
+    "max": [
+     6.4205,
+     6.3067,
+     -0.002
+    ]
+   }
+  },
+  {
+   "name": "ureche005",
+   "family": "ureche",
+   "parent": "suruburi_laterale003",
+   "type": "MESH",
+   "mesh": "Mesh_30",
+   "tris": 64,
+   "origin": [
+    -6.2904,
+    5.5608,
+    -0.0749
+   ],
+   "dims": [
+    0.12,
+    0.06,
+    0.073
+   ],
+   "bbox": {
+    "min": [
+     -6.4104,
+     5.5608,
+     -0.0749
+    ],
+    "max": [
+     -6.2904,
+     5.6208,
+     -0.0019
+    ]
+   }
+  },
+  {
+   "name": "ureche006",
+   "family": "ureche",
+   "parent": "suruburi_laterale002",
+   "type": "MESH",
+   "mesh": "Mesh_27",
+   "tris": 64,
+   "origin": [
+    -6.2904,
+    3.7658,
+    -0.0749
+   ],
+   "dims": [
+    0.12,
+    0.06,
+    0.073
+   ],
+   "bbox": {
+    "min": [
+     -6.4104,
+     3.7058,
+     -0.0749
+    ],
+    "max": [
+     -6.2904,
+     3.7658,
+     -0.0019
+    ]
+   }
+  },
+  {
+   "name": "ureche007",
+   "family": "ureche",
+   "parent": "suruburi_laterale001",
+   "type": "MESH",
+   "mesh": "Mesh_24",
+   "tris": 64,
+   "origin": [
+    -6.2904,
+    1.8429,
+    -0.0749
+   ],
+   "dims": [
+    0.12,
+    0.06,
+    0.073
+   ],
+   "bbox": {
+    "min": [
+     -6.4104,
+     1.8429,
+     -0.0749
+    ],
+    "max": [
+     -6.2904,
+     1.9029,
+     -0.0019
+    ]
+   }
+  },
+  {
+   "name": "ureche008",
+   "family": "ureche",
+   "parent": "suruburi_laterale",
+   "type": "MESH",
+   "mesh": "Mesh_21",
+   "tris": 64,
+   "origin": [
+    -6.2903,
+    0.3122,
+    -0.0749
+   ],
+   "dims": [
+    0.12,
+    0.06,
+    0.073
+   ],
+   "bbox": {
+    "min": [
+     -6.4103,
+     0.2522,
+     -0.0749
+    ],
+    "max": [
+     -6.2903,
+     0.3122,
+     -0.0019
+    ]
+   }
+  },
+  {
+   "name": "ureche009",
+   "family": "ureche",
+   "parent": "suruburi_laterale012",
+   "type": "MESH",
+   "mesh": "Mesh_154",
+   "tris": 64,
+   "origin": [
+    6.3,
+    5.564,
+    -0.075
+   ],
+   "dims": [
+    0.12,
+    0.06,
+    0.073
+   ],
+   "bbox": {
+    "min": [
+     6.3,
+     5.564,
+     -0.075
+    ],
+    "max": [
+     6.42,
+     5.624,
+     -0.002
+    ]
+   }
+  },
+  {
+   "name": "ureche010",
+   "family": "ureche",
+   "parent": "suruburi_laterale020",
+   "type": "MESH",
+   "mesh": "Mesh_81",
+   "tris": 64,
+   "origin": [
+    -6.291,
+    6.2483,
+    -0.075
+   ],
+   "dims": [
+    0.12,
+    0.06,
+    0.073
+   ],
+   "bbox": {
+    "min": [
+     -6.411,
+     6.2483,
+     -0.075
+    ],
+    "max": [
+     -6.291,
+     6.3083,
+     -0.002
+    ]
+   }
+  }
+ ]
+}
