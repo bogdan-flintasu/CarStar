@@ -1,40 +1,41 @@
-# WS-D status (engine rewrite) — branch ws-d
+# WS-D status (engine rewrite) — branches ws-d (part 1), ws-d2 (part 2)
 
-## Done (run 1): D1, D10. Not started: D2-D9 (run 2; the legacy engine still renders).
-- **D1** `src/lib/hall/` — pure, no three.js, 134 Vitest tests green. `import { ... } from '@/lib/hall'`:
-  - `computeHallLayout(p: HallParams): HallLayout`; `HallParams = { length, width, height, bay?, foundation, panels, insulationMm }`.
-    Any positive size works (non-integers, outside 8-20 too); throws `RangeError` on NaN / <= 0. Types: `types.ts`.
-  - `HallLayout`: `frames[{index,z,isEnd}]`, `bayCount`, `bay`, `columns[]`, `rafters[{from,to,length}]`, `purlins[{x,y,zFrom,zTo}]`,
-    `purlinsPerSide`, `eaveY`, `ridgeY`, `halfWidths{columnInner,columnAxis,columnOuter,wallInner,wallOuter,roofEdge}`, `panelThickness`,
-    `walls`, `roof{left,right}`, `slab`, `groundY`, `gutters`, `downpipes`, `bounds{min,max}`, `pitch` (rad), `params`.
-  - **Walls (for E):** `layout.walls.front|back|left|right: WallDescriptor` = `{ key, id ('PereteFata'|'PereteSpate'|'PereteSTG'|
-    'PereteDR'), origin, axisH, axisV, normal, yaw, spanH, spanV, apexV, thickness, polygon [h,v][], area, supports, supportHalfWidth }`.
-    Exterior face; point = `wallPointToWorld(wall, h, v, out?)`; top limit = `wallHeightAt(wall, h)` (follows the gable).
-    `supports` = h of each column axis behind the wall. h runs front->back on BOTH side walls (as PlacementMarkers does today,
-    so saved openings keep their place); the left wall is therefore mirrored (axisH x axisV = -normal): orient with `yaw`.
-  - Also: `HALL_LIMITS` + documented constants (`constants.ts`), `clampHallDimensions`, `parseHallUrlParams`, `computeSection`.
-- **D10** dev only (absent from the production bundle: grep on `.next/static`):
-  - URL: `/configurator?w=13.5&h=4&l=30&step=1` (clamped to HALL_LIMITS; applied once on mount).
-  - `window.__hallStats = { triangles, drawCalls, frames, expectedFrames, purlinsPerSide, eaveY, ridgeY, renderFrame, engine,
-    params:{w,h,l}, ready }`. Measured: triangles/drawCalls (gl.info, shadow pass included), frames, renderFrame.
-    Targets from computeHallLayout: expectedFrames, purlinsPerSide, eaveY, ridgeY. Poll until `ready` and `params` match.
-  - Legacy baseline: 12x4x12 = 3.35 M tris / 458 calls; 18x6x17 = 3 frames vs 4 expected (D-d); 13.5x4.5x102 = 15.8 M tris /
-    2134 calls / 18 frames (model load: 30-120 s in a hidden browser pane).
-- `ConfiguratorEngine` uses a `useShallow` selector (F8). `hardwareTier.ts` lint fixed; the 3 lint errors left are in the legacy
-  `Configurator.tsx` / `LandingScene.tsx`, untouched until they are replaced (D2, D8).
-## Decisions (conservative defaults; say if the business wants otherwise)
-- **Width** = clear span between inner column faces (as in da.glb: 12 m = faces at +-6.00). **Height** = clear height: floor to
-  rafter underside at the inner column face (da.glb frame = 6.0735). **Length** = first to last frame axis. Y = 0 = finished floor.
-- Bays: `n = ceil(L / 6)`, `bay = L / n` (free lengths work; F may lift the 6 m snap once D2 lands). Pitch 10 deg.
-  Purlins: max 1.6 m along the slope -> 12/15/18 m give 5/6/7 per slope (= old engine); 8-9 m: 4; 20 m: 8.
-- Cladding grows outwards with insulation (30-250 mm); no panels: 40 mm sheet. Gables run full width, side walls between them.
-  Slab: top at Y = 0, 0.2 m thick, 2 m apron; with a foundation the terrain is drawn at `groundY = -0.2`.
-## Answers to ASSET_CONTRACT.md §6 (for C)
-1. Width reference: **inner flange faces** (column axis = W/2 + 0.15; `columns[].x` is the axis).
-2. Bolt sockets as child empties: **OK** (`pieceWorld x socketLocal` into one InstancedMesh).
-3. Rafter anchor at the **bottom flange, eave end at the inner column face**: OK = `rafters[].from` (`to` = apex); rotate by `pitch`.
-   Keep `EaveHaunch` height = 0.2585 (column top -> rafter bottom at the inner face) or tell me the real value.
-4. Gutters/downpipes **in the kit**, but anchor `Gutter` on its inner top edge: D hangs it on the outer wall face (`gutters[].x,y`),
-   which moves with insulation thickness. `Purlin` anchor (bottom-face centre) = `purlins[].x,y`.
+## Done: D1-D10 and step 3 (legacy engine deleted). Nothing open in WS-D.
+- **D1** `src/lib/hall/` pure layout: `computeHallLayout(p: HallParams): HallLayout` (+ `HALL_LIMITS`, `clampHallDimensions`,
+  `wallPointToWorld`, `wallHeightAt`). Part 2 added `girtLevels`, `roof.*.plumbThickness`, `downpipes[].end`, and the
+  downpipe now runs 0.292 m above the floor up to gutter − 0.0971 (kit contract).
+- **D2/D5** `src/components/3d/hall/`: `Hall.tsx` (reads like a parts list) = `Steel.tsx` (`Frames`, `Purlins`, `Bolts`,
+  `Rainwater`; one `KitInstances` InstancedMesh per kit piece) + `Walls.tsx` + `Roof.tsx` (`Roof`, `Slab`).
+  `kit.ts` is the only file that knows `hall-kit.glb` (`useHallKit(detail)`; `light` = `_LOD1` meshes, no bolts).
+  `placements.ts` (pure): `placeKit(layout)`, `placeBolts(placements, kit)`; tested against `assets/blender/kit_reference.json`
+  (every source piece within 2 cm, same rotation). `Configurator.tsx` is deleted; all files < 120 lines.
+- **D3** walls = E's `wallGeometryWithHoles` (real holes; `<WallOpenings layout realHoles />` wired), roof = extruded section. No clipping planes.
+- **D4** `frameloop="demand"`; `Site.tsx` `Sun` fits the shadow camera to `layout.bounds`; AA via `gfx.antialias` (high/ultra).
+- **D6** textures/materials built in memos and disposed on unmount (`materials.ts`); lint: 0 errors in the repo.
+- **D7** `CameraRig.tsx`: frames the hall on load and on `requestHallFraming()` (`framing.ts`); otherwise camera + orbit target
+  glide with the hall centre (user orbit/zoom/pan kept).
+- **D8** `LandingScene.tsx` = `<Hall>` with a fixed 12 x 5 x 36 layout, renders on scroll only. **D9** `DimensionLines` reads the
+  layout (L, clear width, H, ridge "Coamă", bay "Pas").
+- **D10** dev hooks: `?w=&h=&l=&step=`, `window.__hallStats`, plus `window.__hallSet('?w=20&l=102')` (no reload) and
+  `window.__hallAdvance()` (renders one frame: needed in hidden tabs, where requestAnimationFrame never fires).
+## Verified (numbers from `__hallStats`; main pass only, three resets `gl.info` after the shadow pass)
+- Matrix W {8,9,12,13,13.5,15,17,18,20} x H {3,4,4.5,5,6} at L 12, and L {12,17,18,48,102}, clad and bare: 100/100 have
+  frames = expected. 12x4x12: 28.7 k tris / 23 calls (was 3.35 M / 458). 13.5x4.5x102: 18 frames, 180 k tris / 22 calls
+  (was 15.8 M / 2134). Untouched for 3 s: 0 frames rendered. Dev hooks absent from `.next/static`. tsc, lint (0 errors),
+  318 tests, build green. Screenshots: bare 12x4x12 and 13.5x4.5x30, clad 12x4x12 and 18x6x48, landing.
+## Decisions (conservative; say if the business wants otherwise)
+- Width = clear span between inner column faces; height = clear height under the rafter at the column; pitch 10 deg; bays
+  `ceil(L/6)` equal; purlins max 1.6 m apart on the slope (12/15/18 m -> 5/6/7 per side, as the old engine).
+- Shadows: the outermost visible shell casts (cladding when shown, steel when it is hidden); the slab only receives.
+- No camera-distance LOD: the full kit is 180 k tris at 102 m, so `_LOD1` is used only on the `low` tier and on the landing
+  page for `low`/`medium`.
+- Look: steel keeps the old plain metal colour (normal + roughness maps only; the old engine never applied the colour map).
+  Cladding metalness 0.35 instead of the asset's 1 (fully metallic walls render almost black). Slab plain grey in the
+  configurator (as before), concrete maps on the landing page.
+- A reset or loaded configuration (more than one dimension changing in one store update) reframes the camera.
 ## Handoffs
-- E: build on `layout.walls` (drop `computePullMain`, 0.44 / 0.048 offsets). F: `HALL_LIMITS` for ranges; areas in `walls[].area`, `roof[].area`.
+- **Orchestrator/C**: `public/models/da-draco.glb` is no longer referenced by any code: it can be deleted. C: consider
+  `Panel` metallicFactor ~0.35 in the GLB so `PANEL_METALNESS` in `materials.ts` can go.
+- **F**: call `requestHallFraming()` (`@/components/3d/hall/framing`) in `ConfigHeader.handleReset`; today a reset from the
+  default size does not reframe. `gfx.landingFrameCount` is removed (was only used by the old landing scene).
+- Not checked at full resolution (pane is ~760 px wide): shadow acne on cladding, roof texture scale; openings in the browser.

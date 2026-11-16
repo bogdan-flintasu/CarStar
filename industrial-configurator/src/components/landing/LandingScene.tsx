@@ -65,8 +65,8 @@ function ReadinessReporter({ onReady }: { onReady: () => void }) {
   useEffect(() => {
     if (active || progress < 100 || fired.current) return;
     fired.current = true;
-    const timer = setTimeout(onReady, 200);
-    return () => clearTimeout(timer);
+    // Not cancelled on re-render: the effect re-runs while progress settles, and the call must still happen once.
+    setTimeout(onReady, 200);
   }, [active, progress, onReady]);
 
   return null;
