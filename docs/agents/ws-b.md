@@ -1,9 +1,8 @@
 # WS-B status (security & API) — part 1 merged (ws-b); part 2 on branch ws-b2
 
 ## Done: B1-B7 (all).
-- B5 `withServerPrice(data, prices)` (`api/_lib/serverPrice.ts`, uses F6 `calculatePrice` + DB prices via
-  `getCurrentPrices()`) recomputes `estimatedPrice`, `floorArea`, `openings` on POST configurations and send-email.
-  Openings: `openingsList` if non-empty, else validated counts. Email with a link prices the *saved* config.
+- B5 `withServerPrice(data, prices)` (`api/_lib/serverPrice.ts`: F6 `calculatePrice` + DB `getCurrentPrices()`) recomputes
+  price/floorArea/openings (list wins over counts) on POST configurations + send-email (link -> saved config).
 - B1 `/admin/login` → `POST /api/auth/login` (bcrypt check, 10 tries/15 min/IP) sets httpOnly, SameSite=Strict,
   HMAC-SHA256-signed cookie `carstar_admin_session` (8 h). `POST /api/auth/logout`. `src/proxy.ts` redirects
   `/admin*` to login, returns 401 for `/api/admin/*`; handlers re-check with `requireAdmin()`. No credentials in client bundle.
@@ -30,8 +29,7 @@
 - Schemas strip unknown keys (config data) but reject extras on prices/login. Ranges only, no step checks.
 - Rate limits are in-memory per process; client IP from first X-Forwarded-For hop (trust only behind a proxy).
 - Without APP_BASE_URL the request origin is the allowed link origin; set APP_BASE_URL in production.
-- B5: GET /api/configurations/[token] returns the price stored at save time (no repricing of old quotes);
-  `numberOfBays` stays client-informational. Price DB failure -> 500 (no silent fallback to defaults).
+- B5: GET [token] keeps the save-time price; `numberOfBays` stays client-side; price DB error -> 500.
 
 ## Handoffs
 - A (.env.example): `AUTH_SECRET="<openssl rand -base64 48>"` (>= 32 chars), `ADMIN_USERNAME="admin"`,
