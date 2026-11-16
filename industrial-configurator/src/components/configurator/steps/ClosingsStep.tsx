@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useOpeningsStore, MIN_OPENING_SIZE } from '@/stores/useOpeningsStore';
 import type { OpeningType } from '@/stores/useOpeningsStore';
 import { countOpenings } from '@/lib/pricing';
+import { wallLabelRo } from '@/lib/i18n/ro';
 
 // ─── Custom SVG Icons ─────────────────────────────────────────────────────────
 function WindowIcon({ className = 'w-7 h-7' }: { className?: string }) {
@@ -238,7 +239,7 @@ export default function ClosingsStep() {
 
             {/* Wall info */}
             <div className="text-xs text-gray-500 font-medium pt-3 border-t border-gray-100">
-              Perete: {selectedOpening.wallId.replace('PereteFata', 'Față').replace('PereteSpate', 'Spate').replace('PereteSTG', 'Stânga').replace('PereteDR', 'Dreapta')}
+              Perete: {wallLabelRo(selectedOpening.wallId)}
             </div>
           </motion.div>
         )}
@@ -277,7 +278,7 @@ export default function ClosingsStep() {
                     </span>
                   </div>
                   <span className="text-xs text-gray-400 font-medium">
-                    {o.wallId.replace('PereteFata', 'Față').replace('PereteSpate', 'Spate').replace('PereteSTG', 'Stânga').replace('PereteDR', 'Dreapta')}
+                    {wallLabelRo(o.wallId)}
                   </span>
                 </button>
               );

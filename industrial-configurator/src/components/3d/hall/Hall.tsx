@@ -5,7 +5,8 @@
  * Sizes and positions come from the layout, shapes from the kit; nothing is measured or adjusted here.
  * Suspends while the kit and its textures load.
  */
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
 import type { HallLayout, LegacyWallId } from '@/lib/hall';
 import { useHallKit, type KitDetail } from './kit';
 import { useHallMaterials } from './materials';
@@ -32,6 +33,16 @@ export default function Hall({ layout, claddingVisible = true, detail = 'full', 
   const placements = useMemo(() => placeKit(layout), [layout]);
   // Under the cladding the steel is in its shade anyway: only the outermost visible shell casts shadows.
   const steel = { kit, placements, material: materials.steel, castShadow: !claddingVisible };
+
+  // Hall mounts only once the kit has loaded (it suspends until then): report ready after its first frame.
+  useEffect(() => {
+    const { setHallReady } = useConfiguratorStore.getState();
+    const raf = requestAnimationFrame(() => setHallReady(true));
+    return () => {
+      cancelAnimationFrame(raf);
+      setHallReady(false);
+    };
+  }, []);
 
   return (
     <group name="Hall">
