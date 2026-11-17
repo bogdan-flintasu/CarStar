@@ -5,4 +5,5 @@ export { clampHallDimensions, parseHallUrlParams, resolveHallParams } from './pa
 export type { HallDimensions, HallUrlParams } from './params';
 export { computeSection, panelThicknessOf } from './section';
 export type { HallSection } from './section';
-export { polygonArea, wallHeightAt, wallPointToWorld } from './walls';
+export { faceHeightAt, polygonArea, wallHeightAt, wallPointToWorld } from './walls';
+export { sideSign } from './section';

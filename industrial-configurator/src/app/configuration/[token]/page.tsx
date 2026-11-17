@@ -3,9 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
-import { useOpeningsStore } from '@/stores/useOpeningsStore';
-import { requestHallFraming } from '@/components/3d/hall/framing';
+import { applyHallConfiguration } from '@/lib/applyHallConfiguration';
 import { configurationDataSchema } from '@/lib/validation/configuration';
 
 export default function ConfigurationTokenPage() {
@@ -14,17 +12,6 @@ export default function ConfigurationTokenPage() {
   const token = params.token as string;
 
   const [error, setError] = useState('');
-
-  const setLength = useConfiguratorStore((s) => s.setLength);
-  const setWidth = useConfiguratorStore((s) => s.setWidth);
-  const setHeight = useConfiguratorStore((s) => s.setHeight);
-  const setShowFoundation = useConfiguratorStore((s) => s.setShowFoundation);
-  const setHasSandwichPanels = useConfiguratorStore((s) => s.setHasSandwichPanels);
-  const setIsIsolated = useConfiguratorStore((s) => s.setIsIsolated);
-  const setInsulation = useConfiguratorStore((s) => s.setInsulation);
-  const resetConfigurator = useConfiguratorStore((s) => s.resetConfigurator);
-  const setOpenings = useOpeningsStore((s) => s.setOpenings);
-  const resetOpenings = useOpeningsStore((s) => s.resetOpenings);
 
   useEffect(() => {
     if (!token) return;
@@ -39,23 +26,7 @@ export default function ConfigurationTokenPage() {
         if (!parsed.success) throw new Error('Invalid configuration data');
         const data = parsed.data;
 
-        // Start from a clean slate so nothing from a previous session leaks in
-        resetConfigurator();
-        resetOpenings();
-
-        setLength(data.dimensions.length);
-        setWidth(data.dimensions.width);
-        setHeight(data.dimensions.height);
-        setShowFoundation(data.foundation);
-        setHasSandwichPanels(data.sandwichPanels);
-        if (data.insulation > 0) {
-          setIsIsolated(true);
-          setInsulation(data.insulation);
-        }
-        // setOpenings normalises legacy (posX/posY) openings itself
-        setOpenings(data.openingsList);
-
-        requestHallFraming();
+        applyHallConfiguration(data, data.model ?? null);
 
         // Redirect to configurator
         router.push('/configurator');
@@ -64,7 +35,7 @@ export default function ConfigurationTokenPage() {
         console.error('Failed to load configuration:', err);
         setError('Configurarea nu a fost găsită.');
       });
-  }, [token, router, resetConfigurator, resetOpenings, setLength, setWidth, setHeight, setShowFoundation, setHasSandwichPanels, setIsIsolated, setInsulation, setOpenings]);
+  }, [token, router]);
 
   if (error) {
     return (

@@ -1,11 +1,24 @@
 import { escapeHtml as e, toHeaderSafe } from '@/lib/validation/html';
 import type { SendEmailInput } from '@/lib/validation/email';
+import { COLOR_COMPONENTS, COMPONENT_LABELS } from '@/lib/colors';
 
 type Lead = Pick<SendEmailInput, 'name' | 'email' | 'phone' | 'message' | 'configurationSummary'>;
 
 function dimensionsText(summary: Lead['configurationSummary']): string | null {
   const d = summary?.dimensions;
   return d ? `${d.length}×${d.width}×${d.height}m` : null;
+}
+
+/** "Pereți: Alb-gri" lines for the colours that were chosen. */
+function colorLines(summary: Lead['configurationSummary']): string[] {
+  const colors = summary?.colors;
+  if (!colors) return [];
+  return COLOR_COMPONENTS.flatMap((c) => (colors[c] ? [`${COMPONENT_LABELS[c]}: ${colors[c].name}`] : []));
+}
+
+function roofText(summary: Lead['configurationSummary']): string {
+  if (summary?.roofType !== 'mono') return '2 ape';
+  return `o apă, latura înaltă ${summary.highSide === 'left' ? 'stânga' : 'dreapta'}`;
 }
 
 /** Subject line: CR/LF and control characters stripped, length capped. */
@@ -37,12 +50,15 @@ export function buildLeadEmailHtml(lead: Lead, link: string | null): string {
       <hr/>
       <h3>Sumar Configurare</h3>
       ${dims ? `<p><strong>Dimensiuni:</strong> ${e(dims.length)} × ${e(dims.width)} × ${e(dims.height)} m</p>` : ''}
+      ${s?.model ? `<p><strong>Model de pornire:</strong> ${e(s.model.name)}</p>` : ''}
+      <p><strong>Acoperiș:</strong> ${e(roofText(s))}</p>
       <p><strong>Suprafață:</strong> ${e(s?.floorArea ?? 'N/A')} m²</p>
       <p><strong>Fundație:</strong> ${s?.foundation ? 'DA' : 'NU'}</p>
       <p><strong>Panouri sandwich:</strong> ${s?.sandwichPanels ? 'DA' : 'NU'}</p>
       <p><strong>Geamuri:</strong> ${e(s?.openings?.windows ?? 0)}</p>
       <p><strong>Uși:</strong> ${e(s?.openings?.doors ?? 0)}</p>
       <p><strong>Uși industriale:</strong> ${e(s?.openings?.garageDoors ?? 0)}</p>
+      ${colorLines(s).map((line) => `<p>${e(line)}</p>`).join('')}
       <p><strong>Preț estimativ:</strong> ${e(price)}</p>
       ${link ? `<p><strong>Link configurare:</strong> <a href="${e(link)}">${e(link)}</a></p>` : ''}
     `;
@@ -61,9 +77,12 @@ export function buildLeadLog(lead: Lead, link: string | null, from: string, to: 
     `Telefon: ${lead.phone || 'N/A'}`,
     `Mesaj:   ${lead.message || '-'}`,
     `Dimensiuni: ${dimensionsText(s) ?? 'N/A'}`,
+    `Model:      ${s?.model?.name ?? '-'}`,
+    `Acoperiș:   ${roofText(s)}`,
     `Suprafață:  ${s?.floorArea ?? 'N/A'} m²`,
     `Fundație:   ${s?.foundation ? 'DA' : 'NU'}`,
     `Sandwich:   ${s?.sandwichPanels ? 'DA' : 'NU'}`,
+    ...colorLines(s),
     `Preț:       ${s?.estimatedPrice ?? 'N/A'}`,
     `Link:       ${link ?? '-'}`,
   ].join('\n');

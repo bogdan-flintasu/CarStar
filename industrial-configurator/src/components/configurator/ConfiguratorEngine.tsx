@@ -13,11 +13,13 @@ import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
 import { useOpeningsStore } from '@/stores/useOpeningsStore';
 import { getGraphicsSettings } from '@/lib/hardwareTier';
 import { clampHallDimensions, computeHallLayout } from '@/lib/hall';
+import { colorHexes } from '@/lib/colors';
 import Hall from '@/components/3d/hall/Hall';
 import CameraRig from '@/components/3d/hall/CameraRig';
 import { Ground, Sun } from '@/components/3d/hall/Site';
 import { requestHallFraming, useHallFramingRequests } from '@/components/3d/hall/framing';
 import HallStatsProbe from '@/components/3d/hall/HallStatsProbe';
+import { SnapshotProvider } from '@/components/3d/hall/snapshot';
 import { useHallUrlParams } from '@/components/3d/hall/useHallUrlParams';
 import PlacementMarkers from '@/components/3d/PlacementMarkers';
 import WallOpenings from '@/components/3d/WallOpenings';
@@ -39,7 +41,7 @@ function useFramingOnReplacedHall(): void {
 }
 
 export default function ConfiguratorEngine() {
-  const { height, width, length, showFoundation, isIsolated, insulation, wallsVisible, currentStep } = useConfiguratorStore(
+  const { height, width, length, showFoundation, isIsolated, insulation, wallsVisible, currentStep, roofType, highSide } = useConfiguratorStore(
     useShallow((s) => ({
       height: s.height,
       width: s.width,
@@ -49,8 +51,12 @@ export default function ConfiguratorEngine() {
       insulation: s.insulation,
       wallsVisible: s.wallsVisible,
       currentStep: s.currentStep,
+      roofType: s.roofType,
+      highSide: s.highSide,
     })),
   );
+  const colors = useConfiguratorStore((s) => s.colors);
+  const hexes = useMemo(() => colorHexes(colors), [colors]);
   const openings = useOpeningsStore((s) => s.openings);
   const isDraggingOpening = useOpeningsStore((s) => s.isDragging);
   const placingOpening = useOpeningsStore((s) => s.activeTool !== null);
@@ -68,8 +74,10 @@ export default function ConfiguratorEngine() {
         foundation: showFoundation,
         panels: isIsolated,
         insulationMm: insulation,
+        roofType,
+        highSide,
       }),
-    [width, height, length, showFoundation, isIsolated, insulation],
+    [width, height, length, showFoundation, isIsolated, insulation, roofType, highSide],
   );
 
   // In step 2 (panels) the cladding is always shown, so the effect of the panel options is visible.
@@ -98,6 +106,7 @@ export default function ConfiguratorEngine() {
         claddingVisible={claddingVisible}
         detail={gfx.tier === 'low' ? 'light' : 'full'}
         holes={openings}
+        colors={hexes}
         onWallHover={placingOpening ? setHoveredWallId : undefined}
       />
 
@@ -105,8 +114,9 @@ export default function ConfiguratorEngine() {
 
       {/* Openings hide themselves with the cladding (same rule as above). */}
       <PlacementMarkers layout={layout} />
-      <WallOpenings layout={layout} realHoles />
+      <WallOpenings layout={layout} realHoles colors={hexes} />
 
+      <SnapshotProvider />
       {process.env.NODE_ENV !== 'production' && <HallStatsProbe layout={layout} />}
     </Canvas>
   );

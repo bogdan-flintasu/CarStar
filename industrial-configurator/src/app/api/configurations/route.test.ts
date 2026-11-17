@@ -7,6 +7,7 @@ const db = vi.hoisted(() => ({
   prices: null as Record<string, unknown> | null,
   created: [] as Array<{ data: Record<string, unknown> }>,
   saved: null as { data: unknown } | null,
+  colors: [] as Array<Record<string, unknown>>,
 }));
 
 vi.mock('@/lib/prisma', () => ({
@@ -14,6 +15,17 @@ vi.mock('@/lib/prisma', () => ({
     prices: {
       findFirst: async () => db.prices,
       create: async ({ data }: { data: Record<string, unknown> }) => (db.prices = { id: 'p', ...data }),
+    },
+    hallModel: {
+      findUnique: async () => null,
+    },
+    colorOption: {
+      count: async () => db.colors.length,
+      createMany: async ({ data }: { data: Array<Record<string, unknown>> }) => {
+        db.colors.push(...data);
+        return { count: data.length };
+      },
+      findMany: async () => db.colors,
     },
     configuration: {
       create: async (args: { data: Record<string, unknown> }) => {

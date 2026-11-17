@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { useShallow } from 'zustand/react/shallow';
 import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
+import ColorPicker from '../ColorPicker';
 
 export default function PanelsStep() {
   const {
@@ -139,6 +140,7 @@ export default function PanelsStep() {
           )}
         </div>
 
+        <ColorPicker title="Culori" components={['walls', 'roof', 'steel', 'trims']} />
       </div>
     </motion.div>
   );

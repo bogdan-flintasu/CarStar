@@ -13,7 +13,9 @@ import { useHallMaterials } from './materials';
 import { placeKit } from './placements';
 import { Roof, Slab } from './Roof';
 import { Bolts, Frames, Purlins, Rainwater } from './Steel';
+import Trims from './Trims';
 import Walls, { type WallHole } from './Walls';
+import type { HallColorHexes } from '@/lib/colors';
 
 export interface HallProps {
   layout: HallLayout;
@@ -25,11 +27,21 @@ export interface HallProps {
   holes?: readonly WallHole[];
   onWallHover?: (wallId: LegacyWallId | null) => void;
   texturedConcrete?: boolean;
+  /** Colour per component; the catalogue defaults when omitted. */
+  colors?: HallColorHexes;
 }
 
-export default function Hall({ layout, claddingVisible = true, detail = 'full', holes, onWallHover, texturedConcrete }: HallProps) {
+export default function Hall({
+  layout,
+  claddingVisible = true,
+  detail = 'full',
+  holes,
+  onWallHover,
+  texturedConcrete,
+  colors,
+}: HallProps) {
   const kit = useHallKit(detail);
-  const materials = useHallMaterials(kit, { texturedConcrete });
+  const materials = useHallMaterials(kit, { texturedConcrete, panels: layout.params.panels, colors });
   const placements = useMemo(() => placeKit(layout), [layout]);
   // Under the cladding the steel is in its shade anyway: only the outermost visible shell casts shadows.
   const steel = { kit, placements, material: materials.steel, castShadow: !claddingVisible };
@@ -51,9 +63,16 @@ export default function Hall({ layout, claddingVisible = true, detail = 'full', 
       <Bolts {...steel} />
 
       <group name="Cladding" visible={claddingVisible}>
-        <Walls layout={layout} material={materials.wall} holes={holes} onHover={claddingVisible ? onWallHover : undefined} />
-        <Roof layout={layout} material={materials.roof} />
-        <Rainwater {...steel} castShadow={false} />
+        <Walls
+          layout={layout}
+          material={materials.wall}
+          edgeMaterial={materials.wallEdge}
+          holes={holes}
+          onHover={claddingVisible ? onWallHover : undefined}
+        />
+        <Roof layout={layout} material={materials.roof} edgeMaterial={materials.trim} />
+        <Trims layout={layout} material={materials.trim} />
+        <Rainwater {...steel} material={materials.trim} castShadow={false} />
       </group>
 
       {layout.params.foundation && <Slab slab={layout.slab} material={materials.concrete} />}

@@ -4,6 +4,17 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 import { DEFAULT_PRICES, calculatePrice, type Prices } from '@/lib/pricing';
+import type { RoofType, Side } from '@/lib/hall';
+import {
+  DEFAULT_PALETTE,
+  defaultColors,
+  resolveColors,
+  surchargeRates,
+  toChoice,
+  type ColorComponent,
+  type ColorOption,
+  type HallColors,
+} from '@/lib/colors';
 
 export { DEFAULT_PRICES };
 
@@ -23,6 +34,12 @@ interface ConfiguratorState {
   setHeight: (v: number) => void;
   setWidth: (v: number) => void;
   setLength: (v: number) => void;
+  /** `gable` = "2 ape", `mono` = "o apă" (then `height` is the low eave). */
+  roofType: RoofType;
+  setRoofType: (v: RoofType) => void;
+  /** Mono roof: the higher side. */
+  highSide: Side;
+  setHighSide: (v: Side) => void;
 
   // ── Walls visibility toggle (Step 1) ─────────────────────
   /** The user's own toggle (only meaningful in step 1). */
@@ -40,6 +57,24 @@ interface ConfiguratorState {
   setIsIsolated: (v: boolean) => void;
   insulation: number;
   setInsulation: (v: number) => void;
+
+  // ── Colours (Steps 2 and 3) ──────────────────────────────
+  /** Chosen colour per component; always resolved against `palette`. */
+  colors: HallColors;
+  setColor: (component: ColorComponent, option: ColorOption) => void;
+  /**
+   * Replaces all colours from a saved configuration (already resolved by the server). Missing components get the
+   * defaults; the choices are checked against the catalogue again when it loads (`setPalette`).
+   */
+  setColors: (colors: Partial<HallColors> | undefined) => void;
+  /** The admin's colour catalogue (built-in until /api/colors has loaded). Not persisted. */
+  palette: ColorOption[];
+  setPalette: (palette: ColorOption[]) => void;
+
+  // ── Starting model ───────────────────────────────────────
+  /** The predefined hall this configuration started from (the customer may have changed it since). */
+  model: { id: string; name: string } | null;
+  setModel: (model: { id: string; name: string } | null) => void;
 
   // ── Runtime (not persisted) ──────────────────────────────
   /** True once the hall has rendered its first frame; hides the loader. Set by the 3D scene. */
@@ -89,6 +124,10 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
   setHeight: (v) => set({ height: v }),
   setWidth: (v) => set({ width: v }),
   setLength: (v) => set({ length: v }),
+  roofType: 'gable',
+  setRoofType: (v) => set({ roofType: v }),
+  highSide: 'right',
+  setHighSide: (v) => set({ highSide: v }),
 
   // ── Walls visibility ────────────────────────────────────
   wallsToggle: false,
@@ -108,6 +147,17 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
   insulation: 30,
   setInsulation: (v) => set({ insulation: v }),
 
+  // ── Colours ─────────────────────────────────────────────
+  colors: defaultColors(),
+  setColor: (component, option) => set((s) => ({ colors: { ...s.colors, [component]: toChoice(option) } })),
+  setColors: (colors) => set((s) => ({ colors: { ...defaultColors(s.palette), ...colors } })),
+  palette: [...DEFAULT_PALETTE],
+  // A choice the new catalogue no longer offers falls back to its default; names/hexes follow the catalogue.
+  setPalette: (palette) => set((s) => ({ palette, colors: resolveColors(s.colors, palette) })),
+
+  model: null,
+  setModel: (model) => set({ model }),
+
   // ── Prices ──────────────────────────────────────────────
   prices: DEFAULT_PRICES,
   setPrices: (prices) => set({ prices }),
@@ -124,20 +174,29 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
   },
 
   getEstimatedPrice: (openingsCount) => {
-    const { length, width, height, showFoundation, hasSandwichPanels, prices } = get();
-    return calculatePrice({ length, width, height, showFoundation, hasSandwichPanels }, openingsCount, prices);
+    const { length, width, height, showFoundation, hasSandwichPanels, roofType, prices, colors, palette } = get();
+    return calculatePrice(
+      { length, width, height, showFoundation, hasSandwichPanels, roofType },
+      openingsCount,
+      prices,
+      surchargeRates(colors, palette),
+    );
   },
 
   getConfigurationData: (openingsCount) => {
     const s = get();
     return {
       dimensions: { length: s.length, width: s.width, height: s.height },
+      roofType: s.roofType,
+      highSide: s.highSide,
       floorArea: s.getFloorArea(),
       numberOfBays: s.getNumberOfBays(),
       foundation: s.showFoundation,
       sandwichPanels: s.hasSandwichPanels,
       insulation: s.isIsolated ? s.insulation : 0,
       openings: openingsCount,
+      colors: s.colors,
+      ...(s.model ? { model: s.model } : {}),
       estimatedPrice: s.getEstimatedPrice(openingsCount),
     };
   },
@@ -148,12 +207,16 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
       height: 3,
       width: 12,
       length: 12,
+      roofType: 'gable',
+      highSide: 'right',
       wallsToggle: false,
       wallsVisible: false,
       showFoundation: true,
       hasSandwichPanels: false,
       isIsolated: false,
       insulation: 30,
+      colors: defaultColors(get().palette),
+      model: null,
     });
   },
     }),
@@ -165,9 +228,12 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
       // Only the user's choices; never prices, step or derived flags.
       partialize: (s) => ({
         height: s.height, width: s.width, length: s.length,
+        roofType: s.roofType, highSide: s.highSide,
         wallsToggle: s.wallsToggle,
         showFoundation: s.showFoundation, hasSandwichPanels: s.hasSandwichPanels,
         isIsolated: s.isIsolated, insulation: s.insulation,
+        colors: s.colors,
+        model: s.model,
       }),
       migrate: (persisted) => {
         // v0 persisted everything (prices, step, wallsVisible); drop what is no longer stored.

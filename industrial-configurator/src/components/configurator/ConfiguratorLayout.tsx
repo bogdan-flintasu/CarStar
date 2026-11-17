@@ -6,7 +6,9 @@ import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
 import { useShallow } from 'zustand/react/shallow';
 import { useOpeningsStore } from '@/stores/useOpeningsStore';
 import { calculatePrice, countOpenings } from '@/lib/pricing';
+import { surchargeRates } from '@/lib/colors';
 import { getGraphicsSettings } from '@/lib/hardwareTier';
+import AdminModelBar from './AdminModelBar';
 import ConfigHeader from './ConfigHeader';
 import ConfigFooter from './ConfigFooter';
 import DimensionsStep from './steps/DimensionsStep';
@@ -31,7 +33,11 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
   const height = useConfiguratorStore((s) => s.height);
   const showFoundation = useConfiguratorStore((s) => s.showFoundation);
   const hasSandwichPanels = useConfiguratorStore((s) => s.hasSandwichPanels);
+  const roofType = useConfiguratorStore((s) => s.roofType);
   const prices = useConfiguratorStore((s) => s.prices);
+  const setPalette = useConfiguratorStore((s) => s.setPalette);
+  const colors = useConfiguratorStore((s) => s.colors);
+  const palette = useConfiguratorStore((s) => s.palette);
   // false on the server and during hydration, true afterwards (avoids persist hydration mismatch)
   const isMounted = useSyncExternalStore(
     () => () => {},
@@ -81,15 +87,26 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
       })
       .catch((err) => console.error('Failed to fetch prices:', err));
   }, [setPrices]);
+
+  // The admin's colour catalogue; the built-in one is shown until it arrives.
+  useEffect(() => {
+    fetch('/api/colors')
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) setPalette(data);
+      })
+      .catch((err) => console.error('Failed to fetch colours:', err));
+  }, [setPalette]);
   
   // Openings only matter for the price: subscribe to the counts, not the whole list
   const counts = useOpeningsStore(
     useShallow((s) => countOpenings(s.openings)),
   );
   const estimatedPrice = calculatePrice(
-    { length, width, height, showFoundation, hasSandwichPanels },
+    { length, width, height, showFoundation, hasSandwichPanels, roofType },
     counts,
     prices,
+    surchargeRates(colors, palette),
   );
 
   const renderStep = () => {
@@ -143,6 +160,8 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
           <div className="absolute inset-0">
             {children}
           </div>
+
+          <AdminModelBar />
           
           {/* Navigation Hint Overlay — Desktop (bottom-left) */}
           <div className="hidden md:flex absolute bottom-6 left-6 bg-white/90 backdrop-blur-md px-4 py-3 rounded-xl border border-gray-200 shadow-sm pointer-events-none z-10 flex-col gap-1.5">

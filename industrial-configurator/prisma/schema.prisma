@@ -30,3 +30,31 @@ model Prices {
   bigDoorPerUnit  Float
   updatedAt       DateTime @updatedAt
 }
+
+/// Colours the admin offers per hall component (see src/lib/colors.ts). Seeded with DEFAULT_PALETTE on first use.
+model ColorOption {
+  id         String  @id
+  component  String  // walls | roof | steel | trims | doors | windows
+  name       String
+  ral        String  @default("")
+  hex        String  // #rrggbb
+  surcharge  Float   @default(0)
+  isDefault  Boolean @default(false)
+  sortOrder  Int     @default(0)
+
+  @@index([component])
+}
+
+/// Predefined halls the admin offers as starting points ("modele"). `data` is a hall configuration
+/// (see hallModelDataSchema in src/lib/validation/models.ts); `thumbnail` is a data: URL captured from the 3D view.
+model HallModel {
+  id          String   @id @default(cuid())
+  name        String
+  description String   @default("")
+  data        Json
+  thumbnail   String   @default("")
+  published   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

@@ -3,6 +3,7 @@ import path from "path";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "../src/generated/prisma";
 import { DEFAULT_PRICES } from "../src/lib/pricing";
+import { DEFAULT_PALETTE } from "../src/lib/colors";
 
 async function main() {
   const dbPath = process.env.DATABASE_URL?.replace("file:", "") || "./prisma/dev.db";
@@ -16,6 +17,10 @@ async function main() {
       console.log("Seeded default prices.");
     } else {
       console.log("Prices already present; nothing to seed.");
+    }
+    if ((await prisma.colorOption.count()) === 0) {
+      await prisma.colorOption.createMany({ data: [...DEFAULT_PALETTE] });
+      console.log("Seeded the default colour catalogue.");
     }
   } finally {
     await prisma.$disconnect();

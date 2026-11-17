@@ -37,7 +37,7 @@ const finiteOr = (v: unknown, fallback: number) =>
 /**
  * Single source of truth for opening bounds. Used by add, update, drag, resize and migration.
  * - width/height >= MIN_OPENING_SIZE and <= the wall's length/height
- * - the opening stays fully inside the wall face (the gable outline when `wall.apex` is set)
+ * - the opening stays fully inside the wall face (the end-wall outline when `wall.apex` is set)
  * - doors: sill = 0
  * Without a `wall`, only the wall-independent rules apply (min size, non-negative position, doors on floor).
  */
@@ -53,18 +53,20 @@ export function clampOpening(opening: Opening, wall?: WallSpan | null): Opening 
     const apex = Math.max(eave, wall.apex ?? eave);
     width = Math.min(width, wall.length);
     height = Math.min(height, apex);
-    // The face is highest at the middle of a gable, so the wider the opening, the lower its top must be.
+    // The face is highest at `apexAt`, so the wider the opening, the lower its top must be. Wherever the apex is, the
+    // best an opening can do loses (apex - eave) * width / length.
     const topMax = eave + (apex - eave) * (1 - width / wall.length);
+    const apexAt = clamp(wall.apexAt ?? wall.length / 2, 0, wall.length);
     if (!isFloorStanding(opening.type)) sill = clamp(sill, 0, Math.max(0, topMax - height));
     height = Math.min(height, Math.max(MIN_OPENING_SIZE, topMax - sill));
-    // Above the eave only the middle part of a gable is available.
+    // Above the eave only the part of the face around the apex is available.
     const top = sill + height;
     let lo = 0;
     let hi = wall.length;
     if (top > eave + 1e-9 && apex > eave) {
-      const reach = (wall.length / 2) * (1 - (top - eave) / (apex - eave));
-      lo = wall.length / 2 - reach;
-      hi = wall.length / 2 + reach;
+      const above = (top - eave) / (apex - eave);
+      lo = apexAt * above;
+      hi = apexAt + (wall.length - apexAt) * (1 - above);
     }
     offsetX = clamp(offsetX, lo, Math.max(lo, hi - width));
   }

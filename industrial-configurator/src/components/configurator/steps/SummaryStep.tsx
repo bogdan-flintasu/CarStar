@@ -5,18 +5,20 @@ import { motion } from 'framer-motion';
 import { useShallow } from 'zustand/react/shallow';
 import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
 import { countOpenings } from '@/lib/pricing';
+import { COLOR_COMPONENTS, COMPONENT_LABELS } from '@/lib/colors';
 import { useOpeningsStore } from '@/stores/useOpeningsStore';
 
 export default function SummaryStep() {
   const {
     length, width, height,
     showFoundation, hasSandwichPanels,
-    isIsolated, insulation,
+    isIsolated, insulation, colors, roofType, highSide, model,
     getFloorArea, getNumberOfBays, getEstimatedPrice, getConfigurationData,
   } = useConfiguratorStore(useShallow((s) => ({
     length: s.length, width: s.width, height: s.height,
     showFoundation: s.showFoundation, hasSandwichPanels: s.hasSandwichPanels,
-    isIsolated: s.isIsolated, insulation: s.insulation,
+    isIsolated: s.isIsolated, insulation: s.insulation, colors: s.colors,
+    roofType: s.roofType, highSide: s.highSide, model: s.model,
     getFloorArea: s.getFloorArea, getNumberOfBays: s.getNumberOfBays,
     getEstimatedPrice: s.getEstimatedPrice, getConfigurationData: s.getConfigurationData,
   })));
@@ -159,6 +161,18 @@ export default function SummaryStep() {
             <span className="text-gray-600 font-medium">Dimensiuni</span>
             <span className="text-black font-bold">{length} × {width} × {height} m</span>
           </div>
+          {model && (
+            <div className="flex justify-between gap-3 text-sm">
+              <span className="text-gray-600 font-medium">Pornit de la</span>
+              <span className="text-black font-bold text-right">{model.name}</span>
+            </div>
+          )}
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600 font-medium">Acoperiș</span>
+            <span className="text-black font-bold">
+              {roofType === 'mono' ? `O apă (înalt ${highSide === 'left' ? 'stânga' : 'dreapta'})` : '2 ape'}
+            </span>
+          </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-600 font-medium">Suprafață la sol</span>
             <span className="text-black font-bold">{floorArea} m²</span>
@@ -188,6 +202,22 @@ export default function SummaryStep() {
               <span className="text-black font-bold">{insulation} mm</span>
             </div>
           )}
+
+          <div className="h-px bg-gray-100 my-1" />
+
+          {COLOR_COMPONENTS.map((c) => (
+            <div key={c} className="flex justify-between items-center gap-3 text-sm">
+              <span className="text-gray-600 font-medium">{COMPONENT_LABELS[c]}</span>
+              <span className="flex items-center gap-2 text-black font-bold text-right">
+                {colors[c].name}
+                <span
+                  aria-hidden
+                  className="inline-block w-3.5 h-3.5 rounded-full border border-gray-300"
+                  style={{ backgroundColor: colors[c].hex }}
+                />
+              </span>
+            </div>
+          ))}
 
           <div className="h-px bg-gray-100 my-1" />
 

@@ -20,7 +20,10 @@ export interface WallHole {
 
 interface WallsProps {
   layout: HallLayout;
+  /** The cladding faces. */
   material: Material;
+  /** The panel's cut edges: corners and opening reveals. */
+  edgeMaterial: Material;
   holes?: readonly WallHole[];
   /** Pointer entered (wall id) or left (null) a wall; used to pick the wall an opening is placed on. */
   onHover?: (wallId: LegacyWallId | null) => void;
@@ -28,17 +31,19 @@ interface WallsProps {
 
 const NO_HOLES: readonly WallHole[] = [];
 
-function Wall({ wall, material, holes = NO_HOLES, onHover }: { wall: WallDescriptor } & Omit<WallsProps, 'layout'>) {
+function Wall({ wall, material, edgeMaterial, holes = NO_HOLES, onHover }: { wall: WallDescriptor } & Omit<WallsProps, 'layout'>) {
   // Keyed by value, so moving an opening rebuilds only the wall it is on.
   const ownHoles = JSON.stringify(holes.filter((hole) => hole.wallId === wall.id));
   const geometry = useMemo(() => wallGeometryWithHoles(wall, JSON.parse(ownHoles) as WallHole[]), [wall, ownHoles]);
   useEffect(() => () => geometry.dispose(), [geometry]);
+  // ExtrudeGeometry groups: 0 = the two faces (profiled cladding), 1 = the cut edges (plain).
+  const materials = useMemo(() => [material, edgeMaterial], [material, edgeMaterial]);
 
   return (
     <mesh
       name={wall.id}
       geometry={geometry}
-      material={material}
+      material={materials}
       position={wallMeshTransform(wall).position}
       rotation-y={wall.yaw}
       castShadow
@@ -50,8 +55,8 @@ function Wall({ wall, material, holes = NO_HOLES, onHover }: { wall: WallDescrip
   );
 }
 
-export default function Walls({ layout, material, holes, onHover }: WallsProps) {
+export default function Walls({ layout, material, edgeMaterial, holes, onHover }: WallsProps) {
   return Object.values(layout.walls).map((wall) => (
-    <Wall key={wall.key} wall={wall} material={material} holes={holes} onHover={onHover} />
+    <Wall key={wall.key} wall={wall} material={material} edgeMaterial={edgeMaterial} holes={holes} onHover={onHover} />
   ));
 }

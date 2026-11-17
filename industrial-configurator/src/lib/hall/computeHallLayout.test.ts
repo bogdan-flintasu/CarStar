@@ -90,10 +90,10 @@ function expectSoundLayout(layout: HallLayout) {
   expect(halfWidths.columnOuter).toBeLessThan(halfWidths.wallInner);
   expect(halfWidths.wallInner).toBeLessThan(halfWidths.wallOuter);
   expect(halfWidths.wallOuter).toBeLessThan(halfWidths.roofEdge);
-  expect(layout.roof.right.zFront).toBeGreaterThan(layout.walls.front.origin[2]);
-  expect(layout.roof.right.zBack).toBeLessThan(layout.walls.back.origin[2]);
-  expect(layout.roof.left.eave[1]).toBeLessThan(layout.roof.left.ridge[1]);
-  expect(layout.roof.left.eave[0]).toBe(-layout.roof.right.eave[0]);
+  expect(layout.roof[1].zFront).toBeGreaterThan(layout.walls.front.origin[2]);
+  expect(layout.roof[1].zBack).toBeLessThan(layout.walls.back.origin[2]);
+  expect(layout.roof[0].eave[1]).toBeLessThan(layout.roof[0].ridge[1]);
+  expect(layout.roof[0].eave[0]).toBe(-layout.roof[1].eave[0]);
 }
 
 describe('computeHallLayout: invariants across the sellable range', () => {
@@ -196,7 +196,7 @@ describe('computeHallLayout: matches the source frame (da.glb, 12 m wide, rafter
   it('puts the eave purlin seat near y = 6.335 m', () => near(layout.purlins.at(-1)!.y, 6.335, 0.01));
   it('puts the wall top and the roof edge near 6.41 m', () => {
     near(layout.walls.right.spanV, 6.41, 0.03);
-    near(layout.roof.right.eave[1], 6.395, 0.03);
+    near(layout.roof[1].eave[1], 6.395, 0.03);
   });
 });
 
@@ -212,7 +212,7 @@ describe('computeHallLayout: cladding, slab and site', () => {
     expect(thick.halfWidths.wallInner).toBe(thin.halfWidths.wallInner);
     expect(thick.halfWidths.wallOuter).toBeCloseTo(thick.halfWidths.wallInner + insulationMm / 1000, 12);
     expect(thick.columns).toEqual(thin.columns);
-    expect(thick.roof.left.thickness).toBeCloseTo(insulationMm / 1000, 12);
+    expect(thick.roof[0].thickness).toBeCloseTo(insulationMm / 1000, 12);
   });
 
   it('lowers the terrain below the slab only when there is a foundation', () => {
@@ -259,7 +259,7 @@ describe('computeHallLayout: cladding, slab and site', () => {
 
   it('bounds the building, not the apron', () => {
     const layout = layoutOf({ length: 30, width: 15, height: 5 });
-    expect(layout.bounds.min).toEqual([-layout.halfWidths.roofEdge, 0, layout.roof.left.zBack]);
+    expect(layout.bounds.min).toEqual([-layout.halfWidths.roofEdge, 0, layout.roof[0].zBack]);
     expect(layout.bounds.max[0]).toBe(layout.halfWidths.roofEdge);
     expect(layout.bounds.max[0] - layout.halfWidths.columnInner).toBeLessThan(COLUMN_DEPTH + 0.5);
   });

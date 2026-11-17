@@ -11,6 +11,8 @@ export type Vec2 = readonly [number, number];
 export type Vec3 = readonly [number, number, number];
 
 export type Side = 'left' | 'right';
+/** `gable`: two slopes meeting at a ridge on the centre line ("2 ape"). `mono`: one slope across the width ("o apă"). */
+export type RoofType = 'gable' | 'mono';
 export type WallKey = 'front' | 'back' | 'left' | 'right';
 /** Ids used by the openings store (the original mesh names). */
 export type LegacyWallId = 'PereteFata' | 'PereteSpate' | 'PereteSTG' | 'PereteDR';
@@ -30,6 +32,10 @@ export interface HallParams {
   panels: boolean;
   /** Sandwich panel core thickness in millimetres; ignored when `panels` is false. */
   insulationMm: number;
+  /** Defaults to `gable`. On a `mono` roof, `height` is the clear height at the low eave. */
+  roofType?: RoofType;
+  /** Mono roof only: the side whose eave is higher. Defaults to `right`. */
+  highSide?: Side;
 }
 
 export interface HallFrame {
@@ -48,6 +54,10 @@ export interface HallColumn {
   baseY: number;
   topY: number;
   height: number;
+  /** Heights of the cladding fixings (girt cleats) on its outer face. */
+  girtLevels: readonly number[];
+  /** Mono roof: the column under the high eave (its joint slopes the other way). */
+  isHigh: boolean;
 }
 
 /** One rafter, given on its bottom-flange line (the kit's `Rafter` anchor) in the frame's XY plane. */
@@ -94,11 +104,13 @@ export interface WallDescriptor {
   spanH: number;
   /** Height of the rectangular part (up to the eave). */
   spanV: number;
-  /** Highest point: the gable apex on the end walls, equal to spanV on the side walls. */
+  /** Highest point: the apex of a gable or the high end of a mono-pitch end wall; equal to spanV on side walls. */
   apexV: number;
+  /** `h` of the highest point: the middle of a gable, one end of a mono-pitch end wall (spanH / 2 on side walls). */
+  apexH: number;
   /** Cladding thickness, measured inwards from the face. */
   thickness: number;
-  /** Outline of the face in (h, v): a rectangle for side walls, a pentagon for gables. Starts at (0, 0). */
+  /** Outline of the face in (h, v): a rectangle for side walls, a pentagon for gables, a trapezoid for mono-pitch end walls. Starts at (0, 0). */
   polygon: readonly Vec2[];
   /** Face area in square metres. */
   area: number;
@@ -110,10 +122,11 @@ export interface WallDescriptor {
 
 /** One roof slope, given by its underside in the XY plane; the panel is `thickness` thick, square to the slope. */
 export interface RoofPlane {
+  /** The side of its (low) eave. */
   side: Side;
   /** Underside at the outer edge (the drip edge). */
   eave: Vec2;
-  /** Underside at the ridge (x = 0). */
+  /** Underside at the top of the slope: the ridge (x = 0) on a gable, the high edge on a mono-pitch roof. */
   ridge: Vec2;
   thickness: number;
   /** The same thickness measured plumb: the top surface is this far above the underside. */
@@ -169,12 +182,15 @@ export interface HallLayout {
   params: Required<HallParams>;
   /** Roof pitch in radians. */
   pitch: number;
+  roofType: RoofType;
+  /** Mono roof: the high side. Gable: null. */
+  highSide: Side | null;
   bayCount: number;
   /** Actual frame spacing: length / bayCount, never more than params.bay. */
   bay: number;
   /** Top of steel (rafter top flange) at the inner column face. */
   eaveY: number;
-  /** Top of steel at the apex: eaveY + (width / 2) * tan(pitch). */
+  /** Highest top of steel: the apex of a gable (eaveY + (width / 2) * tan(pitch)), the high eave of a mono roof. */
   ridgeY: number;
   halfWidths: HallHalfWidths;
   /** Wall and roof panel thickness. */
@@ -185,10 +201,11 @@ export interface HallLayout {
   rafterLength: number;
   purlins: readonly HallPurlin[];
   purlinsPerSide: number;
-  /** Heights of the cladding fixings (girt cleats) on the outer face of every column. */
+  /** Heights of the cladding fixings (girt cleats) on the low-side columns (every column of a gable hall). */
   girtLevels: readonly number[];
   walls: Readonly<Record<WallKey, WallDescriptor>>;
-  roof: Readonly<Record<Side, RoofPlane>>;
+  /** Gable: the left and right slopes. Mono: one slope, `side` = the low side. */
+  roof: readonly RoofPlane[];
   slab: HallSlab;
   /** Terrain level: below the slab when there is a foundation, at the floor otherwise. */
   groundY: number;

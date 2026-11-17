@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import ColorsAdmin from '@/components/admin/ColorsAdmin';
+import ModelsAdmin from '@/components/admin/ModelsAdmin';
 
 interface PricesData {
   id: string;
@@ -64,7 +66,7 @@ function PriceField({
 
 // ─── Admin Dashboard ──────────────────────────────────────────────────────────
 function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'prices' | 'configs'>('prices');
+  const [activeTab, setActiveTab] = useState<'prices' | 'colors' | 'models' | 'configs'>('prices');
   const [prices, setPrices] = useState<PricesData | null>(null);
   const [configs, setConfigs] = useState<ConfigData[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -224,7 +226,7 @@ function AdminDashboard() {
       {/* Content */}
       <div className="max-w-5xl mx-auto px-6 py-8">
         {/* Tabs */}
-        <div className="flex gap-1 mb-8 bg-white/5 p-1 rounded-xl w-fit">
+        <div className="flex gap-1 mb-8 bg-white/5 p-1 rounded-xl w-fit max-w-full overflow-x-auto">
           <button
             onClick={() => setActiveTab('prices')}
             className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
@@ -234,6 +236,26 @@ function AdminDashboard() {
             }`}
           >
             Prețuri
+          </button>
+          <button
+            onClick={() => setActiveTab('colors')}
+            className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
+              activeTab === 'colors'
+                ? 'bg-[#F5A623] text-black shadow-lg shadow-[#F5A623]/20'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Culori
+          </button>
+          <button
+            onClick={() => setActiveTab('models')}
+            className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
+              activeTab === 'models'
+                ? 'bg-[#F5A623] text-black shadow-lg shadow-[#F5A623]/20'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Modele
           </button>
           <button
             onClick={() => setActiveTab('configs')}
@@ -311,6 +333,9 @@ function AdminDashboard() {
           </div>
         )}
 
+        {activeTab === 'colors' && <ColorsAdmin adminFetch={adminFetch} />}
+        {activeTab === 'models' && <ModelsAdmin adminFetch={adminFetch} />}
+
         {/* ── Configs Tab ────────────────────────────── */}
         {activeTab === 'configs' && (
           <div className="space-y-3">
@@ -350,6 +375,12 @@ function AdminDashboard() {
                             <span className="text-gray-400">
                               <span className="text-gray-600">Dimensiuni: </span>
                               <span className="text-white font-medium">{dims.length} × {dims.width} × {dims.height} m</span>
+                            </span>
+                          )}
+                          {typeof (d.model as { name?: unknown } | undefined)?.name === 'string' && (
+                            <span className="text-gray-400">
+                              <span className="text-gray-600">Model: </span>
+                              <span className="text-white font-medium">{(d.model as { name: string }).name}</span>
                             </span>
                           )}
                           {d.estimatedPrice !== undefined && (
