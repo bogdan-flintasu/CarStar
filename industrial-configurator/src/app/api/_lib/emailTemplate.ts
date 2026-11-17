@@ -1,6 +1,14 @@
 import { escapeHtml as e, toHeaderSafe } from '@/lib/validation/html';
 import type { SendEmailInput } from '@/lib/validation/email';
 import { COLOR_COMPONENTS, COMPONENT_LABELS } from '@/lib/colors';
+import { getBranding } from '@/lib/branding';
+
+export interface LeadEmailOptions {
+  /** Defaults to the branding's company name. */
+  companyName?: string;
+  /** File name of the attached PDF quote, if any. */
+  attachment?: string | null;
+}
 
 type Lead = Pick<SendEmailInput, 'name' | 'email' | 'phone' | 'message' | 'configurationSummary'>;
 
@@ -31,7 +39,8 @@ export function buildLeadSubject(lead: Lead): string {
  * HTML body of the lead email. Every interpolated value goes through escapeHtml;
  * `link` must already be the canonical, server-built configuration URL.
  */
-export function buildLeadEmailHtml(lead: Lead, link: string | null): string {
+export function buildLeadEmailHtml(lead: Lead, link: string | null, options: LeadEmailOptions = {}): string {
+  const company = options.companyName ?? getBranding().name;
   const s = lead.configurationSummary;
   const dims = s?.dimensions;
   const price =
@@ -40,7 +49,7 @@ export function buildLeadEmailHtml(lead: Lead, link: string | null): string {
   const message = lead.message ? e(lead.message).replace(/\r?\n/g, '<br/>') : null;
 
   return `
-      <h2>Cerere Nouă de Configurare - CarStar</h2>
+      <h2>Cerere Nouă de Configurare - ${e(company)}</h2>
       <hr/>
       <h3>Detalii Contact</h3>
       <p><strong>Nume:</strong> ${e(lead.name || 'N/A')}</p>
@@ -61,11 +70,12 @@ export function buildLeadEmailHtml(lead: Lead, link: string | null): string {
       ${colorLines(s).map((line) => `<p>${e(line)}</p>`).join('')}
       <p><strong>Preț estimativ:</strong> ${e(price)}</p>
       ${link ? `<p><strong>Link configurare:</strong> <a href="${e(link)}">${e(link)}</a></p>` : ''}
+      ${options.attachment ? `<p><strong>Oferta PDF:</strong> atașată (${e(options.attachment)})</p>` : ''}
     `;
 }
 
 /** Plain-text log used when RESEND_API_KEY is not set (local development). */
-export function buildLeadLog(lead: Lead, link: string | null, from: string, to: string): string {
+export function buildLeadLog(lead: Lead, link: string | null, from: string, to: string, attachment: string | null = null): string {
   const s = lead.configurationSummary;
   return [
     '── EMAIL SIMULATION (no RESEND_API_KEY) ──',
@@ -85,5 +95,6 @@ export function buildLeadLog(lead: Lead, link: string | null, from: string, to: 
     ...colorLines(s),
     `Preț:       ${s?.estimatedPrice ?? 'N/A'}`,
     `Link:       ${link ?? '-'}`,
+    `PDF:        ${attachment ? `s-ar atașa ${attachment}` : '-'}`,
   ].join('\n');
 }

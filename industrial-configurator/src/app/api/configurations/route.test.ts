@@ -8,6 +8,7 @@ const db = vi.hoisted(() => ({
   created: [] as Array<{ data: Record<string, unknown> }>,
   saved: null as { data: unknown } | null,
   colors: [] as Array<Record<string, unknown>>,
+  images: [] as Array<{ configurationId: string; view: string; bytes: Uint8Array; width: number; height: number; mime: string }>,
 }));
 
 vi.mock('@/lib/prisma', () => ({
@@ -32,12 +33,21 @@ vi.mock('@/lib/prisma', () => ({
         db.created.push(args);
         return { id: 'c', ...args.data };
       },
-      findUnique: async () => db.saved,
+      findUnique: async () => db.saved && { id: 'c', ...db.saved },
+      delete: async () => ({}),
+    },
+    configurationImage: {
+      upsert: async ({ create }: { create: (typeof db.images)[number] }) => {
+        db.images.push(create);
+        return create;
+      },
+      findMany: async () => db.images,
     },
   },
 }));
 
 const { POST: createConfiguration } = await import('./route');
+const sharp = (await import('sharp')).default;
 const { POST: sendEmail } = await import('../send-email/route');
 
 const tamperedData = {
@@ -66,6 +76,7 @@ describe('server-side price (B5)', () => {
     db.prices = { id: 'p', ...DEFAULT_PRICES, structurePerM3: 100, updatedAt: new Date() };
     db.created = [];
     db.saved = null;
+    db.images = [];
   });
 
   it('POST /api/configurations stores the server price, not the client one', async () => {
@@ -127,9 +138,103 @@ describe('server-side price (B5)', () => {
       const output = log.mock.calls.map((c) => String(c[0])).join('\n');
       // 864 m3 * 100 + 1 window * 150 + 288 m2 * 35
       expect(output).toContain(`Preț:       ${86400 + 150 + 10080}`);
+      // The PDF quote is built server-side from the token (console fallback: logged, not sent).
+      expect(output).toMatch(/PDF:\s+s-ar atașa oferta-hala-AbC_123-xyz0\.pdf \(\d+ KB\)/);
     } finally {
       log.mockRestore();
       if (prevKey !== undefined) process.env.RESEND_API_KEY = prevKey;
     }
+  });
+});
+
+describe('POST /api/configurations with pictures (multipart)', () => {
+  const jpeg = async (width = 1600, height = 1000) =>
+    new Uint8Array(
+      await sharp({ create: { width, height, channels: 3, background: { r: 90, g: 120, b: 160 } } }).jpeg().toBuffer(),
+    );
+
+  /** A multipart request as a browser sends it: serialised body with its length. */
+  async function upload(fields: Array<[string, string | Blob, string?]>, ip: string) {
+    const form = new FormData();
+    for (const [name, value, filename] of fields) {
+      if (typeof value === 'string') form.append(name, value);
+      else form.append(name, value, filename);
+    }
+    const encoded = new Response(form);
+    const body = new Uint8Array(await encoded.arrayBuffer());
+    return new NextRequest('http://localhost/api/configurations', {
+      method: 'POST',
+      body,
+      headers: {
+        'content-type': encoded.headers.get('content-type')!,
+        'content-length': String(body.byteLength),
+        'x-forwarded-for': ip,
+      },
+    });
+  }
+  const payload = JSON.stringify({ data: tamperedData });
+
+  beforeEach(() => {
+    db.prices = { id: 'p', ...DEFAULT_PRICES, updatedAt: new Date() };
+    db.created = [];
+    db.images = [];
+  });
+
+  it('stores the configuration with its pictures', async () => {
+    const bytes = await jpeg();
+    const res = await createConfiguration(
+      await upload(
+        [
+          ['payload', payload],
+          ['render-front', new Blob([bytes], { type: 'image/jpeg' }), 'front.jpg'],
+          ['render-aerial', new Blob([bytes], { type: 'image/jpeg' }), 'aerial.jpg'],
+        ],
+        '10.1.0.1',
+      ),
+    );
+    expect(res.status).toBe(201);
+    expect(db.created).toHaveLength(1);
+    expect(db.images.map((i) => [i.view, i.mime, i.width, i.height])).toEqual([
+      ['front', 'image/jpeg', 1600, 1000],
+      ['aerial', 'image/jpeg', 1600, 1000],
+    ]);
+  });
+
+  it('checks the bytes, not the declared type', async () => {
+    const png = new Uint8Array(await sharp({ create: { width: 1600, height: 1000, channels: 3, background: '#fff' } }).png().toBuffer());
+    const res = await createConfiguration(
+      await upload([['payload', payload], ['render-front', new Blob([png], { type: 'image/jpeg' }), 'front.jpg']], '10.1.0.2'),
+    );
+    expect(res.status).toBe(400);
+    expect(db.created).toHaveLength(0);
+  });
+
+  it('rejects unknown views, unknown fields and a missing payload', async () => {
+    const bytes = new Blob([await jpeg()], { type: 'image/jpeg' });
+    const cases: Array<Array<[string, string | Blob, string?]>> = [
+      [['payload', payload], ['render-interior', bytes, 'x.jpg']],
+      [['payload', payload], ['avatar', bytes, 'x.jpg']],
+      [['payload', payload], ['render-front', bytes, 'a.jpg'], ['render-front', bytes, 'b.jpg']],
+      [['render-front', bytes, 'a.jpg']],
+      [['payload', '{"data":{}}']],
+    ];
+    for (const [i, fields] of cases.entries()) {
+      const res = await createConfiguration(await upload(fields, `10.1.1.${i}`));
+      expect(res.status).toBe(400);
+    }
+    expect(db.created).toHaveLength(0);
+  });
+
+  it('caps the body size', async () => {
+    const huge = new Blob([new Uint8Array(3 * 1024 * 1024)], { type: 'image/jpeg' });
+    const res = await createConfiguration(await upload([['payload', payload], ['render-front', huge, 'a.jpg']], '10.1.2.1'));
+    expect(res.status).toBe(413);
+  });
+
+  it('keeps the small limit for JSON bodies', async () => {
+    const res = await createConfiguration(
+      post('http://localhost/api/configurations', { data: tamperedData, pad: 'x'.repeat(70 * 1024) }, '10.1.2.2'),
+    );
+    expect(res.status).toBe(413);
   });
 });
