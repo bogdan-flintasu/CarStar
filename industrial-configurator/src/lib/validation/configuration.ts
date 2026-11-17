@@ -90,6 +90,8 @@ export const configurationDataSchema = z.object({
   insulation: z.union([z.literal(0), ranged(INSULATION_LIMITS)]),
   openings: openingsCountSchema.optional(),
   openingsList: z.array(openingSchema).max(MAX_OPENINGS).default([]),
+  /** The predefined hall the customer started from, if any (informational; the server checks it exists). */
+  model: z.object({ id: z.string().regex(/^[A-Za-z0-9_-]{1,64}$/), name: z.string().max(80) }).optional(),
   /** Chosen colour per component. Missing on configurations saved before colours existed (= the defaults). */
   colors: hallColorsSchema.optional(),
   floorArea: finiteNonNegative.optional(),

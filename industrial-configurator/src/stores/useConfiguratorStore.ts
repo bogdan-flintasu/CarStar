@@ -71,6 +71,11 @@ interface ConfiguratorState {
   palette: ColorOption[];
   setPalette: (palette: ColorOption[]) => void;
 
+  // ── Starting model ───────────────────────────────────────
+  /** The predefined hall this configuration started from (the customer may have changed it since). */
+  model: { id: string; name: string } | null;
+  setModel: (model: { id: string; name: string } | null) => void;
+
   // ── Runtime (not persisted) ──────────────────────────────
   /** True once the hall has rendered its first frame; hides the loader. Set by the 3D scene. */
   hallReady: boolean;
@@ -150,6 +155,9 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
   // A choice the new catalogue no longer offers falls back to its default; names/hexes follow the catalogue.
   setPalette: (palette) => set((s) => ({ palette, colors: resolveColors(s.colors, palette) })),
 
+  model: null,
+  setModel: (model) => set({ model }),
+
   // ── Prices ──────────────────────────────────────────────
   prices: DEFAULT_PRICES,
   setPrices: (prices) => set({ prices }),
@@ -188,6 +196,7 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
       insulation: s.isIsolated ? s.insulation : 0,
       openings: openingsCount,
       colors: s.colors,
+      ...(s.model ? { model: s.model } : {}),
       estimatedPrice: s.getEstimatedPrice(openingsCount),
     };
   },
@@ -207,6 +216,7 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
       isIsolated: false,
       insulation: 30,
       colors: defaultColors(get().palette),
+      model: null,
     });
   },
     }),
@@ -223,6 +233,7 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
         showFoundation: s.showFoundation, hasSandwichPanels: s.hasSandwichPanels,
         isIsolated: s.isIsolated, insulation: s.insulation,
         colors: s.colors,
+        model: s.model,
       }),
       migrate: (persisted) => {
         // v0 persisted everything (prices, step, wallsVisible); drop what is no longer stored.

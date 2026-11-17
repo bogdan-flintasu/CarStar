@@ -19,6 +19,7 @@ import CameraRig from '@/components/3d/hall/CameraRig';
 import { Ground, Sun } from '@/components/3d/hall/Site';
 import { requestHallFraming, useHallFramingRequests } from '@/components/3d/hall/framing';
 import HallStatsProbe from '@/components/3d/hall/HallStatsProbe';
+import { SnapshotProvider } from '@/components/3d/hall/snapshot';
 import { useHallUrlParams } from '@/components/3d/hall/useHallUrlParams';
 import PlacementMarkers from '@/components/3d/PlacementMarkers';
 import WallOpenings from '@/components/3d/WallOpenings';
@@ -115,6 +116,7 @@ export default function ConfiguratorEngine() {
       <PlacementMarkers layout={layout} />
       <WallOpenings layout={layout} realHoles colors={hexes} />
 
+      <SnapshotProvider />
       {process.env.NODE_ENV !== 'production' && <HallStatsProbe layout={layout} />}
     </Canvas>
   );

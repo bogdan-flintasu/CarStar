@@ -27,6 +27,11 @@ export async function POST(req: NextRequest) {
   try {
     // B5: never store the client's price; recompute it from the validated data and DB prices.
     const priced = withServerPrice(data, await getCurrentPrices(), await getOrSeedPalette());
+    // The starting model is kept only if it exists, under its current name.
+    const model = data.model
+      ? await prisma.hallModel.findUnique({ where: { id: data.model.id }, select: { id: true, name: true } })
+      : null;
+    priced.model = model ?? undefined;
     const configuration = await prisma.configuration.create({
       data: { token: nanoid(12), data: priced, userName, userEmail, userPhone },
     });

@@ -50,6 +50,7 @@ export function buildLeadEmailHtml(lead: Lead, link: string | null): string {
       <hr/>
       <h3>Sumar Configurare</h3>
       ${dims ? `<p><strong>Dimensiuni:</strong> ${e(dims.length)} × ${e(dims.width)} × ${e(dims.height)} m</p>` : ''}
+      ${s?.model ? `<p><strong>Model de pornire:</strong> ${e(s.model.name)}</p>` : ''}
       <p><strong>Acoperiș:</strong> ${e(roofText(s))}</p>
       <p><strong>Suprafață:</strong> ${e(s?.floorArea ?? 'N/A')} m²</p>
       <p><strong>Fundație:</strong> ${s?.foundation ? 'DA' : 'NU'}</p>
@@ -76,6 +77,7 @@ export function buildLeadLog(lead: Lead, link: string | null, from: string, to: 
     `Telefon: ${lead.phone || 'N/A'}`,
     `Mesaj:   ${lead.message || '-'}`,
     `Dimensiuni: ${dimensionsText(s) ?? 'N/A'}`,
+    `Model:      ${s?.model?.name ?? '-'}`,
     `Acoperiș:   ${roofText(s)}`,
     `Suprafață:  ${s?.floorArea ?? 'N/A'} m²`,
     `Fundație:   ${s?.foundation ? 'DA' : 'NU'}`,

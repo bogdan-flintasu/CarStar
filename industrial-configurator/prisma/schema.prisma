@@ -44,3 +44,17 @@ model ColorOption {
 
   @@index([component])
 }
+
+/// Predefined halls the admin offers as starting points ("modele"). `data` is a hall configuration
+/// (see hallModelDataSchema in src/lib/validation/models.ts); `thumbnail` is a data: URL captured from the 3D view.
+model HallModel {
+  id          String   @id @default(cuid())
+  name        String
+  description String   @default("")
+  data        Json
+  thumbnail   String   @default("")
+  published   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

@@ -5,6 +5,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { motion } from 'framer-motion';
 import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
 import { HALL_LIMITS } from '@/lib/hall';
+import ModelGallery from '../ModelGallery';
 
 interface DimensionFieldProps {
   label: string;
@@ -173,6 +174,8 @@ export default function DimensionsStep() {
       <div className="mb-6">
         <h3 className="text-sm font-bold text-black uppercase mb-1">Dimensiuni</h3>
       </div>
+
+      <ModelGallery />
 
       {/* Sliders */}
       <div className="space-y-5 flex-1">

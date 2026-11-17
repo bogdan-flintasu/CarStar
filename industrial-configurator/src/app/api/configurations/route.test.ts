@@ -16,6 +16,9 @@ vi.mock('@/lib/prisma', () => ({
       findFirst: async () => db.prices,
       create: async ({ data }: { data: Record<string, unknown> }) => (db.prices = { id: 'p', ...data }),
     },
+    hallModel: {
+      findUnique: async () => null,
+    },
     colorOption: {
       count: async () => db.colors.length,
       createMany: async ({ data }: { data: Array<Record<string, unknown>> }) => {
