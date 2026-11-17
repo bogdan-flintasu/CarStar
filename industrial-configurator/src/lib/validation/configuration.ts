@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { hallColorsSchema } from './colors';
 
 /**
  * Allowed hall dimensions in metres. These mirror the sliders in
@@ -86,6 +87,8 @@ export const configurationDataSchema = z.object({
   insulation: z.union([z.literal(0), ranged(INSULATION_LIMITS)]),
   openings: openingsCountSchema.optional(),
   openingsList: z.array(openingSchema).max(MAX_OPENINGS).default([]),
+  /** Chosen colour per component. Missing on configurations saved before colours existed (= the defaults). */
+  colors: hallColorsSchema.optional(),
   floorArea: finiteNonNegative.optional(),
   numberOfBays: z.number().int().min(0).max(1000).optional(),
   estimatedPrice: finiteNonNegative.optional(),

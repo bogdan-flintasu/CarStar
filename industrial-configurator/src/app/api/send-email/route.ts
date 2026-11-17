@@ -10,7 +10,7 @@ import {
   sendEmailSchema,
 } from '@/lib/validation/email';
 import { buildLeadEmailHtml, buildLeadLog, buildLeadSubject } from '../_lib/emailTemplate';
-import { getCurrentPrices } from '../_lib/prices';
+import { getCurrentPrices, getOrSeedPalette } from '../_lib/prices';
 import { resolveEmailSummary } from '../_lib/serverPrice';
 
 const MAX_BODY_BYTES = 16 * 1024;
@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
         storedData,
         input.configurationSummary,
         await getCurrentPrices(),
+        await getOrSeedPalette(),
       ),
     };
     if (apiKey) {

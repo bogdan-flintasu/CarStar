@@ -1,5 +1,6 @@
 'use client';
 
+import ColorPicker from '../ColorPicker';
 import { motion } from 'framer-motion';
 import { useOpeningsStore, MIN_OPENING_SIZE } from '@/stores/useOpeningsStore';
 import type { OpeningType } from '@/stores/useOpeningsStore';
@@ -285,6 +286,10 @@ export default function ClosingsStep() {
             })}
           </div>
         )}
+
+        <div className="pt-4 border-t border-gray-200">
+          <ColorPicker title="Culori uși și ferestre" components={['doors', 'windows']} />
+        </div>
       </div>
 
     </motion.div>

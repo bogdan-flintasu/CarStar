@@ -1,15 +1,16 @@
 'use client';
 
-import { useRef, useCallback, useMemo, useEffect, useState } from 'react';
+import { useRef, useCallback, useMemo, useEffect, useLayoutEffect, useState } from 'react';
 import { ThreeEvent, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useOpeningsStore, resizeOpening } from '@/stores/useOpeningsStore';
 import type { Opening } from '@/stores/useOpeningsStore';
 import { wallPointToWorld } from '@/lib/hall';
 import type { WallDescriptor } from '@/lib/hall';
-import type { ResizeHandle, WallSpan } from './openings/types';
-import { openingCentre } from './openings/openingMath';
-import { isMirrored } from './openings/wallShapeWithHoles';
+import { DEFAULT_COLOR_HEXES, type HallColorHexes } from '@/lib/colors';
+import type { OpeningType, ResizeHandle, WallSpan } from './openings/types';
+import { isFloorStanding, openingCentre } from './openings/openingMath';
+import { clipOpeningToWall, isMirrored } from './openings/wallShapeWithHoles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface WallOpeningProps {
@@ -20,44 +21,110 @@ interface WallOpeningProps {
   conflict?: boolean;
   /** The wall has a real hole (E2): no depth mask needed. */
   realHoles?: boolean;
+  /** Door and window-frame colours. */
+  colors?: Pick<HallColorHexes, 'doors' | 'windows'>;
 }
 
-// ─── Material configs ─────────────────────────────────────────────────────────
-const WINDOW_COLOR = '#88ccff';
-const WINDOW_OPACITY = 0.35;
-const DOOR_COLOR = '#8B6914';
-const GARAGE_DOOR_COLOR = '#666666';
+// ─── Look ─────────────────────────────────────────────────────────────────────
 const SELECTED_EMISSIVE = '#F5A623';
 const CONFLICT_COLOR = '#E5252A';
 const HANDLE_COLOR = '#ffffff';
 const HANDLE_SIZE = 0.08;
-const FRAME_THICKNESS = 0.04;
-const GARAGE_DIVIDER_COUNT = 3;
 const HANDLES: readonly ResizeHandle[] = ['tl', 'tr', 'bl', 'br'];
+const GLASS_COLOR = '#a9c8d8';
+const HARDWARE_COLOR = '#1c1c1c';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+/** Width of the frame profile that lines the hole. */
+const FRAME_WIDTH: Record<OpeningType, number> = { window: 0.06, door: 0.07, garageDoor: 0.1 };
+/** The frame stands this far proud of the cladding, so it covers the cut edge of the panel. */
+const FRAME_PROUD = 0.015;
+/** The frame reaches this far into the wall around the hole, hiding the reveal. */
+const FRAME_BITE = 0.003;
+/** Door leaves and glass sit this far behind the outer face (or in the middle of a thinner wall). */
+const LEAF_SETBACK = 0.03;
+const LEAF_THICKNESS = 0.045;
+/** Largest glass pane before a mullion / transom splits it. */
+const MAX_PANE = { width: 1.2, height: 1.4 };
+const MULLION = 0.05;
+/** Height of one panel of a sectional industrial door. */
+const SECTION_HEIGHT = 0.55;
+const HANDLE_HEIGHT = 1.05;
 
-/** Horizontal divider lines of an industrial door, as one line-segments geometry. */
-function buildDividerGeometry(width: number, height: number): THREE.BufferGeometry {
-  const pts: number[] = [];
-  for (let i = 1; i <= GARAGE_DIVIDER_COUNT; i++) {
-    const y = -height / 2 + (i * height) / (GARAGE_DIVIDER_COUNT + 1);
-    pts.push(-width / 2, y, 0.03, width / 2, y, 0.03);
-  }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
-  return geo;
+type Box = { key: string; position: [number, number, number]; size: [number, number, number] };
+
+/** Centres of the dividers that split `span` (centred on 0) into equal pieces no longer than `max`. */
+function dividers(span: number, max: number): number[] {
+  const pieces = Math.max(1, Math.ceil(span / max - 1e-9));
+  return Array.from({ length: pieces - 1 }, (_, i) => -span / 2 + ((i + 1) * span) / pieces);
 }
 
-function buildEdgesGeometry(width: number, height: number): THREE.EdgesGeometry {
-  const plane = new THREE.PlaneGeometry(width, height);
-  const edges = new THREE.EdgesGeometry(plane);
-  plane.dispose();
-  return edges;
+/**
+ * The parts of an opening `w` x `h` (centred on the origin) in a wall `t` thick (outer face z = 0, inner z = -t).
+ * The frame lines the whole depth of the hole and stands a little proud of the cladding, so no cut panel edge shows;
+ * the leaf or glass sits inside it.
+ */
+export function openingParts(type: OpeningType, w: number, h: number, t: number) {
+  const f = Math.min(FRAME_WIDTH[type], w / 4, h / 4);
+  const depth = t + FRAME_PROUD;
+  const zFrame = FRAME_PROUD - depth / 2;
+  const bottomFrame = !isFloorStanding(type);
+  const fw = f + FRAME_BITE;
+  const frame: Box[] = [
+    { key: 'top', position: [0, h / 2 - f / 2 + FRAME_BITE / 2, zFrame], size: [w + 2 * FRAME_BITE, fw, depth] },
+    { key: 'left', position: [-w / 2 + f / 2 - FRAME_BITE / 2, 0, zFrame], size: [fw, h, depth] },
+    { key: 'right', position: [w / 2 - f / 2 + FRAME_BITE / 2, 0, zFrame], size: [fw, h, depth] },
+  ];
+  if (bottomFrame) {
+    frame.push({ key: 'bottom', position: [0, -h / 2 + f / 2 - FRAME_BITE / 2, zFrame], size: [w + 2 * FRAME_BITE, fw, depth] });
+  }
+
+  const inW = w - 2 * f;
+  const inH = h - f - (bottomFrame ? f : 0);
+  const inY = bottomFrame ? 0 : -f / 2;
+  const zLeaf = -Math.min(LEAF_SETBACK, t / 2);
+
+  const leaf: Box[] = [];
+  const glass: Box[] = [];
+  const grooves: Box[] = [];
+  const hardware: Box[] = [];
+
+  if (type === 'window') {
+    glass.push({ key: 'glass', position: [0, inY, zLeaf], size: [inW, inH, 0.008] });
+    for (const x of dividers(inW, MAX_PANE.width)) {
+      frame.push({ key: `mullion${x}`, position: [x, inY, zLeaf], size: [MULLION, inH, 0.06] });
+    }
+    for (const y of dividers(inH, MAX_PANE.height)) {
+      frame.push({ key: `transom${y}`, position: [0, inY + y, zLeaf], size: [inW, MULLION, 0.06] });
+    }
+    // Sill flashing: a drip under the window, standing out of the wall.
+    hardware.push({ key: 'sill', position: [0, -h / 2 - 0.01, 0.03], size: [w + 0.06, 0.02, 0.06] });
+  } else {
+    leaf.push({ key: 'leaf', position: [0, inY, zLeaf], size: [inW, inH, LEAF_THICKNESS] });
+    const front = zLeaf + LEAF_THICKNESS / 2;
+    if (type === 'garageDoor') {
+      for (const y of dividers(inH, SECTION_HEIGHT)) {
+        grooves.push({ key: `groove${y}`, position: [0, inY + y, front + 0.001], size: [inW, 0.014, 0.004] });
+      }
+    } else {
+      const y = Math.min(HANDLE_HEIGHT - h / 2, inY + inH / 2 - 0.1);
+      const x = inW / 2 - 0.09;
+      hardware.push(
+        { key: 'rose', position: [x, y, front + 0.008], size: [0.04, 0.16, 0.016] },
+        { key: 'lever', position: [x - 0.05, y + 0.04, front + 0.035], size: [0.13, 0.022, 0.022] },
+      );
+    }
+  }
+  return { frame, leaf, glass, grooves, hardware };
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
-export default function WallOpening({ opening, wall, conflict = false, realHoles = false }: WallOpeningProps) {
+export default function WallOpening({
+  opening,
+  wall,
+  conflict = false,
+  realHoles = false,
+  colors = DEFAULT_COLOR_HEXES,
+}: WallOpeningProps) {
   const { camera, gl } = useThree();
 
   const selectedId = useOpeningsStore((s) => s.selectedOpeningId);
@@ -86,18 +153,68 @@ export default function WallOpening({ opening, wall, conflict = false, realHoles
   const rotation = useMemo<[number, number, number]>(() => [0, wall.yaw, 0], [wall]);
   const xSign = isMirrored(wall) ? -1 : 1;
 
-  // ── Geometry (memoised and disposed: no per-render GPU buffers) ─────────
-  const edgesGeometry = useMemo(
-    () => buildEdgesGeometry(opening.width, opening.height),
-    [opening.width, opening.height],
-  );
-  useEffect(() => () => edgesGeometry.dispose(), [edgesGeometry]);
+  // ── Geometry ────────────────────────────────────────────────────────
+  // The part of the opening the wall actually cuts (the hole): never past the eave or the gable outline.
+  const hole = useMemo(() => {
+    const r = clipOpeningToWall(wall, opening) ?? {
+      h0: opening.offsetX,
+      h1: opening.offsetX + opening.width,
+      v0: opening.sill,
+      v1: opening.sill + opening.height,
+    };
+    const c = openingCentre(opening);
+    return {
+      w: r.h1 - r.h0,
+      h: r.v1 - r.v0,
+      // Offset of the hole's centre from the opening's centre, in the group's local frame.
+      x: ((r.h0 + r.h1) / 2 - c.x) * xSign,
+      y: (r.v0 + r.v1) / 2 - c.y,
+    };
+  }, [wall, opening, xSign]);
 
-  const dividerGeometry = useMemo(
-    () => (opening.type === 'garageDoor' ? buildDividerGeometry(opening.width, opening.height) : null),
-    [opening.type, opening.width, opening.height],
+  const parts = useMemo(
+    () => openingParts(opening.type, hole.w, hole.h, wall.thickness),
+    [opening.type, hole.w, hole.h, wall.thickness],
   );
-  useEffect(() => () => dividerGeometry?.dispose(), [dividerGeometry]);
+
+  // ── Materials: one set per opening; colours and highlights are updated in place ──
+  const materials = useMemo(
+    () => ({
+      frame: new THREE.MeshStandardMaterial({ metalness: 0.3, roughness: 0.45 }),
+      leaf: new THREE.MeshStandardMaterial({ metalness: 0.3, roughness: 0.5 }),
+      groove: new THREE.MeshStandardMaterial({ metalness: 0.2, roughness: 0.7 }),
+      glass: new THREE.MeshStandardMaterial({
+        color: GLASS_COLOR,
+        metalness: 0.1,
+        roughness: 0.05,
+        transparent: true,
+        opacity: 0.4,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      }),
+      hardware: new THREE.MeshStandardMaterial({ metalness: 0.6, roughness: 0.35 }),
+    }),
+    [],
+  );
+  useEffect(() => () => Object.values(materials).forEach((m) => m.dispose()), [materials]);
+
+  const invalidate = useThree((state) => state.invalidate);
+  const frameHex = opening.type === 'window' ? colors.windows : colors.doors;
+  useLayoutEffect(() => {
+    materials.frame.color.set(frameHex);
+    materials.leaf.color.set(colors.doors);
+    materials.groove.color.set(colors.doors).multiplyScalar(0.45);
+    // A window's only hardware is its sill flashing, in the frame colour.
+    materials.hardware.color.set(opening.type === 'window' ? frameHex : HARDWARE_COLOR);
+    const active = isSelected || interaction !== null;
+    const glow = conflict ? CONFLICT_COLOR : active ? SELECTED_EMISSIVE : '#000000';
+    const strength = conflict ? 0.6 : active ? 0.35 : 0;
+    for (const m of [materials.frame, materials.leaf, materials.glass]) {
+      m.emissive.set(glow);
+      m.emissiveIntensity = strength;
+    }
+    invalidate();
+  }, [materials, frameHex, colors.doors, opening.type, conflict, isSelected, interaction, invalidate]);
 
   // ── Pointer sessions ────────────────────────────────────────────────────
   // Move/up are tracked on `window`, so fast drags that leave the mesh (or the canvas) keep working.
@@ -196,22 +313,6 @@ export default function WallOpening({ opening, wall, conflict = false, realHoles
     [opening.id, selectOpening],
   );
 
-  // ── Material ────────────────────────────────────────────────────────────
-  const materialProps = useMemo(
-    () => ({
-      transparent: opening.type === 'window',
-      opacity: opening.type === 'window' ? WINDOW_OPACITY : 1,
-      color:
-        opening.type === 'window' ? WINDOW_COLOR : opening.type === 'door' ? DOOR_COLOR : GARAGE_DOOR_COLOR,
-      emissive: conflict ? CONFLICT_COLOR : isSelected ? SELECTED_EMISSIVE : '#000000',
-      emissiveIntensity: conflict ? 0.6 : isSelected ? 0.3 : 0,
-      metalness: opening.type === 'garageDoor' ? 0.7 : 0.1,
-      roughness: opening.type === 'window' ? 0.1 : 0.6,
-      side: THREE.DoubleSide as THREE.Side,
-    }),
-    [opening.type, isSelected, conflict],
-  );
-
   const handlePositions = useMemo(() => {
     const hw = opening.width / 2;
     const hh = opening.height / 2;
@@ -222,49 +323,45 @@ export default function WallOpening({ opening, wall, conflict = false, realHoles
     }));
   }, [opening.width, opening.height, xSign]);
 
+  const boxes = (list: Box[], material: THREE.Material, shadows = false) =>
+    list.map((b) => (
+      <mesh key={b.key} position={b.position} material={material} castShadow={shadows} receiveShadow>
+        <boxGeometry args={b.size} />
+      </mesh>
+    ));
+
   return (
     <group position={worldPos} rotation={rotation}>
-      {/* Depth mask for walls without real holes: hides the wall behind opaque doors. Windows keep the wall
-          visible through the glass (the mask would show the clear colour instead of the hall). */}
-      {!realHoles && opening.type !== 'window' && (
-        <mesh renderOrder={-1} position={[0, 0, 0.015]}>
-          <planeGeometry args={[opening.width - 0.02, opening.height - 0.02]} />
-          <meshBasicMaterial colorWrite={false} depthWrite={true} side={THREE.FrontSide} />
+      <group position={[hole.x, hole.y, 0]}>
+        {/* Depth mask for walls without real holes: hides the wall behind opaque doors. Windows keep the wall
+            visible through the glass (the mask would show the clear colour instead of the hall). */}
+        {!realHoles && opening.type !== 'window' && (
+          <mesh renderOrder={-1} position={[0, 0, 0.001]}>
+            <planeGeometry args={[hole.w, hole.h]} />
+            <meshBasicMaterial colorWrite={false} depthWrite={true} side={THREE.FrontSide} />
+          </mesh>
+        )}
+
+        {boxes(parts.frame, materials.frame, true)}
+        {boxes(parts.leaf, materials.leaf, true)}
+        {boxes(parts.grooves, materials.groove)}
+        {boxes(parts.hardware, materials.hardware)}
+        {parts.glass.map((b) => (
+          <mesh key={b.key} position={b.position} material={materials.glass} renderOrder={1}>
+            <boxGeometry args={b.size} />
+          </mesh>
+        ))}
+
+        {/* Pick target: the whole opening, just in front of it. Never drawn, but still hit by the raycaster. */}
+        <mesh
+          position={[0, 0, FRAME_PROUD + 0.005]}
+          onClick={handleClick}
+          onPointerDown={isSelected ? handleMovePointerDown : undefined}
+        >
+          <planeGeometry args={[hole.w, hole.h]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
         </mesh>
-      )}
-
-      {/* Main opening mesh */}
-      <mesh
-        renderOrder={1}
-        position={[0, 0, 0.025]}
-        onClick={handleClick}
-        onPointerDown={isSelected ? handleMovePointerDown : undefined}
-        castShadow={false}
-        receiveShadow={false}
-      >
-        <planeGeometry args={[opening.width, opening.height]} />
-        <meshStandardMaterial {...materialProps} />
-      </mesh>
-
-      {/* Frame border */}
-      <lineSegments renderOrder={2} position={[0, 0, 0.03]} geometry={edgesGeometry}>
-        <lineBasicMaterial color={conflict ? CONFLICT_COLOR : isSelected || interaction ? '#F5A623' : '#333333'} />
-      </lineSegments>
-
-      {/* Industrial door: horizontal panel dividers */}
-      {dividerGeometry && (
-        <lineSegments geometry={dividerGeometry}>
-          <lineBasicMaterial color="#555555" />
-        </lineSegments>
-      )}
-
-      {/* Frame thickness (thin box behind the plane to give depth) */}
-      <mesh position={[0, 0, -FRAME_THICKNESS / 2]}>
-        <boxGeometry
-          args={[opening.width + FRAME_THICKNESS * 2, opening.height + FRAME_THICKNESS * 2, FRAME_THICKNESS]}
-        />
-        <meshStandardMaterial color="#333333" metalness={0.5} roughness={0.5} />
-      </mesh>
+      </group>
 
       {/* Resize handles (selected only). Each anchors the opposite corner. */}
       {isSelected &&

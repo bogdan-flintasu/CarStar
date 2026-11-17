@@ -4,6 +4,7 @@ import {
   type OpeningCounts,
   type Prices,
 } from '@/lib/pricing';
+import { DEFAULT_PALETTE, resolveColors, surchargeRates, type ColorOption } from '@/lib/colors';
 import { configurationDataSchema, type ConfigurationData } from '@/lib/validation/configuration';
 
 /** The six unit prices from a DB row (drops `id`, `updatedAt`, ...). */
@@ -27,9 +28,14 @@ export function trustedOpeningCounts(data: ConfigurationData): OpeningCounts {
 /**
  * Returns `data` with every price-related field recomputed on the server from
  * the validated dimensions/options and the given (DB) prices. Client-sent
- * `estimatedPrice`, `floorArea` and `openings` are discarded.
+ * `estimatedPrice`, `floorArea` and `openings` are discarded. Colours are re-resolved against the admin's
+ * catalogue (`palette`): unknown ids become the defaults, names and hexes come from the catalogue.
  */
-export function withServerPrice(data: ConfigurationData, prices: Prices): ConfigurationData {
+export function withServerPrice(
+  data: ConfigurationData,
+  prices: Prices,
+  palette: readonly ColorOption[] = DEFAULT_PALETTE,
+): ConfigurationData {
   const { length, width, height } = data.dimensions;
   const openings = trustedOpeningCounts(data);
   const estimatedPrice = calculatePrice(
@@ -42,8 +48,10 @@ export function withServerPrice(data: ConfigurationData, prices: Prices): Config
     },
     openings,
     prices,
+    surchargeRates(data.colors, palette),
   );
-  return { ...data, openings, floorArea: length * width, estimatedPrice };
+  const colors = resolveColors(data.colors, palette);
+  return { ...data, colors, openings, floorArea: length * width, estimatedPrice };
 }
 
 /**
@@ -56,8 +64,9 @@ export function resolveEmailSummary(
   stored: unknown,
   clientSummary: ConfigurationData | null | undefined,
   prices: Prices,
+  palette: readonly ColorOption[] = DEFAULT_PALETTE,
 ): ConfigurationData | null {
   const fromDb = stored === undefined ? null : configurationDataSchema.safeParse(stored);
   const summary = fromDb?.success ? fromDb.data : clientSummary;
-  return summary ? withServerPrice(summary, prices) : null;
+  return summary ? withServerPrice(summary, prices, palette) : null;
 }

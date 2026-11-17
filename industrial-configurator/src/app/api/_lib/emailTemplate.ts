@@ -1,11 +1,19 @@
 import { escapeHtml as e, toHeaderSafe } from '@/lib/validation/html';
 import type { SendEmailInput } from '@/lib/validation/email';
+import { COLOR_COMPONENTS, COMPONENT_LABELS } from '@/lib/colors';
 
 type Lead = Pick<SendEmailInput, 'name' | 'email' | 'phone' | 'message' | 'configurationSummary'>;
 
 function dimensionsText(summary: Lead['configurationSummary']): string | null {
   const d = summary?.dimensions;
   return d ? `${d.length}×${d.width}×${d.height}m` : null;
+}
+
+/** "Pereți: Alb-gri" lines for the colours that were chosen. */
+function colorLines(summary: Lead['configurationSummary']): string[] {
+  const colors = summary?.colors;
+  if (!colors) return [];
+  return COLOR_COMPONENTS.flatMap((c) => (colors[c] ? [`${COMPONENT_LABELS[c]}: ${colors[c].name}`] : []));
 }
 
 /** Subject line: CR/LF and control characters stripped, length capped. */
@@ -43,6 +51,7 @@ export function buildLeadEmailHtml(lead: Lead, link: string | null): string {
       <p><strong>Geamuri:</strong> ${e(s?.openings?.windows ?? 0)}</p>
       <p><strong>Uși:</strong> ${e(s?.openings?.doors ?? 0)}</p>
       <p><strong>Uși industriale:</strong> ${e(s?.openings?.garageDoors ?? 0)}</p>
+      ${colorLines(s).map((line) => `<p>${e(line)}</p>`).join('')}
       <p><strong>Preț estimativ:</strong> ${e(price)}</p>
       ${link ? `<p><strong>Link configurare:</strong> <a href="${e(link)}">${e(link)}</a></p>` : ''}
     `;
@@ -64,6 +73,7 @@ export function buildLeadLog(lead: Lead, link: string | null, from: string, to: 
     `Suprafață:  ${s?.floorArea ?? 'N/A'} m²`,
     `Fundație:   ${s?.foundation ? 'DA' : 'NU'}`,
     `Sandwich:   ${s?.sandwichPanels ? 'DA' : 'NU'}`,
+    ...colorLines(s),
     `Preț:       ${s?.estimatedPrice ?? 'N/A'}`,
     `Link:       ${link ?? '-'}`,
   ].join('\n');

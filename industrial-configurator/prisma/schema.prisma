@@ -30,3 +30,17 @@ model Prices {
   bigDoorPerUnit  Float
   updatedAt       DateTime @updatedAt
 }
+
+/// Colours the admin offers per hall component (see src/lib/colors.ts). Seeded with DEFAULT_PALETTE on first use.
+model ColorOption {
+  id         String  @id
+  component  String  // walls | roof | steel | trims | doors | windows
+  name       String
+  ral        String  @default("")
+  hex        String  // #rrggbb
+  surcharge  Float   @default(0)
+  isDefault  Boolean @default(false)
+  sortOrder  Int     @default(0)
+
+  @@index([component])
+}

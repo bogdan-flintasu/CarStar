@@ -6,6 +6,7 @@ import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
 import { useShallow } from 'zustand/react/shallow';
 import { useOpeningsStore } from '@/stores/useOpeningsStore';
 import { calculatePrice, countOpenings } from '@/lib/pricing';
+import { surchargeRates } from '@/lib/colors';
 import { getGraphicsSettings } from '@/lib/hardwareTier';
 import ConfigHeader from './ConfigHeader';
 import ConfigFooter from './ConfigFooter';
@@ -32,6 +33,9 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
   const showFoundation = useConfiguratorStore((s) => s.showFoundation);
   const hasSandwichPanels = useConfiguratorStore((s) => s.hasSandwichPanels);
   const prices = useConfiguratorStore((s) => s.prices);
+  const setPalette = useConfiguratorStore((s) => s.setPalette);
+  const colors = useConfiguratorStore((s) => s.colors);
+  const palette = useConfiguratorStore((s) => s.palette);
   // false on the server and during hydration, true afterwards (avoids persist hydration mismatch)
   const isMounted = useSyncExternalStore(
     () => () => {},
@@ -81,6 +85,16 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
       })
       .catch((err) => console.error('Failed to fetch prices:', err));
   }, [setPrices]);
+
+  // The admin's colour catalogue; the built-in one is shown until it arrives.
+  useEffect(() => {
+    fetch('/api/colors')
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) setPalette(data);
+      })
+      .catch((err) => console.error('Failed to fetch colours:', err));
+  }, [setPalette]);
   
   // Openings only matter for the price: subscribe to the counts, not the whole list
   const counts = useOpeningsStore(
@@ -90,6 +104,7 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
     { length, width, height, showFoundation, hasSandwichPanels },
     counts,
     prices,
+    surchargeRates(colors, palette),
   );
 
   const renderStep = () => {

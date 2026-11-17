@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import ColorsAdmin from '@/components/admin/ColorsAdmin';
 
 interface PricesData {
   id: string;
@@ -64,7 +65,7 @@ function PriceField({
 
 // ─── Admin Dashboard ──────────────────────────────────────────────────────────
 function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'prices' | 'configs'>('prices');
+  const [activeTab, setActiveTab] = useState<'prices' | 'colors' | 'configs'>('prices');
   const [prices, setPrices] = useState<PricesData | null>(null);
   const [configs, setConfigs] = useState<ConfigData[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -236,6 +237,16 @@ function AdminDashboard() {
             Prețuri
           </button>
           <button
+            onClick={() => setActiveTab('colors')}
+            className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
+              activeTab === 'colors'
+                ? 'bg-[#F5A623] text-black shadow-lg shadow-[#F5A623]/20'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Culori
+          </button>
+          <button
             onClick={() => setActiveTab('configs')}
             className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
               activeTab === 'configs'
@@ -310,6 +321,8 @@ function AdminDashboard() {
             </div>
           </div>
         )}
+
+        {activeTab === 'colors' && <ColorsAdmin adminFetch={adminFetch} />}
 
         {/* ── Configs Tab ────────────────────────────── */}
         {activeTab === 'configs' && (

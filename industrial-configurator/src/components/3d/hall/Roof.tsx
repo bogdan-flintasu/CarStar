@@ -3,6 +3,7 @@
 /**
  * The roof: both slopes as one panel, as thick as the cladding, with plumb eave edges.
  * Its cross-section (the layout's two roof planes) is extruded along the hall, so the ridge is closed by construction.
+ * The two gable ends of the extrusion are the verge flashings (trim colour); its long faces are the cladding.
  */
 import { useEffect, useMemo } from 'react';
 import { ExtrudeGeometry, Shape, Vector2, type BufferGeometry, type Material } from 'three';
@@ -22,10 +23,12 @@ function roofGeometry({ left, right }: Record<'left' | 'right', RoofPlane>): Buf
   return new ExtrudeGeometry(shape, { depth: left.zFront - left.zBack, bevelEnabled: false }).translate(0, 0, left.zBack);
 }
 
-export function Roof({ layout, material }: { layout: HallLayout; material: Material }) {
+export function Roof({ layout, material, edgeMaterial }: { layout: HallLayout; material: Material; edgeMaterial: Material }) {
   const geometry = useMemo(() => roofGeometry(layout.roof), [layout.roof]);
   useEffect(() => () => geometry.dispose(), [geometry]);
-  return <mesh name="Roof" geometry={geometry} material={material} castShadow receiveShadow dispose={null} />;
+  // ExtrudeGeometry groups: 0 = the end caps (the section), 1 = the extruded faces.
+  const materials = useMemo(() => [edgeMaterial, material], [edgeMaterial, material]);
+  return <mesh name="Roof" geometry={geometry} material={materials} castShadow receiveShadow dispose={null} />;
 }
 
 /** A flat slab seen from above: `w` across (X), `l` along (Z), its top face at y = 0. UVs are in metres. */

@@ -13,6 +13,7 @@ import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
 import { useOpeningsStore } from '@/stores/useOpeningsStore';
 import { getGraphicsSettings } from '@/lib/hardwareTier';
 import { clampHallDimensions, computeHallLayout } from '@/lib/hall';
+import { colorHexes } from '@/lib/colors';
 import Hall from '@/components/3d/hall/Hall';
 import CameraRig from '@/components/3d/hall/CameraRig';
 import { Ground, Sun } from '@/components/3d/hall/Site';
@@ -51,6 +52,8 @@ export default function ConfiguratorEngine() {
       currentStep: s.currentStep,
     })),
   );
+  const colors = useConfiguratorStore((s) => s.colors);
+  const hexes = useMemo(() => colorHexes(colors), [colors]);
   const openings = useOpeningsStore((s) => s.openings);
   const isDraggingOpening = useOpeningsStore((s) => s.isDragging);
   const placingOpening = useOpeningsStore((s) => s.activeTool !== null);
@@ -98,6 +101,7 @@ export default function ConfiguratorEngine() {
         claddingVisible={claddingVisible}
         detail={gfx.tier === 'low' ? 'light' : 'full'}
         holes={openings}
+        colors={hexes}
         onWallHover={placingOpening ? setHoveredWallId : undefined}
       />
 
@@ -105,7 +109,7 @@ export default function ConfiguratorEngine() {
 
       {/* Openings hide themselves with the cladding (same rule as above). */}
       <PlacementMarkers layout={layout} />
-      <WallOpenings layout={layout} realHoles />
+      <WallOpenings layout={layout} realHoles colors={hexes} />
 
       {process.env.NODE_ENV !== 'production' && <HallStatsProbe layout={layout} />}
     </Canvas>
