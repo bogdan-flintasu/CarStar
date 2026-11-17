@@ -36,7 +36,22 @@ See `.env.example`: `DATABASE_URL` (SQLite file), `RESEND_*` (contact email),
 `AUTH_SECRET` (>= 32 random chars), `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`
 (bcrypt, each `$` escaped as `\$` in `.env`; generate with
 `node -e "console.log(require('bcryptjs').hashSync(process.argv[1],12))" '<password>'`), `APP_BASE_URL`
-(public origin, used to validate email links), `ALLOWED_DEV_ORIGINS` (optional, comma-separated tunnel hosts for `next dev`).
+(public origin, used to validate email links and in the PDF quote's link and QR code), `ALLOWED_DEV_ORIGINS` (optional, comma-separated tunnel hosts for `next dev`),
+`BRAND_*` (company name, logo, colours and contact shown in the PDF quote and lead email, `src/lib/branding.ts`),
+`QUOTE_VAT_RATE` / `QUOTE_PRICES_INCLUDE_VAT` (how the quote presents VAT, `src/lib/quote/settings.ts`).
+
+## Renders and PDF quote
+
+- **Renders** (`src/components/3d/hall/renders.tsx`): when the customer reaches the summary, four fixed views
+  (front, rear, side, aerial) are rendered from the live scene into an offscreen target with their own camera
+  (framing math: `src/lib/hall/renderViews.ts`), helpers hidden, bigger soft shadows, MSAA, encoded as JPEG.
+  One view per frame. Objects marked with `renderHiddenProps` never appear in renders.
+- **Storage**: saving a configuration uploads the renders (multipart `POST /api/configurations`); they are validated
+  by magic bytes (`src/lib/validation/renders.ts`) and stored in `ConfigurationImage` through
+  `src/app/api/_lib/renderStore.ts` (the only module that touches the bytes).
+- **PDF**: `GET /api/configurations/<token>/pdf` builds the quote from the stored configuration and current DB prices
+  (`src/lib/quote/quoteModel.ts` → `src/app/api/_lib/quotePdf.tsx`, @react-pdf/renderer, Inter font in
+  `assets/fonts/inter`, OFL). The lead email attaches the same PDF.
 
 ## Layout
 
