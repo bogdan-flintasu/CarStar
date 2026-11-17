@@ -35,7 +35,12 @@ export const PROP_FOOTPRINT: Record<PropKind, [number, number]> = {
 };
 
 export const CAR_VARIANTS = 8;
-export const TREE_VARIANTS = 3;
+/** Tree species (see TREE_SHAPES in the render layer): round, large broad, poplar, young, multi-crown, cypress. */
+export const TREE_VARIANTS = 6;
+/** Crown radius of each species at scale 1 (metres): trees take this much ground. */
+export const TREE_CROWN = [2.7, 6, 1.5, 1.6, 2.75, 2.2] as const;
+const NEAR_TREES = [0, 0, 0, 1, 2, 3, 3, 4, 4, 5] as const;
+const FAR_TREES = [0, 1, 1, 1, 2, 4, 5, 5] as const;
 export const BUILDING_VARIANTS = 4;
 
 /** Mulberry32: small, fast, deterministic. */
@@ -63,6 +68,10 @@ const grow = (r: SiteRect, by: number): SiteRect => ({ x0: r.x0 - by, x1: r.x1 +
 export function propRect(p: Prop): SiteRect {
   if (p.kind === 'building' && p.size) {
     return { x0: p.x - p.size.w / 2, x1: p.x + p.size.w / 2, z0: p.z - p.size.d / 2, z1: p.z + p.size.d / 2 };
+  }
+  if (p.kind === 'tree') {
+    const r = TREE_CROWN[p.variant % TREE_CROWN.length] * p.scale;
+    return { x0: p.x - r, x1: p.x + r, z0: p.z - r, z1: p.z + r };
   }
   const [long, short] = PROP_FOOTPRINT[p.kind].map((v) => v * p.scale);
   const alongZ = Math.abs(Math.cos(p.rotation)) > Math.SQRT1_2;
@@ -186,16 +195,35 @@ export function planProps(plan: SitePlan, viewpoints: readonly P2[] = []): Prop[
     { from: [yard.x0 - kerbGap, yard.z0 - kerbGap], to: [yard.x1 + kerbGap, yard.z0 - kerbGap] },
     { from: [yard.x1 + kerbGap, yard.z0 - kerbGap], to: [yard.x1 + kerbGap, yard.z1 - 4] },
   ];
+  const pickFrom = (list: readonly number[]) => list[Math.floor(random() * list.length)];
+  const roadSafe = (t: Prop) => {
+    const r = propRect(t);
+    return r.z1 < road.z0 - 1 || r.z0 > road.z1 + 1;
+  };
   let trees = 0;
   for (const line of lines) {
     const length = Math.hypot(line.to[0] - line.from[0], line.to[1] - line.from[1]);
-    const count = Math.max(1, Math.round(length / 8));
-    for (let i = 0; i <= count && trees < 36; i++) {
+    const count = Math.max(1, Math.round(length / 6));
+    for (let i = 0; i <= count && trees < 60; i++) {
       const t = i / count;
       const x = line.from[0] + (line.to[0] - line.from[0]) * t;
       const z = line.from[1] + (line.to[1] - line.from[1]) * t;
-      if (random() < 0.25) continue; // gaps make the row look planted, not generated
-      props.push({ kind: 'tree', x: x + (random() - 0.5) * 1.5, z: z + (random() - 0.5) * 1.5, rotation: random() * Math.PI * 2, variant: Math.floor(random() * TREE_VARIANTS), scale: 0.8 + random() * 0.45 });
+      if (random() < 0.15) continue; // gaps make the row look planted, not generated
+      // Trees stand back from the kerb by their own crown, so big ones do not hang over the yard.
+      const variant = pickFrom(NEAR_TREES);
+      const scale = 0.85 + random() * 0.6;
+      const out = TREE_CROWN[variant] * scale * 0.6;
+      const tree: Prop = {
+        kind: 'tree',
+        // Pushed outwards: away from the yard sideways on the side rows, backwards on the back row.
+        x: x + (random() - 0.5) * 1.5 + (line.from[1] === line.to[1] ? 0 : x < (yard.x0 + yard.x1) / 2 ? -out : out),
+        z: z + (random() - 0.5) * 1.5 - (line.from[1] === line.to[1] ? out : 0),
+        rotation: random() * Math.PI * 2,
+        variant,
+        scale,
+      };
+      if (!roadSafe(tree)) continue;
+      props.push(tree);
       trees++;
       // A couple of bushes between trees.
       for (let k = 1; k <= 2; k++) {
@@ -206,28 +234,42 @@ export function planProps(plan: SitePlan, viewpoints: readonly P2[] = []): Prop[
     }
   }
 
-  // The horizon: neighbouring halls and buildings, and clumps of trees, well away from the site and the road.
+  // The surroundings: a belt of tree clumps, some of them big, which screens most of the horizon, and a few neighbouring
+  // units behind it. Everything well away from the site and the road.
   const cx = (yard.x0 + yard.x1) / 2;
   const cz = (yard.z0 + yard.z1) / 2;
   const reach = Math.hypot(yard.x1 - yard.x0, yard.z1 - yard.z0) / 2;
-  const clearOfRoad = (z: number, half: number) => z - half > road.z1 + 10 || z + half < road.z0 - 10;
-  for (let i = 0; i < 14; i++) {
-    const angle = (i / 14) * Math.PI * 2 + random() * 0.3;
-    const radius = reach + 80 + random() * 140;
+  const clearOfRoad = (z: number, half: number) => z - half > road.z1 + 8 || z + half < road.z0 - 8;
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2 + random() * 0.4;
+    const radius = reach + 130 + random() * 120;
     const size = { w: 16 + random() * 30, d: 14 + random() * 40, h: 6 + random() * 5 };
     const z = cz + Math.sin(angle) * radius;
     if (!clearOfRoad(z, size.d / 2)) continue;
     props.push({ kind: 'building', x: cx + Math.cos(angle) * radius, z, rotation: 0, variant: Math.floor(random() * BUILDING_VARIANTS), scale: 1, size });
   }
-  for (let i = 0; i < 70; i++) {
-    const angle = random() * Math.PI * 2;
-    const radius = reach + 35 + random() * 170;
-    const z = cz + Math.sin(angle) * radius;
-    if (!clearOfRoad(z, 3)) continue;
-    const tree: Prop = { kind: 'tree', x: cx + Math.cos(angle) * radius, z, rotation: random() * Math.PI * 2, variant: Math.floor(random() * TREE_VARIANTS), scale: 0.9 + random() * 0.7 };
-    const r = propRect(tree);
-    if (props.some((p) => p.kind === 'building' && overlaps(propRect(p), r))) continue;
-    props.push(tree);
+  const clumps = 26;
+  for (let c = 0; c < clumps; c++) {
+    const angle = (c / clumps) * Math.PI * 2 + (random() - 0.5) * 0.3;
+    const radius = reach + 22 + random() * 90;
+    const clumpX = cx + Math.cos(angle) * radius;
+    const clumpZ = cz + Math.sin(angle) * radius;
+    const members = 6 + Math.floor(random() * 9);
+    for (let m = 0; m < members; m++) {
+      const variant = pickFrom(FAR_TREES);
+      const tree: Prop = {
+        kind: 'tree',
+        x: clumpX + (random() - 0.5) * 26,
+        z: clumpZ + (random() - 0.5) * 26,
+        rotation: random() * Math.PI * 2,
+        variant,
+        scale: 1.1 + random() * 1.1,
+      };
+      const r = propRect(tree);
+      if (!clearOfRoad(tree.z, (r.z1 - r.z0) / 2) || overlaps(r, grow(yard, 3))) continue;
+      if (props.some((p) => p.kind === 'building' && overlaps(propRect(p), r))) continue;
+      props.push(tree);
+    }
   }
 
   const wedges = viewpoints.map((v) => sightWedge(v, plan.footprint));

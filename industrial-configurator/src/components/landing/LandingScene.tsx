@@ -8,13 +8,12 @@ import { useEffect, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Environment, Sky, useProgress } from '@react-three/drei';
 import { PCFShadowMap, PerspectiveCamera } from 'three';
-import { computeHallLayout } from '@/lib/hall';
 import { getGraphicsSettings } from '@/lib/hardwareTier';
 import Hall from '@/components/3d/hall/Hall';
 import { Ground, Sun } from '@/components/3d/hall/Site';
-
-/** The showcase hall: long enough for the whole camera path to stay inside it. */
-const LANDING_LAYOUT = computeHallLayout({ width: 12, height: 5, length: 36, foundation: true, panels: true, insulationMm: 60 });
+import WallOpening from '@/components/3d/WallOpening';
+import { wallById } from '@/components/3d/openings/useOpeningsLayout';
+import { LANDING_COLORS, LANDING_LAYOUT, LANDING_OPENINGS } from './landingHall';
 
 /** Camera path along the hall's axis (Z), from the top of the page to its bottom. */
 const PATH = { startZ: -6, endZ: -22, eyeY: 2.5, sway: 0.8, lookAhead: 10 };
@@ -90,11 +89,17 @@ export default function LandingScene({ onReady }: { onReady?: () => void }) {
       {gfx.enableEnvironment && <Environment preset="city" />}
       <Ground layout={LANDING_LAYOUT} textured={gfx.tier !== 'low'} />
 
+      {/* The showcase hall (long enough for the whole camera path to stay inside it): black steel, real openings. */}
       <Hall
         layout={LANDING_LAYOUT}
         detail={gfx.tier === 'low' ? 'light' : 'full'}
         texturedConcrete={gfx.tier !== 'low'}
+        holes={LANDING_OPENINGS}
+        colors={LANDING_COLORS}
       />
+      {LANDING_OPENINGS.map((opening) => (
+        <WallOpening key={opening.id} opening={opening} wall={wallById(LANDING_LAYOUT, opening.wallId)} realHoles colors={LANDING_COLORS} />
+      ))}
 
       <ScrollCamera />
       {onReady && <ReadinessReporter onReady={onReady} />}
