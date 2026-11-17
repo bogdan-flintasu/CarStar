@@ -3,3 +3,7 @@
 *.gltf text eol=lf
 *.webp binary
 *.png binary
+*.ttf binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
