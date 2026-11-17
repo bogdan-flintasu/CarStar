@@ -1,7 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { PerspectiveCamera, Vector3 } from 'three';
 import { computeHallLayout } from './computeHallLayout';
-import { RENDER_FILL, RENDER_VIEWS, hallOutlinePoints, heroSide, renderViewCameras, type ViewCamera } from './renderViews';
+import {
+  RENDER_FILL,
+  RENDER_VIEWS,
+  SKY_SUN_AZIMUTH_DEG,
+  SUN_ELEVATION_DEG,
+  SUN_OFFSET_DEG,
+  hallOutlinePoints,
+  heroSide,
+  renderViewCameras,
+  sunForView,
+  type ViewCamera,
+} from './renderViews';
 import type { HallParams, Vec3 } from './types';
 
 const ASPECT = 16 / 10;
@@ -102,5 +113,44 @@ describe('hallOutlinePoints', () => {
     const layout = computeHallLayout({ ...base, width: 20 });
     const top = Math.max(...hallOutlinePoints(layout).map((p) => p[1]));
     expect(top).toBeCloseTo(layout.bounds.max[1], 1);
+  });
+});
+
+describe('sunForView', () => {
+  const dot = (a: readonly number[], b: readonly number[]) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+
+  it('lights every view from the camera side, at summer-midday height', () => {
+    for (const size of SIZES) {
+      const layout = computeHallLayout({ ...base, ...size });
+      for (const camera of Object.values(renderViewCameras(layout, ASPECT))) {
+        const { direction } = sunForView(camera, layout);
+        expect(Math.hypot(...direction)).toBeCloseTo(1, 9);
+        expect(Math.asin(direction[1]) * (180 / Math.PI)).toBeCloseTo(SUN_ELEVATION_DEG, 6);
+        const toCamera = [camera.position[0] - camera.target[0], 0, camera.position[2] - camera.target[2]];
+        const flatSun = [direction[0], 0, direction[2]];
+        const cos = dot(toCamera, flatSun) / Math.hypot(...toCamera) / Math.hypot(...flatSun);
+        expect(cos).toBeCloseTo(Math.cos((SUN_OFFSET_DEG * Math.PI) / 180), 6);
+      }
+    }
+  });
+
+  it('lights the front gable of the hero view', () => {
+    for (const size of SIZES) {
+      const layout = computeHallLayout({ ...base, ...size });
+      const { direction } = sunForView(renderViewCameras(layout, ASPECT).front, layout);
+      expect(direction[2]).toBeGreaterThan(0.3); // the front wall faces +Z
+    }
+  });
+
+  it('turns the sky so its sun lands on the light direction', () => {
+    const layout = computeHallLayout(base);
+    const { direction, skyRotationY } = sunForView(renderViewCameras(layout, ASPECT).front, layout);
+    // The sky's own sun, rotated by R_y(θ): x' = x cos θ + z sin θ, z' = −x sin θ + z cos θ.
+    const a = (SKY_SUN_AZIMUTH_DEG * Math.PI) / 180;
+    const [x, z] = [Math.cos(a), Math.sin(a)];
+    const turned = [x * Math.cos(skyRotationY) + z * Math.sin(skyRotationY), -x * Math.sin(skyRotationY) + z * Math.cos(skyRotationY)];
+    const flat = Math.hypot(direction[0], direction[2]);
+    expect(turned[0]).toBeCloseTo(direction[0] / flat, 9);
+    expect(turned[1]).toBeCloseTo(direction[2] / flat, 9);
   });
 });

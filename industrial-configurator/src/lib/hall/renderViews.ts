@@ -40,8 +40,9 @@ interface ViewSpec {
  * perspective architectural; the side view is almost an elevation.
  */
 const VIEW_SPECS: Record<RenderView, ViewSpec> = {
-  front: { direction: [-0.62, 0.3, 0.78], fov: 30 },
-  rear: { direction: [0.62, 0.3, -0.78], fov: 30 },
+  // Eye level a little above the eaves: a strip of sky shows above the hall, as in a photo.
+  front: { direction: [-0.62, 0.17, 0.78], fov: 30 },
+  rear: { direction: [0.62, 0.17, -0.78], fov: 30 },
   side: { direction: [1, 0.1, 0.12], fov: 22 },
   aerial: { direction: [-0.55, 1.05, 0.72], fov: 32 },
 };
@@ -150,4 +151,40 @@ export function renderViewCameras(layout: HallLayout, aspect: number, fill = REN
     cameras[view] = frameView(points, [direction[0] * sign, direction[1], direction[2]], fov, aspect, fill);
   }
   return cameras;
+}
+
+/** Height of the sun in the quote renders: a summer midday, as in the sky picture used for them. */
+export const SUN_ELEVATION_DEG = 48;
+/** Where the sun is in that sky picture (azimuth as atan2(z, x) in three.js' equirectangular mapping, degrees). */
+export const SKY_SUN_AZIMUTH_DEG = 34.2;
+/**
+ * The sun stands this far to one side of the camera: the faces in view are lit, one of them more than the other, and the
+ * hall's shadow falls into the picture.
+ */
+export const SUN_OFFSET_DEG = 60;
+
+export interface ViewSun {
+  /** Unit vector towards the sun. */
+  direction: Vec3;
+  /** Rotation about +Y to give the sky (background and environment light) so its own sun matches `direction`. */
+  skyRotationY: number;
+}
+
+/**
+ * The sun of one render: behind the photographer, a little to the side, at summer-midday height. Every picture is
+ * front-lit, as a photographer would choose the time of day for each shot. Mirrored with the hero side, so a hall
+ * seen from the right is lit like its mirror image.
+ */
+export function sunForView(camera: ViewCamera, layout: HallLayout): ViewSun {
+  const sign = heroSide(layout) === 'left' ? 1 : -1;
+  const cameraAzimuth = Math.atan2(camera.position[2] - camera.target[2], camera.position[0] - camera.target[0]);
+  const azimuth = cameraAzimuth - (sign * SUN_OFFSET_DEG * Math.PI) / 180;
+  const elevation = (SUN_ELEVATION_DEG * Math.PI) / 180;
+  const direction: Vec3 = [
+    Math.cos(azimuth) * Math.cos(elevation),
+    Math.sin(elevation),
+    Math.sin(azimuth) * Math.cos(elevation),
+  ];
+  // three.js turns the sky by +rotation (R_y(θ) maps azimuth φ to φ − θ).
+  return { direction, skyRotationY: (SKY_SUN_AZIMUTH_DEG * Math.PI) / 180 - azimuth };
 }

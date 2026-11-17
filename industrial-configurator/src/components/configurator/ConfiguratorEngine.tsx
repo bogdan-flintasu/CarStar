@@ -96,7 +96,12 @@ export default function ConfiguratorEngine() {
     >
       <Sun layout={layout} intensity={0.7} shadowMapSize={gfx.shadowMapSize} />
       <ambientLight intensity={0.5} />
-      {gfx.enableSky && <Sky distance={450000} sunPosition={[-5, 10, 5]} inclination={0} azimuth={0.25} />}
+      {/* Quote renders bring their own sky (src/components/3d/stage). */}
+      {gfx.enableSky && (
+        <group {...renderHiddenProps}>
+          <Sky distance={450000} sunPosition={[-5, 10, 5]} inclination={0} azimuth={0.25} />
+        </group>
+      )}
       {gfx.enableEnvironment && <Environment preset="city" />}
       <Ground layout={layout} textured={gfx.tier !== 'low'} />
 

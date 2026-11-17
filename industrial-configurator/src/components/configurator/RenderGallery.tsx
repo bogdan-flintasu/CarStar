@@ -70,6 +70,7 @@ export default function RenderGallery({ images, loading, done = 0, error, onRetr
         </div>
         <p role="status" className={`mt-2 text-xs ${muted}`}>
           Se generează imaginile halei… {done}/{RENDER_VIEWS.length}
+          <span className="block mt-0.5">Poate dura câteva secunde, mai ales pe telefon.</span>
         </p>
       </div>
     );

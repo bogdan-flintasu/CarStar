@@ -44,8 +44,11 @@ See `.env.example`: `DATABASE_URL` (SQLite file), `RESEND_*` (contact email),
 
 - **Renders** (`src/components/3d/hall/renders.tsx`): when the customer reaches the summary, four fixed views
   (front, rear, side, aerial) are rendered from the live scene into an offscreen target with their own camera
-  (framing math: `src/lib/hall/renderViews.ts`), helpers hidden, bigger soft shadows, MSAA, encoded as JPEG.
-  One view per frame. Objects marked with `renderHiddenProps` never appear in renders.
+  (framing and per-view sun: `src/lib/hall/renderViews.ts`), helpers hidden, encoded as JPEG, one view per frame,
+  same quality on every device. The "photo" staging lives in `src/components/3d/stage`: summer-midday sky (Poly Haven,
+  CC0, `public/render/`) as background and light, the sun placed per view, a site with asphalt, parking and road
+  (`src/lib/hall/sitePlan.ts`), haze, ambient occlusion and a light colour grade. Objects marked with
+  `renderHiddenProps` never appear in renders.
 - **Storage**: saving a configuration uploads the renders (multipart `POST /api/configurations`); they are validated
   by magic bytes (`src/lib/validation/renders.ts`) and stored in `ConfigurationImage` through
   `src/app/api/_lib/renderStore.ts` (the only module that touches the bytes).

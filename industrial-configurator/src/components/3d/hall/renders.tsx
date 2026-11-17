@@ -5,16 +5,18 @@
  * offscreen target with their own camera, so the user's view is never moved. Same pattern as snapshot.tsx:
  * `<HallRenderProvider />` sits in the canvas and registers a renderer, `renderHallViews()` is called from the UI.
  *
- * Only the render pass gets the extra quality: helpers hidden (dimension lines, placement markers, selection handles),
- * selection/conflict glows off, cladding forced on, a bigger and softer shadow map, MSAA, tone mapping and sRGB applied by an output pass.
- * Every setting is put back right after each view, in the same task, even when rendering fails, so the live view
- * never sees any of it. One view is drawn per animation frame, which keeps each blocking step short on phones.
+ * Only the render pass gets the "photo" treatment (src/components/3d/stage): helpers hidden (dimension lines, placement
+ * markers, selection handles), selection/conflict glows off, cladding forced on, a summer-midday sky as background and
+ * light, the sun placed per view with a large soft shadow map, a site with asphalt, parking and road, ambient
+ * occlusion, MSAA, tone mapping, and a light colour grade. Every setting is put back right after each view, in the same
+ * task, even when rendering fails, so the live view never sees any of it. Quality is the same on every device (a phone
+ * just takes longer); one view is drawn per animation frame.
  */
 import { useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
 import {
+  Box3,
   Color,
-  DirectionalLight,
   HalfFloatType,
   type Material,
   Mesh,
@@ -22,14 +24,19 @@ import {
   PerspectiveCamera,
   type Scene,
   UnsignedByteType,
-  Vector2,
+  Vector3,
   WebGLRenderTarget,
-  type WebGLRenderer,
 } from 'three';
+import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
-import { getGraphicsSettings, type QualityTier } from '@/lib/hardwareTier';
-import { RENDER_VIEWS, renderViewCameras, type RenderView } from '@/lib/hall/renderViews';
+import { RENDER_VIEWS, renderViewCameras, sunForView, type RenderView } from '@/lib/hall/renderViews';
+import { planSite } from '@/lib/hall/sitePlan';
 import type { HallLayout } from '@/lib/hall';
+import { useOpeningsStore } from '@/stores/useOpeningsStore';
+import { loadRenderSky } from '@/components/3d/stage/sky';
+import { buildSite, disposeSite } from '@/components/3d/stage/site';
+import { applyStaging } from '@/components/3d/stage/staging';
+import { GradePass } from '@/components/3d/stage/gradePass';
 
 /** Set on any object that exists only to help the user edit (handles, markers, dimension lines): never rendered. */
 export const RENDER_HIDDEN = 'renderHidden';
@@ -45,21 +52,19 @@ export interface HallRender {
   height: number;
 }
 
-export interface RenderQuality {
-  width: number;
-  height: number;
-  shadowMapSize: number;
+/** Output size and quality: the same on every device, so every customer gets the same pictures. */
+export const RENDER_QUALITY = {
+  width: 1600,
+  height: 1000,
+  /** Capped by the GPU's largest texture. */
+  shadowMapSize: 4096,
   /** PCF filter radius in shadow-map texels. */
-  shadowRadius: number;
-  samples: number;
-}
+  shadowRadius: 2.5,
+  samples: 4,
+} as const;
 
-/** Output size and quality per hardware tier: 16:10, 1600 × 1000 unless the device is weak. */
-export function renderQualityFor(tier: QualityTier): RenderQuality {
-  if (tier === 'low') return { width: 1120, height: 700, shadowMapSize: 2048, shadowRadius: 2, samples: 2 };
-  if (tier === 'medium') return { width: 1600, height: 1000, shadowMapSize: 2048, shadowRadius: 2.5, samples: 4 };
-  return { width: 1600, height: 1000, shadowMapSize: 4096, shadowRadius: 3.5, samples: 4 };
-}
+/** Ambient occlusion: contact shadows where walls meet the ground, under cars, in corners (metres). */
+const AO = { radius: 1.6, distanceExponent: 1.2, thickness: 1.5, scale: 1, samples: 16, blend: 0.85 } as const;
 
 /** JPEG qualities tried in turn until a picture is under `TARGET_RENDER_BYTES`. */
 const JPEG_QUALITIES = [0.85, 0.78, 0.7, 0.6];
@@ -131,36 +136,6 @@ function prepareScene(scene: Scene): () => void {
   };
 }
 
-/** Bigger, softer shadow maps for the render pass; returns the function that restores the live ones. */
-function sharpenShadows(scene: Scene, gl: WebGLRenderer, quality: RenderQuality): () => void {
-  const size = Math.min(quality.shadowMapSize, gl.capabilities.maxTextureSize);
-  const saved: { light: DirectionalLight; size: Vector2; radius: number }[] = [];
-  scene.traverse((object) => {
-    if (object instanceof DirectionalLight && object.castShadow) {
-      saved.push({ light: object, size: object.shadow.mapSize.clone(), radius: object.shadow.radius });
-    }
-  });
-  const reallocate = (light: DirectionalLight) => {
-    // The map is created again, at the new size, by the next render.
-    light.shadow.map?.dispose();
-    light.shadow.map = null;
-  };
-  for (const { light } of saved) {
-    light.shadow.mapSize.set(size, size);
-    light.shadow.radius = quality.shadowRadius;
-    reallocate(light);
-  }
-  gl.shadowMap.needsUpdate = true;
-  return () => {
-    for (const { light, size: liveSize, radius } of saved) {
-      light.shadow.mapSize.copy(liveSize);
-      light.shadow.radius = radius;
-      reallocate(light);
-    }
-    gl.shadowMap.needsUpdate = true;
-  };
-}
-
 /** Rows come out of WebGL bottom-up: flip them into a canvas. */
 function pixelsToCanvas(pixels: Uint8Array, width: number, height: number): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
@@ -191,21 +166,50 @@ export function HallRenderProvider({ layout }: { layout: HallLayout }) {
     let busy: Promise<unknown> = Promise.resolve();
 
     const run: RenderAll = async ({ signal, onProgress }) => {
-      const quality = renderQualityFor(getGraphicsSettings().tier);
+      const quality = RENDER_QUALITY;
       const { width, height } = quality;
       const cameras = renderViewCameras(layout, width / height);
+      const plan = planSite(layout, useOpeningsStore.getState().openings);
+      const [sky, site] = await Promise.all([loadRenderSky(gl), buildSite(plan, layout.groundY)]);
+      abortIfNeeded(signal);
+
       const canFloat = gl.extensions.has('EXT_color_buffer_float') || gl.extensions.has('EXT_color_buffer_half_float');
+      const floatType = canFloat ? HalfFloatType : UnsignedByteType;
       const target = new WebGLRenderTarget(width, height, {
-        type: canFloat ? HalfFloatType : UnsignedByteType,
+        type: floatType,
         samples: Math.min(quality.samples, gl.capabilities.maxSamples),
       });
+      const occluded = new WebGLRenderTarget(width, height, { type: floatType, depthBuffer: false });
       const output = new WebGLRenderTarget(width, height, { type: UnsignedByteType, depthBuffer: false });
-      const outputPass = new OutputPass();
-      const pixels = new Uint8Array(width * height * 4);
+      const graded = new WebGLRenderTarget(width, height, { type: UnsignedByteType, depthBuffer: false });
       const camera = new PerspectiveCamera(30, width / height, 0.1, 1000);
+      const gtao = new GTAOPass(scene, camera, width, height);
+      gtao.updateGtaoMaterial({ radius: AO.radius, distanceExponent: AO.distanceExponent, thickness: AO.thickness, scale: AO.scale, samples: AO.samples });
+      gtao.blendIntensity = AO.blend;
+      gtao.setSceneClipBox(new Box3(new Vector3(plan.yard.x0, layout.groundY - 1, plan.yard.z0), new Vector3(plan.yard.x1, layout.bounds.max[1] + 5, plan.yard.z1)));
+      const outputPass = new OutputPass();
+      const grade = new GradePass();
+      const pixels = new Uint8Array(width * height * 4);
       const renders: HallRender[] = [];
 
-      const drawView = (view: RenderView) => {
+      const stage = (view: RenderView) => {
+        const restoreScene = prepareScene(scene);
+        const restoreStaging = applyStaging(scene, gl, {
+          sky,
+          sun: sunForView(cameras[view], layout),
+          cameraDistance: Math.hypot(...cameras[view].position.map((p, i) => p - cameras[view].target[i])),
+          site,
+          shadowArea: plan.yard,
+          shadowMapSize: quality.shadowMapSize,
+          shadowRadius: quality.shadowRadius,
+        });
+        return () => {
+          restoreStaging();
+          restoreScene();
+        };
+      };
+
+      const aim = (view: RenderView) => {
         const c = cameras[view];
         camera.fov = c.fov;
         camera.near = c.near;
@@ -214,61 +218,71 @@ export function HallRenderProvider({ layout }: { layout: HallLayout }) {
         camera.lookAt(...c.target);
         camera.updateProjectionMatrix();
         camera.updateMatrixWorld();
+      };
 
+      const drawView = (view: RenderView) => {
+        aim(view);
         const previousTarget = gl.getRenderTarget();
         const previousClear = gl.getClearColor(new Color());
         const previousAlpha = gl.getClearAlpha();
-        const restoreScene = prepareScene(scene);
-        const restoreShadows = sharpenShadows(scene, gl, quality);
+        const restore = stage(view);
         try {
           gl.setRenderTarget(target);
           gl.setClearColor(BACKGROUND, 1);
           gl.clear();
           gl.render(scene, camera);
-          outputPass.render(gl, output, target, 0, false);
-          gl.readRenderTargetPixels(output, 0, 0, width, height, pixels);
+          gtao.render(gl, occluded, target, 0, false);
+          outputPass.render(gl, output, occluded, 0, false);
+          grade.render(gl, graded, output);
         } finally {
-          restoreShadows();
-          restoreScene();
+          restore();
           gl.setRenderTarget(previousTarget);
           gl.setClearColor(previousClear, previousAlpha);
         }
+      };
+
+      /** Reads the finished picture back; done a frame after drawing it, so the GPU has finished and the read is quick. */
+      const readView = () => {
+        gl.readRenderTargetPixels(graded, 0, 0, width, height, pixels);
         return pixelsToCanvas(pixels, width, height);
       };
 
       try {
-        // Shader variants for an offscreen target differ from the live ones: compile them without blocking first.
+        // Shader variants for the staged scene (fog, sky light, offscreen target) differ from the live ones:
+        // compile them without blocking first.
         await nextFrame();
         abortIfNeeded(signal);
         const previousTarget = gl.getRenderTarget();
-        const restoreScene = prepareScene(scene);
         let compiling: Promise<unknown>;
+        aim('front');
+        const restore = stage('front');
         try {
           gl.setRenderTarget(target);
-          camera.position.set(...cameras.front.position);
-          camera.lookAt(...cameras.front.target);
-          camera.updateMatrixWorld();
           compiling = gl.compileAsync(scene, camera);
         } finally {
           gl.setRenderTarget(previousTarget);
-          restoreScene();
+          restore();
         }
         await compiling.catch(() => undefined);
 
         for (const view of RENDER_VIEWS) {
           await nextFrame();
           abortIfNeeded(signal);
-          const canvas = drawView(view);
+          drawView(view);
+          await nextFrame();
+          const canvas = readView();
           renders.push({ view, blob: await encodeJpeg(canvas), width, height });
           onProgress?.(renders.length);
         }
         return renders;
       } finally {
-        target.dispose();
+        for (const t of [target, occluded, output, graded]) t.dispose();
+        gtao.dispose();
+        outputPass.dispose();
+        grade.dispose();
+        disposeSite(site);
         // The live shadow map was reallocated: draw the live view again.
         invalidate();
-        output.dispose();
-        outputPass.dispose();
       }
     };
 
