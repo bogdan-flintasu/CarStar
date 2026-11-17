@@ -29,6 +29,8 @@ export interface HallStats {
   ridgeY: number;
   renderFrame: number;
   params: { w: number; h: number; l: number };
+  /** The user's camera position (checks that quote renders never move it). */
+  camera: [number, number, number];
   ready: boolean;
 }
 
@@ -53,6 +55,7 @@ export default function HallStatsProbe({ layout }: HallStatsProbeProps) {
   const gl = useThree((state) => state.gl);
   const scene = useThree((state) => state.scene);
   const advance = useThree((state) => state.advance);
+  const camera = useThree((state) => state.camera);
 
   useEffect(() => {
     if (process.env.NODE_ENV === 'production') return;
@@ -70,6 +73,7 @@ export default function HallStatsProbe({ layout }: HallStatsProbeProps) {
         ridgeY: layout.ridgeY,
         renderFrame: frame,
         params: { w: layout.params.width, h: layout.params.height, l: layout.params.length },
+        camera: camera.position.toArray(),
         ready: frames > 0 && triangles > 0,
       };
     };
@@ -81,7 +85,7 @@ export default function HallStatsProbe({ layout }: HallStatsProbeProps) {
       delete window.__hallStats;
       delete window.__hallAdvance;
     };
-  }, [gl, scene, layout, advance]);
+  }, [gl, scene, camera, layout, advance]);
 
   return null;
 }

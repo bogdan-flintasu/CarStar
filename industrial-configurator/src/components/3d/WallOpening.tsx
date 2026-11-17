@@ -11,6 +11,7 @@ import { DEFAULT_COLOR_HEXES, type HallColorHexes } from '@/lib/colors';
 import type { OpeningType, ResizeHandle, WallSpan } from './openings/types';
 import { isFloorStanding, openingCentre } from './openings/openingMath';
 import { clipOpeningToWall, isMirrored } from './openings/wallShapeWithHoles';
+import { renderHiddenProps, renderPlainProps } from './hall/renders';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface WallOpeningProps {
@@ -336,7 +337,8 @@ export default function WallOpening({
     ));
 
   return (
-    <group position={worldPos} rotation={rotation}>
+    // Selection and conflict glows are editing feedback: renders draw the opening without them.
+    <group position={worldPos} rotation={rotation} {...renderPlainProps}>
       <group position={[hole.x, hole.y, 0]}>
         {/* Depth mask for walls without real holes: hides the wall behind opaque doors. Windows keep the wall
             visible through the glass (the mask would show the clear colour instead of the hall). */}
@@ -359,6 +361,7 @@ export default function WallOpening({
 
         {/* Pick target: the whole opening, just in front of it. Never drawn, but still hit by the raycaster. */}
         <mesh
+          {...renderHiddenProps}
           position={[0, 0, FRAME_PROUD + 0.005]}
           onClick={handleClick}
           onPointerDown={isSelected ? handleMovePointerDown : undefined}
@@ -373,6 +376,7 @@ export default function WallOpening({
         handlePositions.map((hp) => (
           <mesh
             key={hp.id}
+            {...renderHiddenProps}
             position={hp.pos}
             renderOrder={3}
             onPointerDown={(e) => handleResizePointerDown(hp.id, e)}
