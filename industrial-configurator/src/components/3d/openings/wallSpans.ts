@@ -2,7 +2,7 @@
 // configurator state; the maths lives in `validateOpenings.ts` (`wallSpansFromLayout`).
 
 import { clampHallDimensions, computeHallLayout } from '@/lib/hall';
-import type { HallLayout } from '@/lib/hall';
+import type { HallLayout, RoofType, Side } from '@/lib/hall';
 import { wallSpansFromLayout } from './validateOpenings';
 import type { WallSpans } from './types';
 
@@ -16,6 +16,8 @@ export interface HallState {
   showFoundation?: boolean;
   isIsolated?: boolean;
   insulation?: number;
+  roofType?: RoofType;
+  highSide?: Side;
 }
 
 export function layoutFromHallState(s: HallState): HallLayout {
@@ -24,6 +26,8 @@ export function layoutFromHallState(s: HallState): HallLayout {
     foundation: s.showFoundation ?? true,
     panels: s.isIsolated ?? false,
     insulationMm: s.insulation ?? 30,
+    roofType: s.roofType,
+    highSide: s.highSide,
   });
 }
 

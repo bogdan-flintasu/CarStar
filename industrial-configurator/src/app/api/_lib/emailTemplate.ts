@@ -16,6 +16,11 @@ function colorLines(summary: Lead['configurationSummary']): string[] {
   return COLOR_COMPONENTS.flatMap((c) => (colors[c] ? [`${COMPONENT_LABELS[c]}: ${colors[c].name}`] : []));
 }
 
+function roofText(summary: Lead['configurationSummary']): string {
+  if (summary?.roofType !== 'mono') return '2 ape';
+  return `o apă, latura înaltă ${summary.highSide === 'left' ? 'stânga' : 'dreapta'}`;
+}
+
 /** Subject line: CR/LF and control characters stripped, length capped. */
 export function buildLeadSubject(lead: Lead): string {
   const dims = dimensionsText(lead.configurationSummary) ?? 'Configurare';
@@ -45,6 +50,7 @@ export function buildLeadEmailHtml(lead: Lead, link: string | null): string {
       <hr/>
       <h3>Sumar Configurare</h3>
       ${dims ? `<p><strong>Dimensiuni:</strong> ${e(dims.length)} × ${e(dims.width)} × ${e(dims.height)} m</p>` : ''}
+      <p><strong>Acoperiș:</strong> ${e(roofText(s))}</p>
       <p><strong>Suprafață:</strong> ${e(s?.floorArea ?? 'N/A')} m²</p>
       <p><strong>Fundație:</strong> ${s?.foundation ? 'DA' : 'NU'}</p>
       <p><strong>Panouri sandwich:</strong> ${s?.sandwichPanels ? 'DA' : 'NU'}</p>
@@ -70,6 +76,7 @@ export function buildLeadLog(lead: Lead, link: string | null, from: string, to: 
     `Telefon: ${lead.phone || 'N/A'}`,
     `Mesaj:   ${lead.message || '-'}`,
     `Dimensiuni: ${dimensionsText(s) ?? 'N/A'}`,
+    `Acoperiș:   ${roofText(s)}`,
     `Suprafață:  ${s?.floorArea ?? 'N/A'} m²`,
     `Fundație:   ${s?.foundation ? 'DA' : 'NU'}`,
     `Sandwich:   ${s?.sandwichPanels ? 'DA' : 'NU'}`,

@@ -9,7 +9,7 @@
 // with a through-hole for every opening. Re-build it only when that wall's openings change.
 
 import * as THREE from 'three';
-import type { Vec3, WallDescriptor } from '@/lib/hall';
+import { faceHeightAt, type Vec3, type WallDescriptor } from '@/lib/hall';
 import type { Opening } from './types';
 
 /** Holes never touch the wall outline (earcut cannot triangulate holes that share an edge with it). */
@@ -27,21 +27,15 @@ export interface HoleRect {
 
 type OpeningRect = Pick<Opening, 'offsetX' | 'sill' | 'width' | 'height'>;
 
-/** Wall data the hole maths needs: the same fields as `WallDescriptor`. */
-export type HoleWall = Pick<WallDescriptor, 'spanH' | 'spanV' | 'apexV'>;
-
-function faceHeightAt(wall: HoleWall, h: number): number {
-  const half = wall.spanH / 2;
-  const towardsApex = 1 - Math.min(1, Math.abs(h - half) / half);
-  return wall.spanV + (wall.apexV - wall.spanV) * towardsApex;
-}
+/** Wall data the hole maths needs: the same fields as `WallDescriptor` (`apexH` defaults to the middle). */
+export type HoleWall = Pick<WallDescriptor, 'spanH' | 'spanV' | 'apexV'> & Partial<Pick<WallDescriptor, 'apexH'>>;
 
 /** Clip one opening to the wall face (inset by HOLE_INSET); null when nothing is left. */
 export function clipOpeningToWall(wall: HoleWall, o: OpeningRect): HoleRect | null {
   const h0 = Math.max(HOLE_INSET, o.offsetX);
   const h1 = Math.min(wall.spanH - HOLE_INSET, o.offsetX + o.width);
   const v0 = Math.max(HOLE_INSET, o.sill);
-  // The face is concave (rises to the apex), so its lowest point over [h0, h1] is at one of the ends.
+  // The face rises to the apex and nowhere dips, so its lowest point over [h0, h1] is at one of the ends.
   const ceiling = Math.min(faceHeightAt(wall, h0), faceHeightAt(wall, h1)) - HOLE_INSET;
   const v1 = Math.min(o.sill + o.height, ceiling);
   if (!(h1 - h0 >= MIN_HOLE_SIZE) || !(v1 - v0 >= MIN_HOLE_SIZE)) return null;
@@ -90,7 +84,7 @@ export function isMirrored(wall: Pick<WallDescriptor, 'yaw' | 'axisH'>): boolean
  * a mirrored wall), y up.
  */
 export function wallShapeWithHoles(
-  wall: Pick<WallDescriptor, 'polygon' | 'spanH' | 'spanV' | 'apexV' | 'yaw' | 'axisH'>,
+  wall: Pick<WallDescriptor, 'polygon' | 'spanH' | 'spanV' | 'apexV' | 'yaw' | 'axisH'> & Partial<Pick<WallDescriptor, 'apexH'>>,
   openings: ReadonlyArray<OpeningRect>,
 ): THREE.Shape {
   const mirrored = isMirrored(wall);

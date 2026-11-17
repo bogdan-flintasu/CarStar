@@ -139,7 +139,12 @@ export default function WallOpening({
   const endSessionRef = useRef<(() => void) | null>(null);
 
   const span: WallSpan = useMemo(
-    () => ({ length: wall.spanH, height: wall.spanV, apex: wall.apexV > wall.spanV ? wall.apexV : undefined }),
+    () => ({
+      length: wall.spanH,
+      height: wall.spanV,
+      apex: wall.apexV > wall.spanV ? wall.apexV : undefined,
+      apexAt: wall.apexH,
+    }),
     [wall],
   );
 

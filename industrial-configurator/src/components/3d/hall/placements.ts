@@ -6,7 +6,7 @@
  * Rotations per piece follow the placement table of public/models/ASSET_CONTRACT.md (section 3).
  */
 import { Euler, Matrix4, Quaternion, Vector3 } from 'three';
-import { GUTTER_WIDTH, type HallLayout, type HallPurlin, type Side } from '@/lib/hall';
+import { COLUMN_DEPTH, GUTTER_WIDTH, type HallLayout, type HallPurlin, type Side } from '@/lib/hall';
 import { KIT_PIECES, type HallKit, type KitPieceName, type SocketSide } from './kit';
 
 export interface Placement {
@@ -64,22 +64,31 @@ function purlinCleats(purlin: HallPurlin, layout: HallLayout): Placement[] {
 
 /** Transforms of every steel piece except the bolts. */
 export function placeKit(layout: HallLayout): KitPlacements {
-  const { columns, rafters, purlins, gutters, downpipes, girtLevels, halfWidths, roof, pitch } = layout;
+  const { columns, rafters, purlins, gutters, downpipes, halfWidths, roof, pitch } = layout;
   const gutterCentre = (side: Side, innerEdgeX: number) => innerEdgeX + (outwards(side) * GUTTER_WIDTH) / 2;
-  const ridgeTopY = roof.left.ridge[1] + roof.left.plumbThickness;
+  const mono = layout.roofType === 'mono';
+  const ridge = roof[0];
+  const ridgeTopY = ridge.ridge[1] + ridge.plumbThickness;
+  const haunch = (c: (typeof columns)[number]) => place(c.x, c.topY, c.z, { turned: isRight(c.side) });
 
   return {
-    Column: columns.map((c) => place(c.x, c.baseY, c.z, { turned: isRight(c.side), scale: [1, c.height, 1] })),
+    // The high-side joint (EaveHaunchHigh) is sheared, so its base plate rises towards the outer column face by
+    // up to 2 tan(pitch) x column depth: that column's steel goes up as far, the rest hides inside the joint.
+    Column: columns.map((c) => {
+      const reach = c.isHigh ? 2 * Math.tan(pitch) * COLUMN_DEPTH : 0;
+      return place(c.x, c.baseY, c.z, { turned: isRight(c.side), scale: [1, c.height + reach, 1] });
+    }),
     BasePlate: columns.map((c) => place(c.x, 0, c.z, { turned: isRight(c.side) })),
-    EaveHaunch: columns.map((c) => place(c.x, c.topY, c.z, { turned: isRight(c.side) })),
+    EaveHaunch: columns.filter((c) => !c.isHigh).map(haunch),
+    EaveHaunchHigh: columns.filter((c) => c.isHigh).map(haunch),
     // The cleats' ears alternate below and above the bracket, as on the source frame.
     GirtCleat: columns.flatMap((c) =>
-      girtLevels.map((y, row) =>
+      c.girtLevels.map((y, row) =>
         place(outwards(c.side) * halfWidths.columnOuter, y, c.z, { turned: isRight(c.side), flipped: row % 2 === 1 }),
       ),
     ),
     Rafter: rafters.map((r) => place(r.from[0], r.from[1], r.z, { turned: isRight(r.side), pitch, scale: [r.length, 1, 1] })),
-    RidgeJoint: rafters.filter((r) => !isRight(r.side)).map((r) => place(r.to[0], r.to[1], r.z)),
+    RidgeJoint: mono ? [] : rafters.filter((r) => !isRight(r.side)).map((r) => place(r.to[0], r.to[1], r.z)),
     Purlin: purlins.flatMap((p) => purlinSpans(p, layout)),
     PurlinCleat: purlins.flatMap((p) => purlinCleats(p, layout)),
     Gutter: gutters.map((g) => placeAlong(g.side, g.x, g.y, g.zFrom, g.zTo)),
@@ -90,7 +99,8 @@ export function placeKit(layout: HallLayout): KitPlacements {
     Downpipe: downpipes.map((d) => place(d.x, d.bottomY, d.z, { turned: d.end === 'back', scale: [1, d.topY - d.bottomY, 1] })),
     DownpipeShoe: downpipes.map((d) => place(d.x, d.bottomY, d.z, { turned: d.end === 'back' })),
     DownpipeOutlet: downpipes.map((d) => place(d.x, d.topY, d.z, { turned: d.end === 'back' })),
-    RidgeCap: [placeAlong('left', 0, ridgeTopY, roof.left.zFront, roof.left.zBack)],
+    // A mono roof has no ridge: its high edge gets a flashing instead (Trims.tsx).
+    RidgeCap: mono ? [] : [placeAlong('left', 0, ridgeTopY, ridge.zFront, ridge.zBack)],
     Bolt: [],
   };
 }

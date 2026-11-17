@@ -92,7 +92,7 @@ describe('wall descriptors', () => {
     ]);
     // The gable's sloping edges run at the roof pitch and touch the roof underside at the ridge.
     expect((front.apexV - front.spanV) / (front.spanH / 2)).toBeCloseTo(Math.tan(layout.pitch), 9);
-    expect(front.apexV).toBeCloseTo(layout.roof.left.ridge[1], 12);
+    expect(front.apexV).toBeCloseTo(layout.roof[0].ridge[1], 12);
     expect(layout.walls.back.polygon).toEqual(front.polygon);
   });
 

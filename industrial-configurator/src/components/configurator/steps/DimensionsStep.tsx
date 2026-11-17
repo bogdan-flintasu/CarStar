@@ -79,14 +79,79 @@ function DimensionField({ label, value, min, max, step, onCommit, first }: Dimen
   );
 }
 
+const optionCard = (selected: boolean) =>
+  `p-3 rounded-xl border-2 text-left transition-all cursor-pointer ${
+    selected
+      ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 shadow-[0_0_15px_rgba(245,166,35,0.1)]'
+      : 'border-gray-200 bg-white hover:border-gray-300'
+  }`;
+
+/** Small section drawings of the two roof types (the high side follows the choice). */
+function RoofIcon({ mono, highSide = 'right' }: { mono: boolean; highSide?: 'left' | 'right' }) {
+  const roof = mono ? (highSide === 'right' ? '2,14 30,6' : '2,6 30,14') : '2,12 16,4 30,12';
+  const [lTop, rTop] = mono ? (highSide === 'right' ? [14, 6] : [6, 14]) : [12, 12];
+  return (
+    <svg viewBox="0 0 32 24" className="w-8 h-6 mb-1 text-gray-700" fill="none" stroke="currentColor" strokeWidth={1.6} aria-hidden>
+      <polyline points={roof} strokeLinejoin="round" />
+      <line x1={4} y1={lTop} x2={4} y2={22} />
+      <line x1={28} y1={rTop} x2={28} y2={22} />
+      <line x1={1} y1={22} x2={31} y2={22} />
+    </svg>
+  );
+}
+
+function RoofTypeField() {
+  const { roofType, setRoofType, highSide, setHighSide } = useConfiguratorStore(
+    useShallow((s) => ({ roofType: s.roofType, setRoofType: s.setRoofType, highSide: s.highSide, setHighSide: s.setHighSide })),
+  );
+  const mono = roofType === 'mono';
+  return (
+    <div className="pt-4 border-t border-gray-100">
+      <span className="text-sm font-bold text-black block mb-1">Acoperiș</span>
+      <span className="text-xs text-gray-500 block mb-3">
+        {mono ? 'O singură pantă: o latură e mai înaltă, cealaltă rămâne la înălțimea aleasă.' : 'Două pante, cu coama la mijloc.'}
+      </span>
+      <div className="grid grid-cols-2 gap-3">
+        <button type="button" aria-pressed={!mono} onClick={() => setRoofType('gable')} className={optionCard(!mono)}>
+          <RoofIcon mono={false} />
+          <span className="block font-bold text-black text-sm">2 ape</span>
+        </button>
+        <button type="button" aria-pressed={mono} onClick={() => setRoofType('mono')} className={optionCard(mono)}>
+          <RoofIcon mono highSide={highSide} />
+          <span className="block font-bold text-black text-sm">O apă</span>
+        </button>
+      </div>
+      {mono && (
+        <div className="mt-3">
+          <span className="text-xs font-semibold text-gray-600 block mb-2">Latura înaltă</span>
+          <div className="grid grid-cols-2 gap-3">
+            {(['left', 'right'] as const).map((side) => (
+              <button
+                key={side}
+                type="button"
+                aria-pressed={highSide === side}
+                onClick={() => setHighSide(side)}
+                className={optionCard(highSide === side)}
+              >
+                <span className="block font-bold text-black text-sm">{side === 'left' ? 'Stânga' : 'Dreapta'}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function DimensionsStep() {
   const {
     height, setHeight,
     width, setWidth,
     length, setLength,
     wallsVisible, setWallsVisible,
-    getFloorArea,
+    getFloorArea, roofType,
   } = useConfiguratorStore(useShallow((s) => ({
+    roofType: s.roofType,
     height: s.height, setHeight: s.setHeight,
     width: s.width, setWidth: s.setWidth,
     length: s.length, setLength: s.setLength,
@@ -113,7 +178,8 @@ export default function DimensionsStep() {
       <div className="space-y-5 flex-1">
         <DimensionField label="Lungime" value={length} min={HALL_LIMITS.length.min} max={HALL_LIMITS.length.max} step={1} onCommit={setLength} first />
         <DimensionField label="Lățime" value={width} min={HALL_LIMITS.width.min} max={HALL_LIMITS.width.max} step={1} onCommit={setWidth} />
-        <DimensionField label="Înălțime" value={height} min={HALL_LIMITS.height.min} max={HALL_LIMITS.height.max} step={1} onCommit={setHeight} />
+        <DimensionField label={roofType === 'mono' ? 'Înălțime (latura joasă)' : 'Înălțime'} value={height} min={HALL_LIMITS.height.min} max={HALL_LIMITS.height.max} step={1} onCommit={setHeight} />
+        <RoofTypeField />
         {/* Computed values */}
         <div className="flex justify-between items-center pt-4 border-t border-gray-100 mb-6">
           <span className="text-sm font-bold text-gray-800">Suprafață utilă</span>

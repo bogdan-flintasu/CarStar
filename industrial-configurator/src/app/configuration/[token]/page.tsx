@@ -24,6 +24,8 @@ export default function ConfigurationTokenPage() {
   const setInsulation = useConfiguratorStore((s) => s.setInsulation);
   const resetConfigurator = useConfiguratorStore((s) => s.resetConfigurator);
   const setColors = useConfiguratorStore((s) => s.setColors);
+  const setRoofType = useConfiguratorStore((s) => s.setRoofType);
+  const setHighSide = useConfiguratorStore((s) => s.setHighSide);
   const setOpenings = useOpeningsStore((s) => s.setOpenings);
   const resetOpenings = useOpeningsStore((s) => s.resetOpenings);
 
@@ -53,6 +55,8 @@ export default function ConfigurationTokenPage() {
           setIsIsolated(true);
           setInsulation(data.insulation);
         }
+        setRoofType(data.roofType ?? 'gable');
+        setHighSide(data.highSide ?? 'right');
         setColors(data.colors);
         // setOpenings normalises legacy (posX/posY) openings itself
         setOpenings(data.openingsList);
@@ -66,7 +70,7 @@ export default function ConfigurationTokenPage() {
         console.error('Failed to load configuration:', err);
         setError('Configurarea nu a fost găsită.');
       });
-  }, [token, router, resetConfigurator, resetOpenings, setLength, setWidth, setHeight, setShowFoundation, setHasSandwichPanels, setIsIsolated, setInsulation, setOpenings, setColors]);
+  }, [token, router, resetConfigurator, resetOpenings, setLength, setWidth, setHeight, setShowFoundation, setHasSandwichPanels, setIsIsolated, setInsulation, setOpenings, setColors, setRoofType, setHighSide]);
 
   if (error) {
     return (

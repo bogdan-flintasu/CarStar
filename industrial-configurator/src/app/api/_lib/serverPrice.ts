@@ -45,6 +45,7 @@ export function withServerPrice(
       height,
       showFoundation: data.foundation,
       hasSandwichPanels: data.sandwichPanels,
+      roofType: data.roofType,
     },
     openings,
     prices,

@@ -32,6 +32,7 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
   const height = useConfiguratorStore((s) => s.height);
   const showFoundation = useConfiguratorStore((s) => s.showFoundation);
   const hasSandwichPanels = useConfiguratorStore((s) => s.hasSandwichPanels);
+  const roofType = useConfiguratorStore((s) => s.roofType);
   const prices = useConfiguratorStore((s) => s.prices);
   const setPalette = useConfiguratorStore((s) => s.setPalette);
   const colors = useConfiguratorStore((s) => s.colors);
@@ -101,7 +102,7 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
     useShallow((s) => countOpenings(s.openings)),
   );
   const estimatedPrice = calculatePrice(
-    { length, width, height, showFoundation, hasSandwichPanels },
+    { length, width, height, showFoundation, hasSandwichPanels, roofType },
     counts,
     prices,
     surchargeRates(colors, palette),

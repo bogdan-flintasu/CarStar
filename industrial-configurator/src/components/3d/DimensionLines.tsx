@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Dimension lines around the bare frame: length, clear width, clear height, ridge height and frame spacing.
+ * Dimension lines around the bare frame: length, clear width, clear height, ridge (or high eave) height and frame spacing.
  * Every value and position is read from the HallLayout, so the lines always measure what is drawn.
  */
 import { Line, Text } from '@react-three/drei';
@@ -80,6 +80,8 @@ export default function DimensionLines({ layout, visible }: DimensionLinesProps)
   const frontZ = walls.front.origin[2] + OFFSET;
   const backZ = frames[frames.length - 1].z;
   const y = FLOOR_CLEARANCE;
+  // The highest point: the ridge of a gable, the high column's inner face of a mono-pitch roof.
+  const topX = layout.highSide ? (layout.highSide === 'left' ? -1 : 1) * halfWidths.columnInner : 0;
 
   return (
     <group renderOrder={999}>
@@ -100,10 +102,10 @@ export default function DimensionLines({ layout, visible }: DimensionLinesProps)
         labelOffset={[0, 0, 0]}
       />
       <Dimension
-        from={[0, 0, frontZ]}
-        to={[0, ridgeY, frontZ]}
+        from={[topX, 0, frontZ]}
+        to={[topX, ridgeY, frontZ]}
         tick={[1, 0, 0]}
-        label={`Coamă = ${metres(ridgeY)}`}
+        label={`${layout.roofType === 'mono' ? 'H max' : 'Coamă'} = ${metres(ridgeY)}`}
         labelRotation={UPRIGHT_FACING_FRONT}
         labelOffset={[0, ridgeY / 2 + 0.2, 0]}
       />

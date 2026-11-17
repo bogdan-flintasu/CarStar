@@ -12,12 +12,13 @@ export default function SummaryStep() {
   const {
     length, width, height,
     showFoundation, hasSandwichPanels,
-    isIsolated, insulation, colors,
+    isIsolated, insulation, colors, roofType, highSide,
     getFloorArea, getNumberOfBays, getEstimatedPrice, getConfigurationData,
   } = useConfiguratorStore(useShallow((s) => ({
     length: s.length, width: s.width, height: s.height,
     showFoundation: s.showFoundation, hasSandwichPanels: s.hasSandwichPanels,
     isIsolated: s.isIsolated, insulation: s.insulation, colors: s.colors,
+    roofType: s.roofType, highSide: s.highSide,
     getFloorArea: s.getFloorArea, getNumberOfBays: s.getNumberOfBays,
     getEstimatedPrice: s.getEstimatedPrice, getConfigurationData: s.getConfigurationData,
   })));
@@ -159,6 +160,12 @@ export default function SummaryStep() {
           <div className="flex justify-between text-sm">
             <span className="text-gray-600 font-medium">Dimensiuni</span>
             <span className="text-black font-bold">{length} × {width} × {height} m</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600 font-medium">Acoperiș</span>
+            <span className="text-black font-bold">
+              {roofType === 'mono' ? `O apă (înalt ${highSide === 'left' ? 'stânga' : 'dreapta'})` : '2 ape'}
+            </span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-600 font-medium">Suprafață la sol</span>

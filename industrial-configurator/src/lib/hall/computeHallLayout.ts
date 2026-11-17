@@ -21,7 +21,7 @@ import {
   SLAB_THICKNESS,
 } from './constants';
 import { resolveHallParams } from './params';
-import { computeSection, spreadEvenly, type HallSection } from './section';
+import { computeSection, sideSign as sign, spreadEvenly, type HallSection } from './section';
 import type {
   HallColumn,
   HallDownpipe,
@@ -38,8 +38,7 @@ import type {
 import { computeWalls, type HallEnds } from './walls';
 
 const SIDES: readonly Side[] = ['left', 'right'];
-/** -1 for the left (-X) side, +1 for the right. */
-const sign = (side: Side) => (side === 'left' ? -1 : 1);
+const otherSide = (side: Side): Side => (side === 'left' ? 'right' : 'left');
 
 /** Frames at equal spacing, as few as `maxBay` allows, covering exactly Z = 0 ... -length. */
 function placeFrames(length: number, maxBay: number): HallFrame[] {
@@ -58,31 +57,45 @@ function placeEnds(length: number, panelThickness: number): HallEnds {
   return { frontInner, frontOuter: frontInner + panelThickness, backInner, backOuter: backInner - panelThickness };
 }
 
-function placeColumns(frames: readonly HallFrame[], section: HallSection, height: number): HallColumn[] {
+/** Cladding fixings up a column whose steel ends at `columnTop`, as few rows as the panel span allows. */
+function girtLevelsBelow(columnTop: number): number[] {
+  return spreadEvenly(GIRT_END_CLEARANCE, columnTop - GIRT_END_CLEARANCE, MAX_GIRT_SPACING);
+}
+
+/** Each column stops the eave joint's height below the rafter's underside at its inner face. */
+function placeColumns(frames: readonly HallFrame[], section: HallSection): HallColumn[] {
   const baseY = BASE_PLATE_THICKNESS;
-  const topY = height - EAVE_JOINT_HEIGHT;
+  const inner = section.halfWidths.columnInner;
   return frames.flatMap((frame) =>
-    SIDES.map((side) => ({
-      side,
-      frame: frame.index,
-      x: sign(side) * section.halfWidths.columnAxis,
-      z: frame.z,
-      baseY,
-      topY,
-      height: topY - baseY,
-    })),
+    SIDES.map((side) => {
+      const topY = section.rafterBottomY(sign(side) * inner) - EAVE_JOINT_HEIGHT;
+      return {
+        side,
+        frame: frame.index,
+        x: sign(side) * section.halfWidths.columnAxis,
+        z: frame.z,
+        baseY,
+        topY,
+        height: topY - baseY,
+        girtLevels: girtLevelsBelow(topY),
+        isHigh: !section.isLowSide(side),
+      };
+    }),
   );
 }
 
+/** Gable: a rafter per side, eave to apex. Mono: one rafter per frame, from the low eave up to the high one. */
 function placeRafters(frames: readonly HallFrame[], section: HallSection): HallRafter[] {
   const eaveX = section.halfWidths.columnInner;
+  const sides = section.roofType === 'mono' ? SIDES.filter(section.isLowSide) : SIDES;
+  const topX = (side: Side) => (section.roofType === 'mono' ? -sign(side) * eaveX : 0);
   return frames.flatMap((frame) =>
-    SIDES.map((side) => ({
+    sides.map((side) => ({
       side,
       frame: frame.index,
       z: frame.z,
-      from: [sign(side) * eaveX, section.rafterBottomY(eaveX)] as const,
-      to: [0, section.rafterBottomY(0)] as const,
+      from: [sign(side) * eaveX, section.rafterBottomY(sign(side) * eaveX)] as const,
+      to: [topX(side), section.rafterBottomY(topX(side))] as const,
       length: section.rafterLength,
     })),
   );
@@ -90,40 +103,39 @@ function placeRafters(frames: readonly HallFrame[], section: HallSection): HallR
 
 /** Purlins run the whole length in one line, flush with the outer flange edges of the end frames. */
 function placePurlins(section: HallSection, ends: HallEnds): HallPurlin[] {
-  return SIDES.flatMap((side) =>
-    section.purlinSeatXs.map((seatX, index) => ({
-      side,
-      index,
-      x: sign(side) * seatX,
-      y: section.rafterTopY(seatX),
-      zFrom: ends.frontInner,
-      zTo: ends.backInner,
-    })),
-  );
+  const indexOnSide = new Map<Side, number>();
+  return section.purlinSeats.map(({ side, x }) => {
+    const index = indexOnSide.get(side) ?? 0;
+    indexOnSide.set(side, index + 1);
+    return { side, index, x, y: section.rafterTopY(x), zFrom: ends.frontInner, zTo: ends.backInner };
+  });
 }
 
-/** Cladding fixings up each column, as few rows as the panel span allows. */
-function placeGirtLevels(height: number): number[] {
-  const columnTop = height - EAVE_JOINT_HEIGHT;
-  return spreadEvenly(GIRT_END_CLEARANCE, columnTop - GIRT_END_CLEARANCE, MAX_GIRT_SPACING);
-}
-
-function placeRoof(side: Side, section: HallSection, ends: HallEnds): RoofPlane {
+/** Gable: one plane per side, eave to ridge. Mono: one plane from the low eave's edge to the high one's. */
+function placeRoof(section: HallSection, ends: HallEnds): RoofPlane[] {
   const edgeX = section.halfWidths.roofEdge;
   const zFront = ends.frontOuter + ROOF_OVERHANG;
   const zBack = ends.backOuter - ROOF_OVERHANG;
-  const slopeLength = edgeX / Math.cos(section.pitch);
-  return {
-    side,
-    eave: [sign(side) * edgeX, section.roofUndersideY(edgeX)],
-    ridge: [0, section.roofUndersideY(0)],
-    thickness: section.panelThickness,
-    plumbThickness: section.roofTopY(0) - section.roofUndersideY(0),
-    zFront,
-    zBack,
-    slopeLength,
-    area: slopeLength * (zFront - zBack),
+  const plane = (side: Side, topX: number): RoofPlane => {
+    const eaveX = sign(side) * edgeX;
+    const slopeLength = Math.abs(topX - eaveX) / Math.cos(section.pitch);
+    return {
+      side,
+      eave: [eaveX, section.roofUndersideY(eaveX)],
+      ridge: [topX, section.roofUndersideY(topX)],
+      thickness: section.panelThickness,
+      plumbThickness: section.roofTopY(0) - section.roofUndersideY(0),
+      zFront,
+      zBack,
+      slopeLength,
+      area: slopeLength * (zFront - zBack),
+    };
   };
+  if (section.roofType === 'mono') {
+    const low = otherSide(section.highSide);
+    return [plane(low, sign(section.highSide) * edgeX)];
+  }
+  return SIDES.map((side) => plane(side, 0));
 }
 
 function placeSlab(section: HallSection, ends: HallEnds): HallSlab {
@@ -137,14 +149,14 @@ function placeSlab(section: HallSection, ends: HallEnds): HallSlab {
   };
 }
 
-/** One gutter under each eave, hung on the outer wall face, with a downpipe at each of the four corners. */
+/** A gutter under each low eave, hung on the outer wall face, with a downpipe at both ends of it. */
 function placeRainwater(section: HallSection, ends: HallEnds): { gutters: HallGutter[]; downpipes: HallDownpipe[] } {
   const wallX = section.halfWidths.wallOuter;
-  const gutterY = section.roofUndersideY(wallX);
-  const gutters = SIDES.map((side) => ({
+  const sides = SIDES.filter(section.isLowSide);
+  const gutters = sides.map((side) => ({
     side,
     x: sign(side) * wallX,
-    y: gutterY,
+    y: section.roofUndersideY(sign(side) * wallX),
     zFrom: ends.frontOuter,
     zTo: ends.backOuter,
   }));
@@ -152,13 +164,13 @@ function placeRainwater(section: HallSection, ends: HallEnds): { gutters: HallGu
     { end: 'front', z: ends.frontOuter - DOWNPIPE_END_INSET },
     { end: 'back', z: ends.backOuter + DOWNPIPE_END_INSET },
   ] as const;
-  const downpipes = SIDES.flatMap((side) =>
+  const downpipes = gutters.flatMap((gutter) =>
     pipeEnds.map(({ end, z }) => ({
-      side,
+      side: gutter.side,
       end,
-      x: sign(side) * (wallX + GUTTER_WIDTH / 2),
+      x: sign(gutter.side) * (wallX + GUTTER_WIDTH / 2),
       z,
-      topY: gutterY - DOWNPIPE_OUTLET_DROP,
+      topY: gutter.y - DOWNPIPE_OUTLET_DROP,
       bottomY: DOWNPIPE_DISCHARGE_HEIGHT,
     })),
   );
@@ -171,33 +183,40 @@ export function computeHallLayout(input: HallParams): HallLayout {
   const frames = placeFrames(params.length, params.bay);
   const ends = placeEnds(params.length, section.panelThickness);
   const bayCount = frames.length - 1;
-  const roof = { left: placeRoof('left', section, ends), right: placeRoof('right', section, ends) };
-  const { roofEdge } = section.halfWidths;
+  const roof = placeRoof(section, ends);
+  const { roofEdge, columnInner } = section.halfWidths;
+  const mono = section.roofType === 'mono';
+  const lowX = mono ? -sign(section.highSide) * columnInner : columnInner;
+  const topX = mono ? sign(section.highSide) * columnInner : 0;
+  const topEdgeX = mono ? sign(section.highSide) * roofEdge : 0;
+  const columns = placeColumns(frames, section);
 
   return {
     params,
     pitch: section.pitch,
+    roofType: section.roofType,
+    highSide: mono ? section.highSide : null,
     bayCount,
     bay: params.length / bayCount,
-    eaveY: section.rafterTopY(section.halfWidths.columnInner),
-    ridgeY: section.rafterTopY(0),
+    eaveY: section.rafterTopY(lowX),
+    ridgeY: section.rafterTopY(topX),
     halfWidths: section.halfWidths,
     panelThickness: section.panelThickness,
     frames,
-    columns: placeColumns(frames, section, params.height),
+    columns,
     rafters: placeRafters(frames, section),
     rafterLength: section.rafterLength,
     purlins: placePurlins(section, ends),
     purlinsPerSide: section.purlinSeatXs.length,
-    girtLevels: placeGirtLevels(params.height),
+    girtLevels: columns.find((c) => !c.isHigh)!.girtLevels,
     walls: computeWalls(section, ends, frames),
     roof,
     slab: placeSlab(section, ends),
     groundY: params.foundation ? -SLAB_THICKNESS : 0,
     ...placeRainwater(section, ends),
     bounds: {
-      min: [-roofEdge, 0, roof.left.zBack],
-      max: [roofEdge, section.roofTopY(0), roof.left.zFront],
+      min: [-roofEdge, 0, roof[0].zBack],
+      max: [roofEdge, section.roofTopY(topEdgeX), roof[0].zFront],
     },
   };
 }

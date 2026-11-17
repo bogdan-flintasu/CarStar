@@ -82,6 +82,9 @@ export const dimensionsSchema = z.object({
  */
 export const configurationDataSchema = z.object({
   dimensions: dimensionsSchema,
+  /** Missing on configurations saved before roof types existed (= gable). */
+  roofType: z.enum(['gable', 'mono']).optional(),
+  highSide: z.enum(['left', 'right']).optional(),
   foundation: z.boolean(),
   sandwichPanels: z.boolean(),
   insulation: z.union([z.literal(0), ranged(INSULATION_LIMITS)]),

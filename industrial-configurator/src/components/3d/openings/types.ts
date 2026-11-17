@@ -48,8 +48,10 @@ export interface WallSpan {
   length: number;
   /** Height of the rectangular part (up to the eave). */
   height: number;
-  /** Gable walls only: height of the apex above the floor. The face rises from `height` at both ends to `apex` at the middle. */
+  /** End walls only: height of the highest point above the floor. The face rises from `height` at both ends to `apex` at `apexAt`. */
   apex?: number;
+  /** Where along the wall the face is highest: the middle of a gable (default), one end of a mono-pitch end wall. */
+  apexAt?: number;
   /** `h` of every column axis behind the wall (openings must not cross them). */
   supports?: readonly number[];
   /** Half the width each support occupies along `h`. */

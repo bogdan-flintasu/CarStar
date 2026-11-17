@@ -40,7 +40,7 @@ function useFramingOnReplacedHall(): void {
 }
 
 export default function ConfiguratorEngine() {
-  const { height, width, length, showFoundation, isIsolated, insulation, wallsVisible, currentStep } = useConfiguratorStore(
+  const { height, width, length, showFoundation, isIsolated, insulation, wallsVisible, currentStep, roofType, highSide } = useConfiguratorStore(
     useShallow((s) => ({
       height: s.height,
       width: s.width,
@@ -50,6 +50,8 @@ export default function ConfiguratorEngine() {
       insulation: s.insulation,
       wallsVisible: s.wallsVisible,
       currentStep: s.currentStep,
+      roofType: s.roofType,
+      highSide: s.highSide,
     })),
   );
   const colors = useConfiguratorStore((s) => s.colors);
@@ -71,8 +73,10 @@ export default function ConfiguratorEngine() {
         foundation: showFoundation,
         panels: isIsolated,
         insulationMm: insulation,
+        roofType,
+        highSide,
       }),
-    [width, height, length, showFoundation, isIsolated, insulation],
+    [width, height, length, showFoundation, isIsolated, insulation, roofType, highSide],
   );
 
   // In step 2 (panels) the cladding is always shown, so the effect of the panel options is visible.

@@ -37,6 +37,7 @@ export function wallSpansFromLayout(layout: HallLayout): WallSpans {
       length: wall.spanH,
       height: wall.spanV,
       apex: wall.apexV > wall.spanV ? wall.apexV : undefined,
+      apexAt: wall.apexH,
       supports: wall.supports,
       supportHalfWidth: wall.supportHalfWidth,
       blockers: blockersForWall(layout, wall.id),

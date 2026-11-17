@@ -37,7 +37,7 @@ function Piece({ name, kit, placements, material, castShadow }: SteelProps & { n
   );
 }
 
-const FRAME_PIECES = ['Column', 'BasePlate', 'EaveHaunch', 'Rafter', 'RidgeJoint', 'GirtCleat'] as const;
+const FRAME_PIECES = ['Column', 'BasePlate', 'EaveHaunch', 'EaveHaunchHigh', 'Rafter', 'RidgeJoint', 'GirtCleat'] as const;
 const PURLIN_PIECES = ['Purlin', 'PurlinCleat'] as const;
 const RAINWATER_PIECES = ['Gutter', 'GutterEndCap', 'Downpipe', 'DownpipeShoe', 'DownpipeOutlet', 'RidgeCap'] as const;
 

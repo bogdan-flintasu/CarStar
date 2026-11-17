@@ -25,6 +25,8 @@ export function resolveHallParams(params: HallParams): Required<HallParams> {
     foundation: params.foundation,
     panels: params.panels,
     insulationMm: Number.isFinite(params.insulationMm) ? Math.max(0, params.insulationMm) : 0,
+    roofType: params.roofType === 'mono' ? 'mono' : 'gable',
+    highSide: params.highSide === 'left' ? 'left' : 'right',
   };
 }
 

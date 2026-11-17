@@ -37,11 +37,29 @@ export function wallPointToWorld(wall: WallDescriptor, h: number, v: number, out
   ];
 }
 
-/** Height of the wall face at `h`: the eave height on side walls, rising to the apex on gables. */
+/**
+ * Height of a wall face at `h`: it rises linearly from `spanV` at both ends to `apexV` at `apexH` (the middle of a
+ * gable, one end of a mono-pitch end wall; flat on side walls). `apexH` defaults to the middle.
+ */
+export function faceHeightAt(
+  wall: Pick<WallDescriptor, 'spanH' | 'spanV' | 'apexV'> & { apexH?: number },
+  h: number,
+): number {
+  const apexH = wall.apexH ?? wall.spanH / 2;
+  const towardsApex =
+    h <= apexH
+      ? apexH > 0
+        ? Math.max(0, h / apexH)
+        : 1
+      : apexH < wall.spanH
+        ? Math.max(0, (wall.spanH - h) / (wall.spanH - apexH))
+        : 1;
+  return wall.spanV + (wall.apexV - wall.spanV) * Math.min(1, towardsApex);
+}
+
+/** Height of the wall face at `h`: the eave height on side walls, rising to the apex on end walls. */
 export function wallHeightAt(wall: WallDescriptor, h: number): number {
-  const half = wall.spanH / 2;
-  const towardsApex = 1 - Math.min(1, Math.abs(h - half) / half);
-  return wall.spanV + (wall.apexV - wall.spanV) * towardsApex;
+  return faceHeightAt(wall, h);
 }
 
 export function computeWalls(
@@ -50,48 +68,68 @@ export function computeWalls(
   frames: readonly HallFrame[],
 ): Record<WallKey, WallDescriptor> {
   const { wallOuter, columnAxis } = section.halfWidths;
-  const eaveV = section.roofUndersideY(wallOuter);
-  const apexV = section.roofUndersideY(0);
   const thickness = section.panelThickness;
+  /** Top of the cladding (the roof's underside) above a point of the outer wall line. */
+  const topAt = (x: number) => section.roofUndersideY(x);
+  const leftV = topAt(-wallOuter);
+  const rightV = topAt(wallOuter);
+  const eaveV = Math.min(leftV, rightV);
 
+  // End walls run the full outer width. h runs +X on the front wall and -X on the back wall.
   const gableSpan = 2 * wallOuter;
-  const gablePolygon: Vec2[] = [
-    [0, 0],
-    [gableSpan, 0],
-    [gableSpan, eaveV],
-    [gableSpan / 2, apexV],
-    [0, eaveV],
-  ];
-  const gable = {
-    axisV: UP,
-    spanH: gableSpan,
-    spanV: eaveV,
-    apexV,
-    thickness,
-    polygon: gablePolygon,
-    area: polygonArea(gablePolygon),
-    supports: [wallOuter - columnAxis, wallOuter + columnAxis],
-    supportHalfWidth: COLUMN_DEPTH / 2,
+  const endWall = (startV: number, endV: number) => {
+    const polygon: Vec2[] =
+      section.roofType === 'mono'
+        ? [
+            [0, 0],
+            [gableSpan, 0],
+            [gableSpan, endV],
+            [0, startV],
+          ]
+        : [
+            [0, 0],
+            [gableSpan, 0],
+            [gableSpan, eaveV],
+            [gableSpan / 2, topAt(0)],
+            [0, eaveV],
+          ];
+    const apexV = section.roofType === 'mono' ? Math.max(startV, endV) : topAt(0);
+    return {
+      axisV: UP,
+      spanH: gableSpan,
+      spanV: eaveV,
+      apexV,
+      apexH: section.roofType === 'mono' ? (endV > startV ? gableSpan : 0) : gableSpan / 2,
+      thickness,
+      polygon,
+      area: polygonArea(polygon),
+      supports: [wallOuter - columnAxis, wallOuter + columnAxis],
+      supportHalfWidth: COLUMN_DEPTH / 2,
+    };
   };
 
+  // Side walls fit between the end walls' inner faces; each is as high as the roof above it.
   const sideSpan = ends.frontInner - ends.backInner;
-  const sidePolygon: Vec2[] = [
-    [0, 0],
-    [sideSpan, 0],
-    [sideSpan, eaveV],
-    [0, eaveV],
-  ];
-  const side = {
-    axisH: [0, 0, -1] as Vec3,
-    axisV: UP,
-    spanH: sideSpan,
-    spanV: eaveV,
-    apexV: eaveV,
-    thickness,
-    polygon: sidePolygon,
-    area: polygonArea(sidePolygon),
-    supports: frames.map((frame) => ends.frontInner - frame.z),
-    supportHalfWidth: FRAME_FLANGE_WIDTH / 2,
+  const sideWall = (v: number) => {
+    const polygon: Vec2[] = [
+      [0, 0],
+      [sideSpan, 0],
+      [sideSpan, v],
+      [0, v],
+    ];
+    return {
+      axisH: [0, 0, -1] as Vec3,
+      axisV: UP,
+      spanH: sideSpan,
+      spanV: v,
+      apexV: v,
+      apexH: sideSpan / 2,
+      thickness,
+      polygon,
+      area: polygonArea(polygon),
+      supports: frames.map((frame) => ends.frontInner - frame.z),
+      supportHalfWidth: FRAME_FLANGE_WIDTH / 2,
+    };
   };
 
   return {
@@ -102,7 +140,7 @@ export function computeWalls(
       axisH: [1, 0, 0],
       normal: [0, 0, 1],
       yaw: 0,
-      ...gable,
+      ...endWall(leftV, rightV),
     },
     back: {
       key: 'back',
@@ -111,7 +149,7 @@ export function computeWalls(
       axisH: [-1, 0, 0],
       normal: [0, 0, -1],
       yaw: Math.PI,
-      ...gable,
+      ...endWall(rightV, leftV),
     },
     left: {
       key: 'left',
@@ -119,7 +157,7 @@ export function computeWalls(
       origin: [-wallOuter, 0, ends.frontInner],
       normal: [-1, 0, 0],
       yaw: -Math.PI / 2,
-      ...side,
+      ...sideWall(leftV),
     },
     right: {
       key: 'right',
@@ -127,7 +165,7 @@ export function computeWalls(
       origin: [wallOuter, 0, ends.frontInner],
       normal: [1, 0, 0],
       yaw: Math.PI / 2,
-      ...side,
+      ...sideWall(rightV),
     },
   };
 }

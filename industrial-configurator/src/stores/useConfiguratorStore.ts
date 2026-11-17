@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 import { DEFAULT_PRICES, calculatePrice, type Prices } from '@/lib/pricing';
+import type { RoofType, Side } from '@/lib/hall';
 import {
   DEFAULT_PALETTE,
   defaultColors,
@@ -33,6 +34,12 @@ interface ConfiguratorState {
   setHeight: (v: number) => void;
   setWidth: (v: number) => void;
   setLength: (v: number) => void;
+  /** `gable` = "2 ape", `mono` = "o apă" (then `height` is the low eave). */
+  roofType: RoofType;
+  setRoofType: (v: RoofType) => void;
+  /** Mono roof: the higher side. */
+  highSide: Side;
+  setHighSide: (v: Side) => void;
 
   // ── Walls visibility toggle (Step 1) ─────────────────────
   /** The user's own toggle (only meaningful in step 1). */
@@ -112,6 +119,10 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
   setHeight: (v) => set({ height: v }),
   setWidth: (v) => set({ width: v }),
   setLength: (v) => set({ length: v }),
+  roofType: 'gable',
+  setRoofType: (v) => set({ roofType: v }),
+  highSide: 'right',
+  setHighSide: (v) => set({ highSide: v }),
 
   // ── Walls visibility ────────────────────────────────────
   wallsToggle: false,
@@ -155,9 +166,9 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
   },
 
   getEstimatedPrice: (openingsCount) => {
-    const { length, width, height, showFoundation, hasSandwichPanels, prices, colors, palette } = get();
+    const { length, width, height, showFoundation, hasSandwichPanels, roofType, prices, colors, palette } = get();
     return calculatePrice(
-      { length, width, height, showFoundation, hasSandwichPanels },
+      { length, width, height, showFoundation, hasSandwichPanels, roofType },
       openingsCount,
       prices,
       surchargeRates(colors, palette),
@@ -168,6 +179,8 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
     const s = get();
     return {
       dimensions: { length: s.length, width: s.width, height: s.height },
+      roofType: s.roofType,
+      highSide: s.highSide,
       floorArea: s.getFloorArea(),
       numberOfBays: s.getNumberOfBays(),
       foundation: s.showFoundation,
@@ -185,6 +198,8 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
       height: 3,
       width: 12,
       length: 12,
+      roofType: 'gable',
+      highSide: 'right',
       wallsToggle: false,
       wallsVisible: false,
       showFoundation: true,
@@ -203,6 +218,7 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
       // Only the user's choices; never prices, step or derived flags.
       partialize: (s) => ({
         height: s.height, width: s.width, length: s.length,
+        roofType: s.roofType, highSide: s.highSide,
         wallsToggle: s.wallsToggle,
         showFoundation: s.showFoundation, hasSandwichPanels: s.hasSandwichPanels,
         isIsolated: s.isIsolated, insulation: s.insulation,
