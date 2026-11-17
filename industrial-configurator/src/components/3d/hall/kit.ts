@@ -9,7 +9,7 @@
  *   - stretch pieces are exactly 1 m long on their stretch axis and are scaled along it;
  *   - `sockets` are the local transforms of the bolts a joint piece carries.
  */
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useGLTF } from '@react-three/drei';
 import { Matrix4, Vector3, type BufferGeometry, type Material, type Mesh, type Object3D } from 'three';
 import { COLUMN_DEPTH, ROOF_PITCH_DEG } from '@/lib/hall';
@@ -106,7 +106,7 @@ function derivePiece(source: KitPiece, matrix: Matrix4): KitPiece {
  */
 export function useHallKit(detail: KitDetail = 'full'): HallKit {
   const { nodes, materials } = useGLTF(KIT_URL, false, true);
-  return useMemo(() => {
+  const kit = useMemo(() => {
     const pieces = Object.fromEntries(
       KIT_PIECES.filter((name) => !DERIVED[name]).map((name) => [name, readPiece(nodes, name, detail)]),
     ) as Record<KitPieceName, KitPiece>;
@@ -115,6 +115,12 @@ export function useHallKit(detail: KitDetail = 'full'): HallKit {
     }
     return { pieces, materials } as unknown as HallKit;
   }, [nodes, materials, detail]);
+  // The derived geometries are this hook's own (the asset's belong to drei's cache).
+  useEffect(
+    () => () => (Object.keys(DERIVED) as KitPieceName[]).forEach((name) => kit.pieces[name].geometry.dispose()),
+    [kit],
+  );
+  return kit;
 }
 
 useGLTF.preload(KIT_URL, false, true);

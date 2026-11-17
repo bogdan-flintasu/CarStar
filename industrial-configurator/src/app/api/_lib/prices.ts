@@ -19,7 +19,12 @@ export async function getCurrentPrices(): Promise<Prices> {
  */
 export async function getOrSeedPalette(): Promise<ColorOption[]> {
   if ((await prisma.colorOption.count()) === 0) {
-    await prisma.colorOption.createMany({ data: [...DEFAULT_PALETTE] });
+    try {
+      await prisma.colorOption.createMany({ data: [...DEFAULT_PALETTE] });
+    } catch (error) {
+      // Another request seeded it first (same fixed ids): read what it wrote.
+      if ((await prisma.colorOption.count()) === 0) throw error;
+    }
   }
   const rows = await prisma.colorOption.findMany({ orderBy: [{ component: 'asc' }, { sortOrder: 'asc' }] });
   return rows.filter((row): row is ColorOption => (COLOR_COMPONENTS as readonly string[]).includes(row.component));

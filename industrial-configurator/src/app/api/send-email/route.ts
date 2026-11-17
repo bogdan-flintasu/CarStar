@@ -57,15 +57,18 @@ export async function POST(req: NextRequest) {
 
   try {
     // B5: the quoted price is recomputed with DB prices, never taken from the client.
-    const lead = {
-      ...input,
-      configurationSummary: resolveEmailSummary(
-        storedData,
-        input.configurationSummary,
-        await getCurrentPrices(),
-        await getOrSeedPalette(),
-      ),
-    };
+    const summary = resolveEmailSummary(
+      storedData,
+      input.configurationSummary,
+      await getCurrentPrices(),
+      await getOrSeedPalette(),
+    );
+    // The starting model is named only if it exists (a client-sent summary could claim any name).
+    if (summary?.model) {
+      const model = await prisma.hallModel.findUnique({ where: { id: summary.model.id }, select: { id: true, name: true } });
+      summary.model = model ?? undefined;
+    }
+    const lead = { ...input, configurationSummary: summary };
     if (apiKey) {
       const { Resend } = await import('resend');
       const resend = new Resend(apiKey);

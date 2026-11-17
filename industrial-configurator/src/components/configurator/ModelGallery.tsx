@@ -11,21 +11,14 @@ import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
 import { applyHallConfiguration } from '@/lib/applyHallConfiguration';
 import { calculatePrice, countOpenings } from '@/lib/pricing';
 import { surchargeRates } from '@/lib/colors';
-import type { HallModelSummary } from '@/lib/validation/models';
+import { hallLabel, type HallModelSummary } from '@/lib/validation/models';
 
-/** Loaded once per page: the list changes only when the admin edits it. */
-let cache: Promise<HallModelSummary[]> | null = null;
+/** Fetched each time step 1 opens, so models the admin just saved show up; a failed fetch just shows none. */
 function loadModels(): Promise<HallModelSummary[]> {
-  cache ??= fetch('/api/models')
+  return fetch('/api/models', { cache: 'no-store' })
     .then((r) => (r.ok ? r.json() : []))
     .then((data) => (Array.isArray(data) ? data : []))
     .catch(() => []);
-  return cache;
-}
-
-export function hallLabel(data: HallModelSummary['data']): string {
-  const { length, width, height } = data.dimensions;
-  return `${length} × ${width} × ${height} m · ${data.roofType === 'mono' ? 'o apă' : '2 ape'}`;
 }
 
 export default function ModelGallery() {

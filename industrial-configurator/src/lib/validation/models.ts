@@ -60,3 +60,9 @@ export interface HallModelAdmin extends HallModelSummary {
   sortOrder: number;
   updatedAt: string;
 }
+
+/** "24 × 12 × 5 m · 2 ape": a hall's size and roof type, for model cards and lists. */
+export function hallLabel(data: Pick<HallModelData, 'dimensions' | 'roofType'>): string {
+  const { length, width, height } = data.dimensions;
+  return `${length} × ${width} × ${height} m · ${data.roofType === 'mono' ? 'o apă' : '2 ape'}`;
+}

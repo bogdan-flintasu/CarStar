@@ -16,9 +16,22 @@ import type { HallModelAdmin } from '@/lib/validation/models';
 
 type Status = { kind: 'idle' } | { kind: 'saving' } | { kind: 'saved'; text: string } | { kind: 'error'; text: string };
 
-async function snapshotWithoutSelection(): Promise<string | undefined> {
-  useOpeningsStore.getState().selectOpening(null);
-  return (await takeHallSnapshot()) ?? undefined;
+/**
+ * Picture of the finished hall: walls shown (which also hides the dimension lines), no selected opening and no
+ * placement tool. The admin's wall toggle is restored afterwards.
+ */
+async function takeModelPicture(): Promise<string | undefined> {
+  const hall = useConfiguratorStore.getState();
+  const openings = useOpeningsStore.getState();
+  const wallsToggle = hall.wallsToggle;
+  hall.setWallsVisible(true);
+  openings.selectOpening(null);
+  openings.setActiveTool(null);
+  try {
+    return (await takeHallSnapshot()) ?? undefined;
+  } finally {
+    useConfiguratorStore.getState().setWallsVisible(wallsToggle);
+  }
 }
 
 export default function AdminModelBar() {
@@ -67,7 +80,7 @@ export default function AdminModelBar() {
     if (!form || !form.name.trim()) return fail('Dă un nume modelului.');
     setStatus({ kind: 'saving' });
     try {
-      const thumbnail = await snapshotWithoutSelection();
+      const thumbnail = await takeModelPicture();
       const res = await fetch('/api/admin/models', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -87,7 +100,7 @@ export default function AdminModelBar() {
     if (!editing) return;
     setStatus({ kind: 'saving' });
     try {
-      const thumbnail = await snapshotWithoutSelection();
+      const thumbnail = await takeModelPicture();
       const res = await fetch(`/api/admin/models/${editing.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },

@@ -6,18 +6,16 @@
  */
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import type { HallModelAdmin } from '@/lib/validation/models';
+import { hallLabel, type HallModelAdmin } from '@/lib/validation/models';
 
 type AdminFetch = (input: string, init?: RequestInit) => Promise<Response>;
 
 const input =
   'w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm outline-none focus:border-[#F5A623]/50 transition-colors';
 
-export function describeHall(data: HallModelAdmin['data']): string {
-  const { length, width, height } = data.dimensions;
-  const roof = data.roofType === 'mono' ? 'o apă' : '2 ape';
+function describeHall(data: HallModelAdmin['data']): string {
   const openings = data.openingsList.length;
-  return `${length} × ${width} × ${height} m · ${roof}${openings ? ` · ${openings} deschideri` : ''}`;
+  return `${hallLabel(data)}${openings ? ` · ${openings} deschideri` : ''}`;
 }
 
 export default function ModelsAdmin({ adminFetch }: { adminFetch: AdminFetch }) {

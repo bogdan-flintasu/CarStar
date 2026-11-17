@@ -81,6 +81,8 @@ export default function DimensionLines({ layout, visible }: DimensionLinesProps)
   const backZ = frames[frames.length - 1].z;
   const y = FLOOR_CLEARANCE;
   // The highest point: the ridge of a gable, the high column's inner face of a mono-pitch roof.
+  // H is the clear height at the (low) eave: on a mono-pitch roof, draw it on the low side.
+  const lowX = layout.highSide === 'left' ? sideX : -sideX;
   const topX = layout.highSide ? (layout.highSide === 'left' ? -1 : 1) * halfWidths.columnInner : 0;
 
   return (
@@ -94,8 +96,8 @@ export default function DimensionLines({ layout, visible }: DimensionLinesProps)
         labelRotation={FLAT_ACROSS_HALL}
       />
       <Dimension
-        from={[-sideX, 0, 0]}
-        to={[-sideX, params.height, 0]}
+        from={[lowX, 0, 0]}
+        to={[lowX, params.height, 0]}
         tick={[1, 0, 0]}
         label={`H = ${metres(params.height)}`}
         labelRotation={UPRIGHT_FACING_LEFT}
