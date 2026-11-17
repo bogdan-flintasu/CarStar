@@ -138,7 +138,7 @@ export function frameView(points: readonly Vec3[], direction: Vec3, fov: number,
     nearest = Math.min(nearest, depth);
     farthest = Math.max(farthest, depth);
   }
-  return { position, target, fov, near: Math.max(0.1, nearest * 0.5), far: farthest + FAR_BEYOND };
+  return { position, target, fov, near: Math.max(0.5, nearest * 0.05), far: farthest + FAR_BEYOND };
 }
 
 /** Cameras of every render view for this hall, for pictures of the given aspect ratio (width / height). */

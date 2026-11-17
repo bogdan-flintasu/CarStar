@@ -88,6 +88,9 @@ describe('buildQuoteModel', () => {
     const gross = buildQuoteModel(input({ settings: { vatRate: 0.19, pricesIncludeVat: true } })).price;
     expect(gross).toMatchObject({ label: 'Preț estimativ (TVA inclus)', vatNote: 'Prețul include TVA 19%.' });
     expect(buildQuoteModel(input()).disclaimer.join(' ')).toMatch(/nu este o ofertă fermă/i);
+    // CC BY 4.0: the props' authors are credited whenever there are pictures.
+    expect(buildQuoteModel(input()).disclaimer.join(' ')).toContain('https://example.com/credite');
+    expect(buildQuoteModel(input({ renderViews: [] })).disclaimer.join(' ')).not.toContain('/credite');
   });
 
   it('puts the front view first and the others after it', () => {

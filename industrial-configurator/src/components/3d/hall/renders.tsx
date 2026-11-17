@@ -31,10 +31,12 @@ import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { RENDER_VIEWS, renderViewCameras, sunForView, type RenderView } from '@/lib/hall/renderViews';
 import { planSite } from '@/lib/hall/sitePlan';
+import { planProps } from '@/lib/hall/propPlan';
 import type { HallLayout } from '@/lib/hall';
 import { useOpeningsStore } from '@/stores/useOpeningsStore';
 import { loadRenderSky } from '@/components/3d/stage/sky';
 import { buildSite, disposeSite } from '@/components/3d/stage/site';
+import { buildProps, disposeProps, loadPropAssets } from '@/components/3d/stage/props';
 import { applyStaging } from '@/components/3d/stage/staging';
 import { GradePass } from '@/components/3d/stage/gradePass';
 
@@ -170,8 +172,12 @@ export function HallRenderProvider({ layout }: { layout: HallLayout }) {
       const { width, height } = quality;
       const cameras = renderViewCameras(layout, width / height);
       const plan = planSite(layout, useOpeningsStore.getState().openings);
-      const [sky, site] = await Promise.all([loadRenderSky(gl), buildSite(plan, layout.groundY)]);
+      const [sky, site, propAssets] = await Promise.all([loadRenderSky(gl), buildSite(plan, layout.groundY), loadPropAssets()]);
       abortIfNeeded(signal);
+      // Cars, people, trees and neighbours ride along with the site's ground.
+      const viewpoints = Object.values(cameras).map((c) => [c.position[0], c.position[2]] as [number, number]);
+      const props = buildProps(planProps(plan, viewpoints), propAssets, layout.groundY);
+      site.add(props);
 
       const canFloat = gl.extensions.has('EXT_color_buffer_float') || gl.extensions.has('EXT_color_buffer_half_float');
       const floatType = canFloat ? HalfFloatType : UnsignedByteType;
@@ -280,6 +286,8 @@ export function HallRenderProvider({ layout }: { layout: HallLayout }) {
         gtao.dispose();
         outputPass.dispose();
         grade.dispose();
+        site.remove(props);
+        disposeProps(props);
         disposeSite(site);
         // The live shadow map was reallocated: draw the live view again.
         invalidate();

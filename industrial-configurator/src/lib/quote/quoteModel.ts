@@ -10,6 +10,7 @@ import { COLOR_COMPONENTS, COMPONENT_LABELS, defaultColors } from '@/lib/colors'
 import { clampHallDimensions, computeHallLayout } from '@/lib/hall';
 import { RENDER_VIEW_LABELS, type RenderView } from '@/lib/hall/renderViews';
 import { wallLabelRo } from '@/lib/i18n/ro';
+import { renderCreditLine } from '@/lib/renderCredits';
 import type { ConfigurationData } from '@/lib/validation/configuration';
 import type { QuoteSettings } from './settings';
 
@@ -127,6 +128,14 @@ export function openingRows(list: ConfigurationData['openingsList']): QuoteOpeni
     .map(({ type, wall, size, count }) => ({ type, wall, size, count }));
 }
 
+const originOf = (link: string) => {
+  try {
+    return new URL(link).origin;
+  } catch {
+    return '';
+  }
+};
+
 export function buildQuoteModel(input: QuoteInput): QuoteModel {
   const { data, branding, settings, token } = input;
   const { length, width, height } = data.dimensions;
@@ -179,6 +188,7 @@ export function buildQuoteModel(input: QuoteInput): QuoteModel {
       'Acesta este un preț estimativ, calculat automat din configurația aleasă. Nu este o ofertă fermă și nici un proiect tehnic.',
       'Prețul final se stabilește după vizita în teren și proiectarea halei (verificarea structurii, a terenului și a încărcărilor de zăpadă și vânt).',
       'Imaginile sunt randări ale configurației și au rol de prezentare.',
+      ...(images.length > 0 ? [renderCreditLine(originOf(input.link))] : []),
     ],
     link: input.link,
     filename: quoteFilename(token),

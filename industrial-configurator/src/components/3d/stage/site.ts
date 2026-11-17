@@ -19,24 +19,13 @@ import {
   TextureLoader,
 } from 'three';
 import type { SitePlan, SiteRect } from '@/lib/hall/sitePlan';
+import { seededRandom } from '@/lib/hall/propPlan';
 
 const GRASS_SIZE = 2000;
 const GRASS_TILE = 4;
 const ASPHALT_TILE = 14;
 const LINE = 0.12;
 const KERB_HEIGHT = 0.14;
-
-/** Small deterministic PRNG (mulberry32): the same asphalt grain in every picture. */
-export function seededRandom(seed: number): () => number {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 /** Asphalt grain: mid-grey speckles, a few lighter stones and soft darker patches. */
 function asphaltTexture(): Texture {

@@ -78,6 +78,20 @@ describe('renderViewCameras', () => {
     }
   });
 
+  it('keeps the ground in front of the camera inside the near plane (no clipped foreground)', () => {
+    for (const size of SIZES) {
+      const layout = computeHallLayout({ ...base, ...size });
+      for (const camera of Object.values(renderViewCameras(layout, ASPECT))) {
+        // Where the bottom edge of the picture meets the ground, roughly: well beyond the near plane.
+        const height = camera.position[1] - layout.groundY;
+        const pitch = Math.atan2(camera.position[1] - camera.target[1], Math.hypot(camera.position[0] - camera.target[0], camera.position[2] - camera.target[2]));
+        const bottom = pitch + (camera.fov * Math.PI) / 360;
+        const groundHit = bottom < Math.PI / 2 ? height / Math.sin(bottom) : height;
+        expect(camera.near).toBeLessThan(groundHit * 0.5);
+      }
+    }
+  });
+
   it('is deterministic', () => {
     const layout = computeHallLayout({ ...base, width: 13, length: 30 });
     expect(renderViewCameras(layout, ASPECT)).toEqual(renderViewCameras(layout, ASPECT));

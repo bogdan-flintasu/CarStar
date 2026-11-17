@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { RENDER_VIEW_LABELS, RENDER_VIEWS, type RenderView } from '@/lib/hall/renderViews';
+import { renderCreditLine } from '@/lib/renderCredits';
 
 export interface GalleryImage {
   view: RenderView;
@@ -104,6 +105,12 @@ export default function RenderGallery({ images, loading, done = 0, error, onRetr
           </button>
         ))}
       </div>
+      <p className={`mt-2 text-[10px] leading-snug ${muted}`}>
+        {renderCreditLine().replace(/ Lista completă: \/credite$/, ' ')}
+        <a href="/credite" target="_blank" className="underline">
+          Credite
+        </a>
+      </p>
 
       {current &&
         createPortal(
