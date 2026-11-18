@@ -18,6 +18,23 @@ model Configuration {
   userEmail String?
   userName  String?
   userPhone String?
+  images    ConfigurationImage[]
+}
+
+/// Quote pictures of a configuration (the 3D renders made in the customer's browser), one per view.
+/// Accessed only through src/app/api/_lib/renderStore.ts, so the bytes can move to disk or S3 later.
+model ConfigurationImage {
+  id              String        @id @default(cuid())
+  configurationId String
+  configuration   Configuration @relation(fields: [configurationId], references: [id], onDelete: Cascade)
+  view            String        // front | rear | side | aerial (RENDER_VIEWS)
+  mime            String        // always image/jpeg (checked by magic bytes)
+  bytes           Bytes
+  width           Int
+  height          Int
+  createdAt       DateTime      @default(now())
+
+  @@unique([configurationId, view])
 }
 
 model Prices {

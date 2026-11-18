@@ -12,6 +12,7 @@ import {
 import { buildLeadEmailHtml, buildLeadLog, buildLeadSubject } from '../_lib/emailTemplate';
 import { getCurrentPrices, getOrSeedPalette } from '../_lib/prices';
 import { resolveEmailSummary } from '../_lib/serverPrice';
+import { buildQuotePdfForToken, type QuotePdf } from '../_lib/quoteForToken';
 
 const MAX_BODY_BYTES = 16 * 1024;
 
@@ -39,9 +40,10 @@ export async function POST(req: NextRequest) {
   // The link in the email is rebuilt server-side from the token.
   let link: string | null = null;
   let storedData: unknown = undefined;
+  let token: string | null = null;
+  const origin = normalizeOrigin(process.env.APP_BASE_URL) ?? req.nextUrl.origin;
   if (input.configurationLink) {
-    const origin = normalizeOrigin(process.env.APP_BASE_URL) ?? req.nextUrl.origin;
-    const token = parseConfigurationLink(input.configurationLink, origin);
+    token = parseConfigurationLink(input.configurationLink, origin);
     const saved =
       token && (await prisma.configuration.findUnique({ where: { token }, select: { data: true } }));
     if (!token || !saved) {
@@ -69,6 +71,16 @@ export async function POST(req: NextRequest) {
       summary.model = model ?? undefined;
     }
     const lead = { ...input, configurationSummary: summary };
+    // The PDF quote of the saved configuration, built here from the stored data (never sent by the client).
+    // A lead is worth more than its attachment: if the PDF fails, the email still goes out without it.
+    let quote: QuotePdf | null = null;
+    if (token) {
+      try {
+        quote = await buildQuotePdfForToken(token, origin);
+      } catch (error) {
+        console.error('send-email: PDF quote not attached:', error);
+      }
+    }
     if (apiKey) {
       const { Resend } = await import('resend');
       const resend = new Resend(apiKey);
@@ -77,11 +89,12 @@ export async function POST(req: NextRequest) {
         to: [toEmail],
         replyTo: input.email,
         subject: buildLeadSubject(lead),
-        html: buildLeadEmailHtml(lead, link),
+        html: buildLeadEmailHtml(lead, link, { attachment: quote?.filename }),
+        attachments: quote ? [{ filename: quote.filename, content: quote.pdf, contentType: 'application/pdf' }] : undefined,
       });
       if (error) throw new Error(error.message);
     } else {
-      console.log(buildLeadLog(lead, link, fromEmail, toEmail));
+      console.log(buildLeadLog(lead, link, fromEmail, toEmail, quote && `${quote.filename} (${Math.round(quote.pdf.byteLength / 1024)} KB)`));
     }
     return NextResponse.json({ success: true });
   } catch (error) {

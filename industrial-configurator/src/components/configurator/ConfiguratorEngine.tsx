@@ -20,6 +20,7 @@ import { Ground, Sun } from '@/components/3d/hall/Site';
 import { requestHallFraming, useHallFramingRequests } from '@/components/3d/hall/framing';
 import HallStatsProbe from '@/components/3d/hall/HallStatsProbe';
 import { SnapshotProvider } from '@/components/3d/hall/snapshot';
+import { HallRenderProvider, renderHiddenProps } from '@/components/3d/hall/renders';
 import { useHallUrlParams } from '@/components/3d/hall/useHallUrlParams';
 import PlacementMarkers from '@/components/3d/PlacementMarkers';
 import WallOpenings from '@/components/3d/WallOpenings';
@@ -95,7 +96,12 @@ export default function ConfiguratorEngine() {
     >
       <Sun layout={layout} intensity={0.7} shadowMapSize={gfx.shadowMapSize} />
       <ambientLight intensity={0.5} />
-      {gfx.enableSky && <Sky distance={450000} sunPosition={[-5, 10, 5]} inclination={0} azimuth={0.25} />}
+      {/* Quote renders bring their own sky (src/components/3d/stage). */}
+      {gfx.enableSky && (
+        <group {...renderHiddenProps}>
+          <Sky distance={450000} sunPosition={[-5, 10, 5]} inclination={0} azimuth={0.25} />
+        </group>
+      )}
       {gfx.enableEnvironment && <Environment preset="city" />}
       <Ground layout={layout} textured={gfx.tier !== 'low'} />
 
@@ -110,13 +116,16 @@ export default function ConfiguratorEngine() {
         onWallHover={placingOpening ? setHoveredWallId : undefined}
       />
 
-      <DimensionLines layout={layout} visible={!claddingVisible} />
-
-      {/* Openings hide themselves with the cladding (same rule as above). */}
-      <PlacementMarkers layout={layout} />
+      {/* Editing helpers: never in the quote renders. */}
+      <group {...renderHiddenProps}>
+        <DimensionLines layout={layout} visible={!claddingVisible} />
+        {/* Openings hide themselves with the cladding (same rule as above). */}
+        <PlacementMarkers layout={layout} />
+      </group>
       <WallOpenings layout={layout} realHoles colors={hexes} />
 
       <SnapshotProvider />
+      <HallRenderProvider layout={layout} />
       {process.env.NODE_ENV !== 'production' && <HallStatsProbe layout={layout} />}
     </Canvas>
   );

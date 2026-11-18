@@ -7,6 +7,9 @@ import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
 import { countOpenings } from '@/lib/pricing';
 import { COLOR_COMPONENTS, COMPONENT_LABELS } from '@/lib/colors';
 import { useOpeningsStore } from '@/stores/useOpeningsStore';
+import RenderGallery from '../RenderGallery';
+import { ensureHallRenders, useHallRenders, type RenderedView } from '../hallRenders';
+import { renderField } from '@/lib/validation/renders';
 
 export default function SummaryStep() {
   const {
@@ -24,6 +27,7 @@ export default function SummaryStep() {
   })));
 
   const openings = useOpeningsStore((s) => s.openings);
+  const renders = useHallRenders();
 
   const counts = countOpenings(openings);
   const { windows: windowCount, doors: doorCount, garageDoors: garageDoorCount } = counts;
@@ -43,21 +47,66 @@ export default function SummaryStep() {
   const [configLink, setConfigLink] = useState('');
   const [copied, setCopied] = useState(false);
 
-  const handleGenerateLink = async () => {
+  const [token, setToken] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const [pdfError, setPdfError] = useState('');
+
+  /**
+   * Saves the configuration once, with its pictures (multipart upload), and returns its token. Pictures that could not
+   * be rendered are left out rather than blocking the save. Throws the HTTP status on failure.
+   */
+  const saveConfiguration = async (contact?: { userName: string; userEmail: string; userPhone: string }) => {
+    if (token) return token;
+    let views: RenderedView[] = [];
     try {
-      const data = { ...getConfigurationData(counts), openingsList: openings };
-      const res = await fetch('/api/configurations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data }),
-      });
-      const result = await res.json();
-      if (result.token) {
-        const url = `${window.location.origin}/configuration/${result.token}`;
-        setConfigLink(url);
-      }
+      views = await ensureHallRenders();
+    } catch (err) {
+      console.error('Saving without pictures:', err);
+    }
+    const form = new FormData();
+    form.append('payload', JSON.stringify({ data: { ...getConfigurationData(counts), openingsList: openings }, ...contact }));
+    for (const v of views) form.append(renderField(v.view), v.blob, `${v.view}.jpg`);
+    const res = await fetch('/api/configurations', { method: 'POST', body: form });
+    if (!res.ok) throw res.status;
+    const result: { token?: string } = await res.json();
+    if (!result.token) throw 0;
+    setToken(result.token);
+    setConfigLink(`${window.location.origin}/configuration/${result.token}`);
+    return result.token;
+  };
+
+  const handleGenerateLink = async () => {
+    setSaving(true);
+    try {
+      await saveConfiguration();
     } catch (err) {
       console.error('Failed to generate configuration link:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    setPdfBusy(true);
+    setPdfError('');
+    try {
+      const saved = await saveConfiguration();
+      const res = await fetch(`/api/configurations/${saved}/pdf`);
+      if (!res.ok) throw res.status;
+      const url = URL.createObjectURL(await res.blob());
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `oferta-hala-${saved}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (err) {
+      console.error('Failed to download the PDF quote:', err);
+      setPdfError(errorFor(typeof err === 'number' ? err : 0));
+    } finally {
+      setPdfBusy(false);
     }
   };
 
@@ -82,20 +131,12 @@ export default function SummaryStep() {
     try {
       let link = configLink;
       if (!link) {
-        const data = { ...getConfigurationData(counts), openingsList: openings };
-        const res = await fetch('/api/configurations', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data, userName: name, userEmail: email, userPhone: phone }),
-        });
-        if (!res.ok) {
-          setError(errorFor(res.status));
+        try {
+          const saved = await saveConfiguration({ userName: name, userEmail: email, userPhone: phone });
+          link = `${window.location.origin}/configuration/${saved}`;
+        } catch (status) {
+          setError(errorFor(typeof status === 'number' ? status : 0));
           return;
-        }
-        const result = await res.json();
-        if (result.token) {
-          link = `${window.location.origin}/configuration/${result.token}`;
-          setConfigLink(link);
         }
       }
 
@@ -151,6 +192,18 @@ export default function SummaryStep() {
           <div className="text-xs text-gray-400 mt-1">
             *Preț orientativ, supus modificărilor
           </div>
+        </div>
+
+        {/* Pictures of the hall, as in the PDF quote */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <h3 className="text-sm font-bold text-black mb-3 uppercase">Imagini</h3>
+          <RenderGallery
+            images={renders.status === 'ready' ? renders.views : []}
+            loading={renders.status === 'rendering' || renders.status === 'idle'}
+            done={renders.done}
+            error={renders.status === 'error'}
+            onRetry={renders.retry}
+          />
         </div>
 
         {/* Configuration details */}
@@ -256,11 +309,26 @@ export default function SummaryStep() {
           ) : (
             <button
               onClick={handleGenerateLink}
-              className="w-full py-2 rounded-lg border border-[var(--color-primary)] text-[var(--color-primary)] text-sm font-bold cursor-pointer hover:bg-orange-55 transition-colors"
+              disabled={saving}
+              className="w-full py-2 rounded-lg border border-[var(--color-primary)] text-[var(--color-primary)] text-sm font-bold cursor-pointer hover:bg-orange-55 transition-colors disabled:opacity-50"
             >
-              Generează Link
+              {saving ? 'Se salvează…' : 'Generează Link'}
             </button>
           )}
+        </div>
+
+        {/* PDF quote, built on the server from the saved configuration */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <h3 className="text-sm font-bold text-black mb-1">Ofertă PDF</h3>
+          <p className="text-xs text-gray-500 mb-3">Imaginile halei, specificațiile și prețul estimativ, într-un singur document.</p>
+          <button
+            onClick={handleDownloadPdf}
+            disabled={pdfBusy}
+            className="w-full py-2.5 rounded-lg bg-black text-white text-sm font-bold cursor-pointer hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-wait"
+          >
+            {pdfBusy ? 'Se pregătește oferta…' : 'Descarcă oferta PDF'}
+          </button>
+          {pdfError && <p role="alert" className="mt-2 text-xs text-red-500">{pdfError}</p>}
         </div>
 
         {/* Email form */}
