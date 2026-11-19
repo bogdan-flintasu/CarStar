@@ -23,6 +23,7 @@ import HallStatsProbe from '@/components/3d/hall/HallStatsProbe';
 import { SnapshotProvider } from '@/components/3d/hall/snapshot';
 import { HallRenderProvider, renderHiddenProps } from '@/components/3d/hall/renders';
 import { useHallUrlParams } from '@/components/3d/hall/useHallUrlParams';
+import ComponentPicker from '@/components/3d/hall/ComponentPicker';
 import PlacementPreview from '@/components/3d/openings/PlacementPreview';
 import WallOpenings from '@/components/3d/WallOpenings';
 import DimensionLines from '@/components/3d/DimensionLines';
@@ -132,6 +133,7 @@ export default function ConfiguratorEngine() {
         <FlatViewDimensions layout={layout} openings={openings} color={accent} />
         {/* Openings hide themselves with the cladding (same rule as above). */}
         <PlacementPreview layout={layout} />
+        <ComponentPicker layout={layout} claddingVisible={claddingVisible} />
       </group>
       <WallOpenings layout={layout} realHoles colors={hexes} />
 
