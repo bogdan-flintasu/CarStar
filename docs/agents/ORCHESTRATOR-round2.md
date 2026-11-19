@@ -105,3 +105,19 @@ Gate: `cd industrial-configurator && pnpm install && pnpm exec tsc --noEmit && p
   T4 tuning (sonnet) SKIPPED: target met (user asked to save tokens; 38% of the 5 h window used, keep 20%).
   Open: thresholds untested on a real weak phone; phone toggle can sit under the relayout toast while it shows.
 - Budget decision (user at 38%, must keep 20%): finish wave 2 (T5b-ui + lean browser check), then STOP before wave 3.
+- T5b-ui done (0b003e6, sonnet, 132k tokens). Own files + 2+2 mount lines. Worker browser-checked column, rafter, purlin,
+  wall, roof, gutter picks, opening priority, Esc/empty/× clear, 375 px. Merged r2-t5b-ui -> bee10b0. Gate GREEN (771).
+- Wave 2 browser check (orchestrator, verify worktree on main bee10b0, port 3010, 1440 px + 375 px):
+  - T3b PASS: Dreapta ortho shows bays 5,71 m … L = 40 m, H / Coamă, axis bubbles 1..8, opening chain.
+  - T1b PASS: window tool -> status "Plasezi: Fereastră …", preview centred in bay, click -> {bay 0, offset 'centre'},
+    first-time hint gone, Esc ends tool.
+  - T5b PASS: wall click -> card "Peretele lateral dreapta" (length, height, area, colour + RAL) + highlight.
+  - T4 PASS: "Calitate Auto/Ridicată" next to undo/redo; phone: stacked above undo above the view bar, no h-scroll.
+  - BUG found + FIXED (orchestrator, CameraRig.tsx): any click on the canvas left the fixed view (OrbitControls 'start'),
+    so clicking a component/opening on a flat view hid its dimensions. Now leaves only on the first 'change' after 'start'.
+    Verified: click keeps Dreapta + chains; drag still leaves. Gate GREEN (tsc, lint 0/0, 771 tests, build).
+  - Minor, open: flat-view overlay shows during the 0.65 s glide before the camera arrives (floats briefly) -> T3d/T1f;
+    first click after placing only deselects the new opening (by design: new openings start selected).
+  - Not checked: card drop onto wall, Alt-drag, real touch, downpipe pick, governor on a real weak phone.
+- STOP after wave 2 (user budget: keep 20% of the 5 h window). Next session: wave 3 = T1d, T1e, T1f, T3d, then QA
+  (sonnet), fix round, final gate, SUMMARY-round2.md. Worktrees of this round are still on disk (not cleaned).
