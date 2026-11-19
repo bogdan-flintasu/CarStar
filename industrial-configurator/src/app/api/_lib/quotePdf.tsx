@@ -8,6 +8,7 @@ import path from 'path';
 import { Document, Font, Image as PdfImage, Link, Page, StyleSheet, Text, View, renderToBuffer } from '@react-pdf/renderer';
 import type { RenderView } from '@/lib/hall/renderViews';
 import type { QuoteImage, QuoteModel } from '@/lib/quote/quoteModel';
+import { QuoteDrawingPages } from './quoteDrawings';
 
 const FONT_DIR = path.join(process.cwd(), 'assets', 'fonts', 'inter');
 let fontsRegistered = false;
@@ -223,6 +224,8 @@ function QuoteDocument({ model, assets }: { model: QuoteModel; assets: QuoteAsse
             ))}
           </View>
         </View>
+
+        <QuoteDrawingPages model={model} />
 
         <View style={s.footer} fixed>
           <View style={s.footerText}>
