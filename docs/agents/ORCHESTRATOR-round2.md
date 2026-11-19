@@ -31,3 +31,6 @@ Gate: `cd industrial-configurator && pnpm install && pnpm exec tsc --noEmit && p
   formatMetres ("7,5 m"). Handoffs: T3b switch DimensionLines labels to formatMetres, grid dashed, steel on elevations as
   hidden lines, offset text from labelAt; T1 pass placed rects (offsetX/sill/width/height) to buildDrawings.
 - T5a launched (sonnet) in the freed slot.
+- T5a done (caeeec7). CONFIGURATOR_FOV = 45 in cameraViews.ts, used by CameraRig fallback and the engine; initial camera
+  moved back to [-11, 13, 24] (accepted: only thing that assumed 75°). 24 frustum tests. Merged r2-t5a -> 0b3738f.
+  Gate GREEN (tsc, lint 0/0, 550 tests, build).
