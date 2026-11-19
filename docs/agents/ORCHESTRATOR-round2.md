@@ -96,3 +96,12 @@ Gate: `cd industrial-configurator && pnpm install && pnpm exec tsc --noEmit && p
   placeKit — T4's LOD must keep it (check at T4 review: culling must not reorder/compact instances without a mapping).
   37+4 tests. Not browser-checked (nothing drawn yet). Merged -> see next line.
 - T5b-ui (sonnet, r2-t5b-ui) launched now: own highlight overlay + card, no T4 files; browser check required (port 3018).
+- T4 done (ea784c7 baseline + script, 1f26662 governor/LOD/toggle; 237k tokens). Own files only. M5 already met target
+  before changes (60 fps cap); 102 m hall 212k -> 83k tris at framed view; 4x: 58-60 fps. Governor ladder env -> shadow
+  2048/1024/512 -> far detail -> DPR -0.25 to 1; constants in quality.ts (QUALITY_TUNING, TRIANGLE_BUDGET). Bolts in 12 m
+  chunks, screen-size cull, offscreen renders draw all (quote renders pixel-compared L0 vs L8: same). Picking contract
+  kept: name + userData.kitPiece, instance i = placement i; only bolts chunked (not pickable).
+  Merged r2-t4 -> 5c9b6a2 (engine + layout auto-merged). Gate GREEN (771 tests, incl. T5b-map contract test vs placeKit).
+  T4 tuning (sonnet) SKIPPED: target met (user asked to save tokens; 38% of the 5 h window used, keep 20%).
+  Open: thresholds untested on a real weak phone; phone toggle can sit under the relayout toast while it shows.
+- Budget decision (user at 38%, must keep 20%): finish wave 2 (T5b-ui + lean browser check), then STOP before wave 3.
