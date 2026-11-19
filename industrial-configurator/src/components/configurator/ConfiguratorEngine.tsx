@@ -24,6 +24,7 @@ import { SnapshotProvider } from '@/components/3d/hall/snapshot';
 import { HallRenderProvider, renderHiddenProps } from '@/components/3d/hall/renders';
 import { useHallUrlParams } from '@/components/3d/hall/useHallUrlParams';
 import ComponentPicker from '@/components/3d/hall/ComponentPicker';
+import ComponentHighlight from '@/components/3d/hall/ComponentHighlight';
 import PlacementPreview from '@/components/3d/openings/PlacementPreview';
 import WallOpenings from '@/components/3d/WallOpenings';
 import DimensionLines from '@/components/3d/DimensionLines';
@@ -134,6 +135,7 @@ export default function ConfiguratorEngine() {
         {/* Openings hide themselves with the cladding (same rule as above). */}
         <PlacementPreview layout={layout} />
         <ComponentPicker layout={layout} claddingVisible={claddingVisible} />
+        <ComponentHighlight layout={layout} />
       </group>
       <WallOpenings layout={layout} realHoles colors={hexes} />
 
