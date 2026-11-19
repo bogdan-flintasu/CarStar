@@ -8,11 +8,13 @@
 import { useEffect, useMemo } from 'react';
 import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
 import type { HallLayout, LegacyWallId } from '@/lib/hall';
-import { useHallKit, type KitDetail } from './kit';
+import { KIT_PIECES, useHallKit, type HallKit, type KitDetail } from './kit';
 import { useHallMaterials } from './materials';
-import { placeKit } from './placements';
+import { placeKit, type KitPlacements } from './placements';
+import { estimateHallCost, type HallCost } from './qualityLod';
+import { useQualityStore } from './qualityStore';
 import { Roof, Slab } from './Roof';
-import { Bolts, Frames, Purlins, Rainwater } from './Steel';
+import { Bolts, Frames, Purlins, RAINWATER_PIECES, Rainwater } from './Steel';
 import Trims from './Trims';
 import Walls, { type WallHole } from './Walls';
 import type { HallColorHexes } from '@/lib/colors';
@@ -31,6 +33,32 @@ export interface HallProps {
   colors?: HallColorHexes;
 }
 
+/** Bolts and rainwater goods never cast shadows (Steel.tsx, below). */
+const NO_SHADOW_PIECES = new Set<string>(['Bolt', ...RAINWATER_PIECES]);
+const trianglesOf = (geometry: HallKit['pieces'][keyof HallKit['pieces']]['geometry']) =>
+  (geometry.index?.count ?? geometry.getAttribute('position').count) / 3;
+
+/** What this hall costs to draw with every piece shown (qualityLod.ts): the governor's starting point. */
+function hallCost(kit: HallKit, placements: KitPlacements, steelCastsShadow: boolean): HallCost {
+  const bolts = KIT_PIECES.reduce(
+    (sum, name) =>
+      sum +
+      placements[name].reduce(
+        (n, { openSide }) => n + kit.pieces[name].sockets.filter((s) => s.side === undefined || s.side !== openSide).length,
+        0,
+      ),
+    0,
+  );
+  return estimateHallCost(
+    KIT_PIECES.map((name) => ({
+      name,
+      instances: name === 'Bolt' ? bolts : placements[name].length,
+      trianglesEach: trianglesOf(kit.pieces[name].geometry),
+      castsShadow: steelCastsShadow && !NO_SHADOW_PIECES.has(name),
+    })),
+  );
+}
+
 export default function Hall({
   layout,
   claddingVisible = true,
@@ -45,6 +73,10 @@ export default function Hall({
   const placements = useMemo(() => placeKit(layout), [layout]);
   // Under the cladding the steel is in its shade anyway: only the outermost visible shell casts shadows.
   const steel = { kit, placements, material: materials.steel, castShadow: !claddingVisible };
+
+  useEffect(() => {
+    useQualityStore.getState().setCost(hallCost(kit, placements, !claddingVisible));
+  }, [kit, placements, claddingVisible]);
 
   // Hall mounts only once the kit has loaded (it suspends until then): report ready after its first frame.
   useEffect(() => {

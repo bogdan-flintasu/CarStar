@@ -11,6 +11,7 @@ import { getGraphicsSettings } from '@/lib/hardwareTier';
 import AdminModelBar from './AdminModelBar';
 import ViewToolbar from './ViewToolbar';
 import HistoryButtons from './HistoryButtons';
+import QualityToggle from './QualityToggle';
 import MovedOpeningsToast from './MovedOpeningsToast';
 import ConfigHeader from './ConfigHeader';
 import ConfigFooter from './ConfigFooter';
@@ -167,6 +168,7 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
           <AdminModelBar />
           <ViewToolbar />
           <HistoryButtons />
+          <QualityToggle />
           <MovedOpeningsToast />
 
           {/* Navigation Hint Overlay — Desktop (bottom-left) */}

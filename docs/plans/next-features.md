@@ -150,6 +150,34 @@ test the full flow: place, copy, mirror, resize smaller and larger, undo.
     dips are main-thread stalls under the input flood, not draw cost. Draw calls stay ~40 whatever the length
     (instancing); triangles grow ~linearly with length (bolts, cleats, purlin spans). The costs that scale on weaker
     devices are GPU-side: pixels (DPR 2), PCF shadow map 2048, environment reflections, and the triangle count.
+- After (2026-11-19, same machine and script, Auto mode; the machine was shared with other builds, load average ~7,
+  so the throttled rows vary by ±10 fps from run to run; "quality" = the governor's level at the end of the row):
+
+  | hall (w×l×h) | CPU | median ms | p95 ms | fps | render CPU ms | triangles | draw calls | quality |
+  |---|---|---|---|---|---|---|---|---|
+  | 12×12×4 | 1× | 16.7 | 16.7 | 60 | 0.4 | 35,040 | 43 | L0 |
+  | 12×12×4 | 4× | 16.7 | 16.8 | 60 | 0.6 | 35,040 | 43 | L0 |
+  | 12×12×4 | 6× | 16.7 | 16.8 | 58 | 1.0 | 35,040 | 43 | L0 |
+  | 15×40×5 | 1× | 16.7 | 16.7 | 60 | 0.2 | 56,148 | 42 | L0 |
+  | 15×40×5 | 4× | 16.7 | 33.4 | 51 | 1.6 | 38,676 | 40 | L0 |
+  | 15×40×5 | 6× | 16.7 | 66.7 | 33 | 1.1 | 38,676 | 40 | L2 (env off, shadow 1024) |
+  | 20×102×6 | 1× | 16.7 | 16.8 | 60 | 0.2 | 83,228 | 40 | L0 |
+  | 20×102×6 | 4× | 16.7 | 16.8 | 60 | 0.5 | 83,164 | 34 | L0 |
+  | 20×102×6 | 6× | 16.7 | 50.0 | 39 | 8.7 | 83,228 | 40 | L1 (env off) |
+
+  - Repeats of the 102 m rows: 4× 60/58 fps, 6× 59/60 fps, both at L0; "Ridicată": 4× 60 fps, 6× 59 fps.
+  - The 102 m hall at its framed view: 212k -> 83k triangles (bolts beyond 1 px are not drawn). Close up (the 12 m
+    hall, or zoomed in) every bolt chunk near the camera is drawn: same triangles as before.
+  - Acceptance: 102 m at 4× holds 58–60 fps. Governor under a synthetic 60 ms/frame load walks L0 -> L8 (DPR 1) in
+    ~30 s of dragging and back up one level per ~5 s of fast frames once the load is gone.
+  - Quote renders: pixel-compared at live L0 and L8 (DPR 1, no env, shadow 512, near detail): mean difference
+    0.11–0.21 of 255, the same as two runs at L0 (renders are not bit-exact run to run); every bolt chunk is drawn
+    in each offscreen pass.
+- Tuning (all in `components/3d/hall/quality.ts` `QUALITY_TUNING` / `QUALITY_LADDER` / `TRIANGLE_BUDGET`, and
+  `qualityLod.ts`): slow 28 ms median, fast 20 ms, window 20 sampled frames, cooldown 10, raise after 2000 ms of fast
+  rendered time (x2 backoff on a failed raise, max 30 s, probation 3000 ms), startup grace 3000 ms, offscreen hold
+  1500 ms; shadow steps 1024/512, DPR step 0.25, floor 1; triangle budget low 120k, medium 250k; bolts: chunk 12 m,
+  size 0.036 m, drawn at >= 1 CSS px (3 px with far detail off).
 
 ## T5: Small items
 
