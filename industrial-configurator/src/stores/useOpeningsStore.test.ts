@@ -108,8 +108,8 @@ describe('useOpeningsStore actions', () => {
   });
 });
 
-describe('persist migration v0 -> v1', () => {
-  it('converts normalised positions to metres and dedupes ids', async () => {
+describe('persist migration to v2', () => {
+  it('v0 -> v2: normalised positions become anchors, duplicate ids are repaired', async () => {
     const v0 = JSON.stringify({
       state: {
         openings: [
@@ -132,11 +132,68 @@ describe('persist migration v0 -> v1', () => {
     expect(openings[1]).toMatchObject({ type: 'garageDoor', sill: 0 });
     expect(openings[1].offsetX).toBeCloseTo(DEFAULT_FRONT.length / 2 - 1.5, 3);
     expect(openings[0]).not.toHaveProperty('posX');
-    expect(JSON.parse(localStorage.getItem(OPENINGS_STORAGE_KEY)!).version).toBe(OPENINGS_STORE_VERSION);
+    expect(useOpeningsStore.getState().intents.map((i) => i.anchor)).toEqual([
+      { kind: 'axis', fromCentre: 0 },
+      { kind: 'axis', fromCentre: 0 },
+    ]);
+    const saved = JSON.parse(localStorage.getItem(OPENINGS_STORAGE_KEY)!);
+    expect(saved.version).toBe(OPENINGS_STORE_VERSION);
+    expect(saved.state.intents).toHaveLength(2);
+  });
+
+  it('v1 -> v2: metres become anchors on the persisted hall (not the default one)', async () => {
+    const v1 = JSON.stringify({
+      state: { openings: [{ id: 'w', type: 'window', wallId: 'PereteDR', offsetX: 20, sill: 1, width: 1.2, height: 1 }] },
+      version: 1,
+    });
+    const hall = JSON.stringify({ state: { width: 12, height: 4, length: 30 }, version: 1 });
+    const { useOpeningsStore } = await loadStore({
+      'carstar-openings-storage': v1,
+      'carstar-configurator-storage': hall,
+    });
+    const [w] = useOpeningsStore.getState().intents;
+    expect(w.anchor).toMatchObject({ kind: 'bay', bay: 3 });
+    // Placed on the real hall, it is exactly where it was.
+    useOpeningsStore.getState().setWallSpans(spansFromHallState({ width: 12, height: 4, length: 30 }));
+    expect(useOpeningsStore.getState().openings[0]).toMatchObject({ offsetX: 20, sill: 1, width: 1.2, height: 1 });
+  });
+
+  it('v2: reloads the intents and drops malformed ones', async () => {
+    const v2 = JSON.stringify({
+      state: {
+        intents: [
+          { id: 'a', type: 'door', wallId: 'PereteSTG', anchor: { kind: 'bay', bay: 1, offset: 'centre' }, sill: 0, width: 1, height: 2.1 },
+          { id: 'b', type: 'door', wallId: 'PereteSTG', anchor: { kind: 'bay', bay: 'x' }, sill: 0, width: 1, height: 2.1 },
+        ],
+      },
+      version: 2,
+    });
+    const { useOpeningsStore } = await loadStore({ 'carstar-openings-storage': v2 });
+    const s = useOpeningsStore.getState();
+    expect(s.intents.map((i) => i.id)).toEqual(['a']);
+    expect(s.openings[0]).toMatchObject({ id: 'a', anchor: { kind: 'bay', bay: 1, offset: 'centre' }, width: 1 });
   });
 });
 
-describe('E7/E8: conflicts and re-clamping when the hall changes', () => {
+describe('setOpenings (shared links, models)', () => {
+  it('accepts v0, v1 and v2 shapes', async () => {
+    const mod = await loadStore();
+    mod.useOpeningsStore.getState().setOpenings([
+      { id: 'v0', type: 'window', wallId: 'PereteFata', posX: 0.5, posY: 0.5, width: 1, height: 1 },
+      { id: 'v1', type: 'door', wallId: 'PereteDR', offsetX: 2, sill: 0, width: 1, height: 2.1 },
+      { id: 'v2', type: 'window', wallId: 'PereteSTG', offsetX: 0, sill: 1, width: 1, height: 1, anchor: { kind: 'bay', bay: 1, offset: 'centre' } },
+    ]);
+    const s = mod.useOpeningsStore.getState();
+    expect(s.intents.map((i) => i.anchor.kind)).toEqual(['axis', 'bay', 'bay']);
+    expect(s.openings.find((o) => o.id === 'v1')!.offsetX).toBe(2);
+    // v2: the anchor wins over stale metric fields.
+    const v2 = s.openings.find((o) => o.id === 'v2')!;
+    const bay = s.wallSpans!.PereteSTG.bays![1];
+    expect(v2.offsetX + v2.width / 2).toBeCloseTo((bay.h0 + bay.h1) / 2, 3);
+  });
+});
+
+describe('T1a: a change of the hall re-places openings from their anchors (E7/E8)', () => {
   const span = (length: number, height: number, extra = {}) => ({ length, height, ...extra });
   const spans = (front: ReturnType<typeof span>) => ({ ...SPANS, PereteFata: front });
 
@@ -145,23 +202,29 @@ describe('E7/E8: conflicts and re-clamping when the hall changes', () => {
       type: 'window', wallId: 'PereteFata', offsetX: 1, sill: 1, width: 1, height: 1, ...o,
     } as never);
 
-  // table: [name, new front span, expected opening after the change, expected conflict count]
-  const cases: Array<[string, ReturnType<typeof span>, Record<string, number>, number]> = [
-    ['wall gets shorter: opening is pulled in', span(6, 3), { offsetX: 4, width: 2 }, 0],
-    ['wall gets shorter than the opening: width shrinks', span(1.5, 3), { offsetX: 0, width: 1.5 }, 0],
-    ['wall gets lower: sill follows', span(12, 2), { sill: 0.5, height: 1.5 }, 0],
-    ['wall grows: nothing moves', span(20, 5), { offsetX: 8, width: 2, sill: 1 }, 0],
+  // table: [name, new front span, expected opening after the change, expected conflict kinds]
+  // The opening starts at offsetX 8 (centre 9: 3 m right of the 12 m wall's centre), 2 x 1.5 m, sill 1.
+  const cases: Array<[string, ReturnType<typeof span>, Record<string, number>, string[]]> = [
+    ['wall gets shorter: kept on the wall, flagged, never shrunk', span(6, 3), { offsetX: 4, width: 2 }, ['fit']],
+    ['wall shorter than the opening: flagged, size kept', span(1.5, 3), { offsetX: 0, width: 2, height: 1.5 }, ['fit']],
+    ['wall gets lower: flagged, sill and height kept', span(12, 2), { sill: 1, height: 1.5 }, ['fit']],
+    ['wall grows: keeps its distance from the centre line', span(20, 5), { offsetX: 12, width: 2, sill: 1 }, []],
   ];
 
-  it.each(cases)('%s', async (_name, next, expected, conflictCount) => {
+  it.each(cases)('%s', async (_name, next, expected, kinds) => {
     const mod = await loadStore();
     const { useOpeningsStore } = mod;
     useOpeningsStore.getState().setWallSpans(spans(span(12, 3)));
     const id = add(mod, { offsetX: 8, sill: 1, width: 2, height: 1.5 });
+    const original = useOpeningsStore.getState().openings[0];
     useOpeningsStore.getState().setWallSpans(spans(next));
     const o = useOpeningsStore.getState().openings.find((x) => x.id === id)!;
     expect(o).toMatchObject(expected);
-    expect(useOpeningsStore.getState().conflicts).toHaveLength(conflictCount);
+    expect(useOpeningsStore.getState().conflicts.map((c) => c.kind)).toEqual(kinds);
+    // Back to the original wall: exactly where it was, nothing flagged.
+    useOpeningsStore.getState().setWallSpans(spans(span(12, 3)));
+    expect(useOpeningsStore.getState().openings[0]).toEqual(original);
+    expect(useOpeningsStore.getState().conflicts).toEqual([]);
   });
 
   it('flags openings that become overlapping after a shrink, and unflags them when fixed', async () => {
@@ -172,14 +235,50 @@ describe('E7/E8: conflicts and re-clamping when the hall changes', () => {
     const b = add(mod, { offsetX: 8, width: 2 });
     expect(useOpeningsStore.getState().conflicts).toHaveLength(0);
     useOpeningsStore.getState().setWallSpans(spans(span(3, 3)));
-    const { conflicts } = useOpeningsStore.getState();
-    expect(new Set(conflicts.map((c) => c.openingId))).toEqual(new Set([a, b]));
+    const overlaps = () => useOpeningsStore.getState().conflicts.filter((c) => c.kind === 'overlap');
+    expect(new Set(overlaps().map((c) => c.openingId))).toEqual(new Set([a, b]));
     expect(mod.selectHasOpeningConflicts(useOpeningsStore.getState())).toBe(true);
     useOpeningsStore.getState().removeOpening(b);
-    expect(useOpeningsStore.getState().conflicts).toHaveLength(0);
+    expect(overlaps()).toHaveLength(0);
   });
 
-  it('does not re-clamp when the spans are unchanged (dragging keeps its position)', async () => {
+  it('raises a notice when openings are moved or stop fitting, and clears it when they fit again', async () => {
+    const mod = await loadStore();
+    const { useOpeningsStore } = mod;
+    const big = spansFromHallState({ width: 12, height: 4, length: 30 });
+    useOpeningsStore.getState().setWallSpans(big);
+    useOpeningsStore.getState().addOpening({ type: 'window', wallId: 'PereteDR', offsetX: 27, sill: 1, width: 1, height: 1 });
+    useOpeningsStore.getState().addOpening({ type: 'window', wallId: 'PereteFata', offsetX: 11, sill: 1, width: 1, height: 1 });
+    expect(useOpeningsStore.getState().relayoutNotice).toBeNull();
+    useOpeningsStore.getState().setWallSpans(spansFromHallState({ width: 8, height: 4, length: 18 }));
+    expect(useOpeningsStore.getState().relayoutNotice).toMatchObject({ moved: 1, unfit: 1 });
+    useOpeningsStore.getState().setWallSpans(big);
+    expect(useOpeningsStore.getState().relayoutNotice).toBeNull();
+  });
+
+  it('"Reașază automat" fixes an opening that no longer fits, at its size', async () => {
+    const mod = await loadStore();
+    const { useOpeningsStore } = mod;
+    useOpeningsStore.getState().setWallSpans(spans(span(12, 3)));
+    const id = add(mod, { offsetX: 8, sill: 1, width: 2, height: 1.5 });
+    useOpeningsStore.getState().setWallSpans(spans(span(6, 3)));
+    expect(useOpeningsStore.getState().conflicts).toHaveLength(1);
+    expect(useOpeningsStore.getState().autoPlaceOpening(id)).toBe(true);
+    expect(useOpeningsStore.getState().conflicts).toEqual([]);
+    expect(useOpeningsStore.getState().openings[0]).toMatchObject({ width: 2, height: 1.5 });
+  });
+
+  it('a size edit keeps a centred opening centred', async () => {
+    const mod = await loadStore();
+    const { useOpeningsStore } = mod;
+    useOpeningsStore.getState().setWallSpans(spans(span(12, 3)));
+    const id = add(mod, { type: 'garageDoor', offsetX: 4.5, sill: 0, width: 3, height: 2.5 });
+    useOpeningsStore.getState().updateOpening(id, { width: 4 });
+    expect(useOpeningsStore.getState().openings[0]).toMatchObject({ offsetX: 4, width: 4 });
+    expect(useOpeningsStore.getState().intents[0].anchor).toEqual({ kind: 'axis', fromCentre: 0 });
+  });
+
+  it('does not re-place when the spans are unchanged (dragging keeps its position)', async () => {
     const mod = await loadStore();
     const { useOpeningsStore } = mod;
     useOpeningsStore.getState().setWallSpans(spans(span(12, 3)));

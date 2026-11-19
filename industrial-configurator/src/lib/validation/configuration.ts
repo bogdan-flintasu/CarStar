@@ -39,15 +39,37 @@ const openingBase = {
   height: z.number().finite().positive().max(MAX_OPENING_HEIGHT_M),
 };
 
+/** Anchor coordinates in metres (from a bay's column, a wall's centre or its start): bounded with margin. */
+const MAX_ANCHOR_M = 200;
+const anchorMetres = z.number().finite().min(-MAX_ANCHOR_M).max(MAX_ANCHOR_M);
+
 /**
- * Current opening shape (v1, metres), mirrors `Opening` in `@/stores/useOpeningsStore`:
- * offsetX = wall start -> left edge, sill = floor -> bottom edge.
- * Fine-grained clamping to the actual wall is done client-side by `clampOpening`.
+ * Where the user put an opening (v2), mirrors `OpeningAnchor` in `@/components/3d/openings/types`. Strict: unknown
+ * keys and kinds are rejected. Whether the kind suits the wall is checked client-side (`normalizeIntents`).
+ */
+export const openingAnchorSchema = z.discriminatedUnion('kind', [
+  z.strictObject({
+    kind: z.literal('bay'),
+    bay: z.number().int().min(0).max(1000),
+    offset: z.union([z.literal('centre'), anchorMetres]),
+  }),
+  z.strictObject({ kind: z.literal('axis'), fromCentre: anchorMetres }),
+  z.strictObject({ kind: z.literal('wallStart'), offsetX: z.number().finite().min(0).max(MAX_ANCHOR_M) }),
+]);
+
+/**
+ * Current opening shape (metres), mirrors `Opening` in `@/stores/useOpeningsStore`:
+ * offsetX = wall start -> left edge, sill = floor -> bottom edge. v1 has only these; v2 adds the user's `anchor`
+ * (the placed rectangle stays, for the price, the quote and older readers).
+ * Fine-grained clamping to the actual wall is done client-side.
  */
 export const metricOpeningSchema = z.object({
   ...openingBase,
   offsetX: z.number().finite().min(0).max(MAX_WALL_M),
   sill: z.number().finite().min(0).max(MAX_OPENING_HEIGHT_M),
+  anchor: openingAnchorSchema.optional(),
+  /** Reserved for symmetric twins (T1e). */
+  linkId: z.string().min(1).max(64).optional(),
 });
 
 /** Pre-v1 shape (normalised centre position), still found in old saved links. */
@@ -55,9 +77,11 @@ export const legacyOpeningSchema = z.object({
   ...openingBase,
   posX: z.number().finite().min(0).max(1),
   posY: z.number().finite().min(0).max(1),
+  /** Anchors are v2 only: a malformed one must not slip through as a legacy opening. */
+  anchor: z.never().optional(),
 });
 
-/** One opening as stored in `openingsList`: the metric shape, or the legacy shape. */
+/** One opening as stored in `openingsList`: v2 / v1 (metric, with or without an anchor) or v0 (legacy). */
 export const openingSchema = z.union([metricOpeningSchema, legacyOpeningSchema]);
 
 export const openingsCountSchema = z.object({

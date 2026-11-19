@@ -1,6 +1,7 @@
 'use client';
 
 import ColorPicker from '../ColorPicker';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useOpeningsStore, MIN_OPENING_SIZE } from '@/stores/useOpeningsStore';
 import type { OpeningType } from '@/stores/useOpeningsStore';
@@ -80,8 +81,27 @@ export default function ClosingsStep() {
   const selectOpening = useOpeningsStore((s) => s.selectOpening);
   const wallSpans = useOpeningsStore((s) => s.wallSpans);
   const conflicts = useOpeningsStore((s) => s.conflicts);
+  const autoPlaceOpening = useOpeningsStore((s) => s.autoPlaceOpening);
+  const [autoPlaceFailed, setAutoPlaceFailed] = useState<string | null>(null);
   const conflictKinds = new Map<string, Set<string>>();
   for (const c of conflicts) conflictKinds.set(c.openingId, (conflictKinds.get(c.openingId) ?? new Set()).add(c.kind));
+  const doesNotFit = (id: string) => conflictKinds.get(id)?.has('fit') ?? false;
+  const unfitCount = [...conflictKinds.values()].filter((k) => k.has('fit')).length;
+  const reposition = (id: string) => {
+    const ok = autoPlaceOpening(id);
+    setAutoPlaceFailed(ok ? null : id);
+    selectOpening(id);
+  };
+  /** "Reașază automat": only for openings that no longer fit (T1a). */
+  const repositionButton = (id: string) => (
+    <button
+      type="button"
+      onClick={() => reposition(id)}
+      className="shrink-0 px-2.5 py-1.5 rounded-md text-[11px] font-bold bg-red-600 text-white hover:bg-red-700 cursor-pointer transition-colors"
+    >
+      Reașază automat
+    </button>
+  );
 
   const selectedOpening = openings.find((o) => o.id === selectedOpeningId) || null;
   // Inputs are bounded by the selected wall; the store clamps every update to it as well.
@@ -238,6 +258,16 @@ export default function ClosingsStep() {
               </div>
             </div>
 
+            {doesNotFit(selectedOpening.id) && (
+              <div className="flex items-center justify-between gap-2 rounded-md bg-red-50 border border-red-200 px-2.5 py-2">
+                <span className="text-xs font-semibold text-red-700">Nu mai încape aici după modificarea halei.</span>
+                {repositionButton(selectedOpening.id)}
+              </div>
+            )}
+            {autoPlaceFailed === selectedOpening.id && doesNotFit(selectedOpening.id) && (
+              <p className="text-xs text-red-700">Nu am găsit un loc liber. Mută sau micșorează deschiderea manual.</p>
+            )}
+
             {/* Wall info */}
             <div className="text-xs text-gray-500 font-medium pt-3 border-t border-gray-100">
               Perete: {wallLabelRo(selectedOpening.wallId)}
@@ -248,7 +278,8 @@ export default function ClosingsStep() {
         {conflicts.length > 0 && (
           <div role="alert" className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
             {conflictKinds.size === 1 ? '1 deschidere are' : `${conflictKinds.size} deschideri au`} conflicte (suprapunere,
-            stâlp/cadru sau burlan). Mută sau redimensionează deschiderile marcate cu roșu înainte de a continua.
+            stâlp/cadru, burlan sau nu mai încape). Mută sau redimensionează deschiderile marcate cu roșu înainte de a
+            continua{unfitCount > 0 ? ', sau folosește „Reașază automat”' : ''}.
           </div>
         )}
 
@@ -260,28 +291,36 @@ export default function ClosingsStep() {
             </span>
             {openings.map((o) => {
               const Icon = ICON_MAP[o.type];
+              const unfit = doesNotFit(o.id);
               return (
-                <button
+                <div
                   key={o.id}
-                  onClick={() => selectOpening(o.id)}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-all cursor-pointer ${
+                  className={`w-full flex items-center gap-2 rounded-lg transition-all ${
                     conflictKinds.has(o.id)
                       ? 'bg-red-50 border-2 border-red-500 text-red-700'
                       : selectedOpeningId === o.id
                       ? 'bg-orange-50 border-2 border-[var(--color-primary)] text-black'
                       : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
-                  }`}
+                  } ${unfit ? 'pr-1.5' : ''}`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <Icon className={`w-4 h-4 ${selectedOpeningId === o.id ? 'text-[var(--color-primary)]' : 'text-gray-400'}`} />
-                    <span className="text-xs font-bold">
-                      {o.width.toFixed(1)} × {o.height.toFixed(1)}m
+                  <button
+                    type="button"
+                    onClick={() => selectOpening(o.id)}
+                    className="flex-1 min-w-0 flex items-center justify-between gap-2 px-3 py-2.5 text-left cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Icon className={`w-4 h-4 shrink-0 ${selectedOpeningId === o.id ? 'text-[var(--color-primary)]' : 'text-gray-400'}`} />
+                      <span className="text-xs font-bold whitespace-nowrap">
+                        {o.width.toFixed(1)} × {o.height.toFixed(1)}m
+                      </span>
+                      {unfit && <span className="text-[11px] font-semibold whitespace-nowrap">nu încape</span>}
+                    </div>
+                    <span className="text-xs text-gray-400 font-medium truncate">
+                      {wallLabelRo(o.wallId)}
                     </span>
-                  </div>
-                  <span className="text-xs text-gray-400 font-medium">
-                    {wallLabelRo(o.wallId)}
-                  </span>
-                </button>
+                  </button>
+                  {unfit && repositionButton(o.id)}
+                </div>
               );
             })}
           </div>
