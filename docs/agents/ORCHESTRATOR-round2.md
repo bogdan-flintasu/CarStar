@@ -90,3 +90,9 @@ Gate: `cd industrial-configurator && pnpm install && pnpm exec tsc --noEmit && p
   Not browser-checked by worker: card drop, Alt-drag, touch tap, right-click exit -> orchestrator's wave-2 check.
   Pre-existing: OrbitControls can rotate slightly at the start of an opening drag (CameraRig); legend cramped at ~800 px.
 - T5b split: T5b-map (opus, r2-t5b-map) starts now — own raycast picker + pure mapping, no edits to T4's Hall/KitInstances/Steel (relies on T4's instance-order contract). T5b-ui (sonnet) after T4 + T5b-map merge.
+- T5b-map done (f914057, 153k tokens). Own files + 2 engine lines (import + mount inside renderHiddenProps). Pure
+  resolvePick / pickFromHits / highlightTarget / resolveKey / componentColor; useComponentSelection (mutually exclusive
+  with opening selection); raycast picker on gl.domElement (5/10 px click slop). Instance-order contract tested against
+  placeKit — T4's LOD must keep it (check at T4 review: culling must not reorder/compact instances without a mapping).
+  37+4 tests. Not browser-checked (nothing drawn yet). Merged -> see next line.
+- T5b-ui (sonnet, r2-t5b-ui) launched now: own highlight overlay + card, no T4 files; browser check required (port 3018).
