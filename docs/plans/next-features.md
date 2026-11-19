@@ -129,6 +129,27 @@ test the full flow: place, copy, mirror, resize smaller and larger, undo.
    the camera; simpler far purlins; merge static pieces.
 - Acceptance: the 102 m hall holds 30 fps or more at 4× throttling; no visible change on high-tier devices; quote
   renders unchanged (they keep their fixed quality).
+- Baseline (2026-11-19, Apple M5 10-core 16 GB, Chrome headless with ANGLE Metal GPU, 1440×900 at DPR 2, device tier
+  `ultra`; `node scripts/measure-perf.mjs`, 5 s of mouse-drag orbit per row, step 2 so the cladding is on):
+  - frame ms are rAF-to-rAF intervals of rendered frames (vsync-capped at 16.7); "render CPU ms" is the main-thread
+    cost of one `__hallAdvance()` (GPU time excluded), i.e. the headroom under the cap.
+
+  | hall (w×l×h) | CPU | median ms | p95 ms | fps | render CPU ms | triangles | draw calls |
+  |---|---|---|---|---|---|---|---|
+  | 12×12×4 | 1× | 16.7 | 16.8 | 60 | 0.1 | 35,040 | 41 |
+  | 12×12×4 | 4× | 16.7 | 16.8 | 60 | 0.5 | 35,040 | 41 |
+  | 12×12×4 | 6× | 16.7 | 33.4 | 53 | 1.0 | 35,040 | 41 |
+  | 15×40×5 | 1× | 16.7 | 16.8 | 60 | 0.1 | 86,164 | 41 |
+  | 15×40×5 | 4× | 16.7 | 16.8 | 60 | 0.6 | 86,164 | 41 |
+  | 15×40×5 | 6× | 16.7 | 16.8 | 60 | 0.9 | 86,164 | 41 |
+  | 20×102×6 | 1× | 16.7 | 16.7 | 60 | 0.1 | 212,676 | 39 |
+  | 20×102×6 | 4× | 16.7 | 16.8 | 60 | 0.5 | 212,636 | 35 |
+  | 20×102×6 | 6× | 16.7 | 33.4 | 44 | 4.4 | 212,636 | 35 |
+
+  - Reading: on this machine every hall is vsync-bound at 4× (the acceptance already holds before any change); the 6×
+    dips are main-thread stalls under the input flood, not draw cost. Draw calls stay ~40 whatever the length
+    (instancing); triangles grow ~linearly with length (bolts, cleats, purlin spans). The costs that scale on weaker
+    devices are GPU-side: pixels (DPR 2), PCF shadow map 2048, environment reflections, and the triangle count.
 
 ## T5: Small items
 
