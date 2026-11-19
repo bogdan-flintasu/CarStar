@@ -7,3 +7,4 @@ export { computeSection, panelThicknessOf } from './section';
 export type { HallSection } from './section';
 export { faceHeightAt, polygonArea, wallHeightAt, wallPointToWorld } from './walls';
 export { sideSign } from './section';
+export * from './drawings';
