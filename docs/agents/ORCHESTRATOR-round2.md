@@ -74,3 +74,4 @@ Gate: `cd industrial-configurator && pnpm install && pnpm exec tsc --noEmit && p
   Batch B after T4 merges = T5b pick mapping (opus; needs KitInstances, which T4 owns) -> T5b UI/info card (sonnet),
   and T4 tuning (sonnet). Worker dev-server ports: T1 3014, T3 3015, T4 3016 (Chrome via CDP, temp profile).
   Gate now includes `pnpm exec prisma generate` (stale client after a schema merge).
+- Batch A launched: T1b+c, T3b+c, T4 (all opus).
