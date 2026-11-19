@@ -16,7 +16,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { OrthographicCamera, PerspectiveCamera, Vector3, type Camera } from 'three';
 import type { HallLayout } from '@/lib/hall';
-import { cameraViewPose, distanceForZoom, hallRadius, zoomForDistance, type CameraPose } from '@/lib/hall/cameraViews';
+import { CONFIGURATOR_FOV, cameraViewPose, distanceForZoom, hallRadius, zoomForDistance, type CameraPose } from '@/lib/hall/cameraViews';
 import { useViewStore, type AxisScreen } from '@/stores/useViewStore';
 
 interface CameraRigProps {
@@ -35,7 +35,7 @@ const MAX_FRAME_TIME = 1 / 30;
 const VIEW_GLIDE = 0.65;
 const REFIT_GLIDE = 0.3;
 /** Field of view used for framing when the default camera is not a perspective one. */
-const FALLBACK_FOV = 75;
+const FALLBACK_FOV = CONFIGURATOR_FOV;
 const ORTHO_FAR = 6000;
 
 type Orbit = {
