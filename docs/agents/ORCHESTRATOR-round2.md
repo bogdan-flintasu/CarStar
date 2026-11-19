@@ -89,3 +89,4 @@ Gate: `cd industrial-configurator && pnpm install && pnpm exec tsc --noEmit && p
   snapEnabled, snapGuides. 32 tests. Merged r2-t1bc -> d1ccc51 (engine auto-merged with T3's lines). Gate GREEN (703 tests).
   Not browser-checked by worker: card drop, Alt-drag, touch tap, right-click exit -> orchestrator's wave-2 check.
   Pre-existing: OrbitControls can rotate slightly at the start of an opening drag (CameraRig); legend cramped at ~800 px.
+- T5b split: T5b-map (opus, r2-t5b-map) starts now — own raycast picker + pure mapping, no edits to T4's Hall/KitInstances/Steel (relies on T4's instance-order contract). T5b-ui (sonnet) after T4 + T5b-map merge.
