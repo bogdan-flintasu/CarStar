@@ -34,3 +34,14 @@ Gate: `cd industrial-configurator && pnpm install && pnpm exec tsc --noEmit && p
 - T5a done (caeeec7). CONFIGURATOR_FOV = 45 in cameraViews.ts, used by CameraRig fallback and the engine; initial camera
   moved back to [-11, 13, 24] (accepted: only thing that assumed 75°). 24 frustum tests. Merged r2-t5a -> 0b3738f.
   Gate GREEN (tsc, lint 0/0, 550 tests, build).
+- T2 done (b2b2d9d schema, 04e4108 rest). Schema reviewed by orchestrator: OK (Configuration rebuilt with all columns
+  copied; INSERT OR IGNORE default org + BrandIdentity.theme copied from AppSetting uiTheme; AppSetting kept; logoAssetId
+  deliberately not a relation, snapshots reference assets). Security: magic bytes, 1 MB, allow-list SVG sanitizer, logo
+  route nosniff + sandbox CSP, admin routes requireAdmin (401 tests). Outside list, accepted: send-email route (+7, DB
+  branding), favicon.ico moved src/app -> public (metadata.icons), configurations route test.
+  Merged r2-t2 -> bdf7e0d. First gate RED: stale Prisma client (pnpm install skipped postinstall) -> `prisma generate`.
+  Main dev.db backed up to ~/CarStar-assets/dev.db.bak-before-brand-identity, then `prisma migrate deploy` applied.
+  Gate GREEN (tsc, lint 0/0, 600 tests, build). Gate note: after a schema merge run `pnpm exec prisma generate` too.
+  Handoffs: useAccentColor()/useBrand() in UiThemeScope.tsx -> T1b (placement preview, selected opening), T3b (DimensionLines).
+  Landing page + root layout title/siteName still say "CarStar" (not in T2 scope; left as is).
+  Dev server must be restarted (schema change).
