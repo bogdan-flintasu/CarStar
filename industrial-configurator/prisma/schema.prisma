@@ -18,6 +18,11 @@ model Configuration {
   userEmail String?
   userName  String?
   userPhone String?
+  /// Owner organization (null on rows saved before brand identity existed).
+  organizationId   String?
+  organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  /// Branding frozen at save time (name, contact lines, colours, logo asset id + sha), so a rebrand never changes an old quote.
+  brandingSnapshot Json?
   images    ConfigurationImage[]
 }
 
@@ -82,4 +87,55 @@ model AppSetting {
   key       String   @id
   value     Json
   updatedAt DateTime @updatedAt
+}
+
+/// A company using the configurator. One row ("default") for now; `subdomain` is for the multi-tenant future.
+model Organization {
+  id             String          @id @default(cuid())
+  name           String
+  legalName      String          @default("")
+  taxId          String          @default("") // CUI
+  regNo          String          @default("")
+  address        String          @default("")
+  phone          String          @default("")
+  email          String          @default("")
+  website        String          @default("")
+  subdomain      String?         @unique
+  status         String          @default("active") // active | suspended
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  brand          BrandIdentity?
+  assets         Asset[]
+  configurations Configuration[]
+}
+
+/// Name, logo, colours and interface theme of an organization (1:1). `theme` is the UiTheme (src/lib/uiTheme.ts).
+model BrandIdentity {
+  id             String       @id @default(cuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  displayName    String       @default("")
+  logoAssetId    String?
+  primaryColor   String       @default("")
+  secondaryColor String?
+  theme          Json
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+/// Uploaded files (logos). Accessed only through src/app/api/_lib/assetStore.ts so the bytes can move to S3 later.
+model Asset {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  kind           String       // logo
+  mime           String
+  bytes          Bytes
+  size           Int
+  width          Int?
+  height         Int?
+  sha256         String
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId])
 }
