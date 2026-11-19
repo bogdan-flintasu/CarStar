@@ -52,3 +52,18 @@ Gate: `cd industrial-configurator && pnpm install && pnpm exec tsc --noEmit && p
   Merged r2-t1a -> 7fa94ff. Gate GREEN (tsc, lint 0/0, 643 tests, build). Not browser-checked by the worker.
   Handoffs: T1b use addOpening(rect) + placement[id].fits; T1c addOpening(rect, {free:true}); T1e linkId reserved.
 - Wave 1 merged (T1a, T2, T3a, T5a). Browser verification pending: port 3000 occupied, waiting for the user's OK.
+- Wave 1 browser check (orchestrator). Port 3000 = the user's dev server from this checkout (Next refuses a 2nd server in
+  the same dir), so I verified on a detached worktree of main (.claude/worktrees/verify, own copy of dev.db) on port 3011
+  (launch config "dev-verify"). Results:
+  - T1a PASS: window placed on the right wall at L=30 (stored anchor {bay 4, offset 2.19}, v2); L=12 -> toast
+    "1 gol a fost mutat · Anulează", anchor unchanged; L=30 again -> window back on the same spot; ⌘Z 30->12, ⌘⇧Z ->30;
+    buttons disabled correctly; titles show the shortcut.
+  - T5a PASS: 45° lens, framing fine on desktop and phone.
+  - T2 PASS: /api/brand, /api/brand/icon (307 to favicon without logo), /api/brand/logo 404 without logo, admin PUT
+    unauthenticated 401; admin "Interfață" company section renders, no console errors; saved display name "Hale Test"
+    (verify DB only) shows in the configurator header. Logo upload + "Folosim culorile din logo?" not clicked through
+    (the built-in browser cannot pick a file).
+  - 375 px: no horizontal scroll, header fits.
+  - ISSUES: (1) T2 ConfigHeader: a long name ("Configurator hale", the default) is clipped and runs into the step
+    indicator at 1440 and 800 px (needs truncate + room). (2) T1a HistoryButtons on phones sit on top of the admin
+    models bar (admins only). (3) T1a toast overlaps the admin bar at desktop (minor). -> small fix before/with wave 2.
