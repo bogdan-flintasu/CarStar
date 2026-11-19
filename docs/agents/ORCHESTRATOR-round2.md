@@ -25,3 +25,9 @@ Gate: `cd industrial-configurator && pnpm install && pnpm exec tsc --noEmit && p
 ## Events
 - 2026-11-19 Wave 0: main 3ab2490 clean; gate GREEN (tsc, lint 0/0, 479 tests, build; 1 pre-existing Turbopack warning).
   No CLAUDE.md files in the repo. Briefs for wave 1 written.
+- Wave 1 launched: T1a (opus), T2 (sonnet), T3a (opus). T5a (sonnet) waits for the first free slot (max 3 workers).
+- T3a done (7690746; drawings.ts, drawingsFormat.ts, 46 tests). Reviewed: own files only, tests check behaviour. Merged r2-t3a -> c2a8bc7.
+  Gate GREEN (tsc, lint 0/0, 525 tests, build). API: buildDrawings(layout, openings?) -> Record<DrawingViewId, Drawing>;
+  formatMetres ("7,5 m"). Handoffs: T3b switch DimensionLines labels to formatMetres, grid dashed, steel on elevations as
+  hidden lines, offset text from labelAt; T1 pass placed rects (offsetX/sill/width/height) to buildDrawings.
+- T5a launched (sonnet) in the freed slot.
