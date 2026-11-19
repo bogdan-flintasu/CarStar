@@ -121,3 +121,7 @@ Gate: `cd industrial-configurator && pnpm install && pnpm exec tsc --noEmit && p
   - Not checked: card drop onto wall, Alt-drag, real touch, downpipe pick, governor on a real weak phone.
 - STOP after wave 2 (user budget: keep 20% of the 5 h window). Next session: wave 3 = T1d, T1e, T1f, T3d, then QA
   (sonnet), fix round, final gate, SUMMARY-round2.md. Worktrees of this round are still on disk (not cleaned).
+- 2026-11-20 Wave 3 resumed. Plan: batch A = T1d+T1e in one worker (opus, r2-t1de; sequential in T1 files) + T3d (opus, r2-t3d)
+  in parallel. Then T1f (sonnet, resize polish + full-flow browser test) after both merge, then QA (sonnet), fixes, final gate,
+  SUMMARY-round2.md. T3d may make small additive layer edits in hall/** (T4 and T5b are done; contracts must hold).
+  Ports: T1 3014, T3 3015. Briefs r2-t1de.md, r2-t3d.md (b78107f). Both launched.
