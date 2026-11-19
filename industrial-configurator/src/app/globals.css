@@ -282,3 +282,51 @@ input[type="number"] {
     rgba(10, 11, 13, 0.95) 100%
   );
 }
+
+/* ─── Configurator interface theme (set by the admin, see src/lib/uiTheme.ts) ───
+   Inside `.cfg-theme` Tailwind's own colour variables are remapped, so existing class names follow the theme:
+   white → paper, black → ink, gray-50…950 mixed between them, the accent from --ui-accent.
+   The main panels use paper = surface and ink = text; the price bar (`.cfg-bar`) is drawn "inverted" with its own pair,
+   so its light-on-dark classes (text-white, text-gray-400 on bg-black) keep working for any bar colours. */
+.cfg-theme {
+  --ui-paper: var(--ui-surface, #ffffff);
+  --ui-ink: var(--ui-text, #111111);
+  --color-primary: var(--ui-accent, #f5a623);
+  --color-primary-hover: color-mix(in oklab, var(--ui-accent, #f5a623) 86%, var(--ui-ink));
+  --color-primary-light: color-mix(in oklab, var(--ui-accent, #f5a623) 15%, transparent);
+  --color-primary-glow: color-mix(in oklab, var(--ui-accent, #f5a623) 40%, transparent);
+  --color-border-active: color-mix(in oklab, var(--ui-accent, #f5a623) 50%, transparent);
+  --color-bg-primary: var(--ui-background, #f8f9fa);
+  --color-bg-secondary: var(--ui-paper);
+  --color-bg-card: var(--ui-paper);
+  --color-text-primary: var(--ui-ink);
+  color: var(--ui-ink);
+}
+.cfg-bar {
+  --ui-paper: var(--ui-bar-text, #ffffff);
+  --ui-ink: var(--ui-bar-bg, #1a1a1a);
+}
+.cfg-theme,
+.cfg-bar {
+  --color-white: var(--ui-paper);
+  --color-black: var(--ui-ink);
+  --color-gray-50: color-mix(in oklab, var(--ui-ink) 4%, var(--ui-paper));
+  --color-gray-100: color-mix(in oklab, var(--ui-ink) 8%, var(--ui-paper));
+  --color-gray-200: color-mix(in oklab, var(--ui-ink) 14%, var(--ui-paper));
+  --color-gray-300: color-mix(in oklab, var(--ui-ink) 24%, var(--ui-paper));
+  --color-gray-400: color-mix(in oklab, var(--ui-ink) 40%, var(--ui-paper));
+  --color-gray-500: color-mix(in oklab, var(--ui-ink) 52%, var(--ui-paper));
+  --color-gray-600: color-mix(in oklab, var(--ui-ink) 64%, var(--ui-paper));
+  --color-gray-700: color-mix(in oklab, var(--ui-ink) 76%, var(--ui-paper));
+  --color-gray-800: color-mix(in oklab, var(--ui-ink) 86%, var(--ui-paper));
+  --color-gray-900: color-mix(in oklab, var(--ui-ink) 93%, var(--ui-paper));
+  --color-gray-950: color-mix(in oklab, var(--ui-ink) 97%, var(--ui-paper));
+  --color-border: var(--color-gray-200);
+  --color-border-hover: var(--color-gray-300);
+  --color-text-secondary: var(--color-gray-600);
+  --color-text-muted: var(--color-gray-500);
+}
+/* Slider thumbs have a white ring: keep it the panel colour. */
+.cfg-theme input[type="range"]::-webkit-slider-thumb {
+  border-color: var(--ui-paper);
+}

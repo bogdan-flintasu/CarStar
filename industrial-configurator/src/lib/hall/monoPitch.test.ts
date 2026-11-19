@@ -51,7 +51,11 @@ describe.each(['left', 'right'] as const)('mono-pitch roof, high side %s', (high
   it('has one roof plane, one gutter and its two downpipes, all on the low side', () => {
     expect(layout.roof).toHaveLength(1);
     expect(layout.roof[0].side).toBe(lowSide);
-    expect(layout.roof[0].ridge[1] - layout.roof[0].eave[1]).toBeCloseTo(2 * layout.halfWidths.roofEdge * Math.tan(layout.pitch), 9);
+    // From the low eave, flush with the wall face over the gutter, to the high edge, which overhangs its wall.
+    const { wallOuter, roofEdge } = layout.halfWidths;
+    expect(Math.abs(layout.roof[0].eave[0])).toBeCloseTo(wallOuter, 9);
+    expect(Math.abs(layout.roof[0].ridge[0])).toBeCloseTo(roofEdge, 9);
+    expect(layout.roof[0].ridge[1] - layout.roof[0].eave[1]).toBeCloseTo((wallOuter + roofEdge) * Math.tan(layout.pitch), 9);
     expect(layout.gutters.map((g) => g.side)).toEqual([lowSide]);
     expect(layout.downpipes).toHaveLength(2);
     expect(layout.downpipes.every((d) => d.side === lowSide)).toBe(true);
@@ -80,7 +84,9 @@ describe.each(['left', 'right'] as const)('mono-pitch roof, high side %s', (high
     expect(kit.EaveHaunchHigh).toHaveLength(layout.frames.length);
     expect(kit.RidgeJoint).toHaveLength(0);
     expect(kit.RidgeCap).toHaveLength(0);
-    expect(kit.Gutter).toHaveLength(1);
+    // One gutter, on the low side: three plain lengths between its two outlets (one over each downpipe).
+    expect(kit.Gutter).toHaveLength(3);
+    expect(kit.GutterOutlet).toHaveLength(2);
   });
 
   it('lets a tall opening sit only towards the high end of an end wall', () => {

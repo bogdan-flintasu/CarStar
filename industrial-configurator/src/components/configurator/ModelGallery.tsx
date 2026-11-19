@@ -68,7 +68,7 @@ export default function ModelGallery() {
               title={model.description || model.name}
               className={`text-left rounded-xl border-2 overflow-hidden transition-all cursor-pointer bg-white ${
                 selected
-                  ? 'border-[var(--color-primary)] shadow-[0_0_15px_rgba(245,166,35,0.15)]'
+                  ? 'border-[var(--color-primary)] shadow-[0_0_15px_var(--color-primary-light)]'
                   : 'border-gray-200 hover:border-gray-300'
               }`}
             >

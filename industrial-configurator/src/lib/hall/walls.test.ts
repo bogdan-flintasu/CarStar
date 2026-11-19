@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { computeHallLayout } from './computeHallLayout';
-import { COLUMN_DEPTH, FRAME_FLANGE_WIDTH } from './constants';
+import { COLUMN_DEPTH, END_WALL_GIRT_DEPTH, FRAME_FLANGE_WIDTH } from './constants';
 import type { HallParams, Vec3, WallKey } from './types';
 import { polygonArea, wallHeightAt, wallPointToWorld } from './walls';
 
@@ -51,7 +51,8 @@ describe('wall descriptors', () => {
   });
 
   it('places the faces on the outside of the cladding', () => {
-    const frontInner = FRAME_FLANGE_WIDTH / 2;
+    // The end walls stand on their girts, END_WALL_GIRT_DEPTH out from the end frames' flanges.
+    const frontInner = FRAME_FLANGE_WIDTH / 2 + END_WALL_GIRT_DEPTH;
     expectPoint(layout.walls.front.origin, [-wallOuter, 0, frontInner + 0.08]);
     expectPoint(layout.walls.back.origin, [wallOuter, 0, -base.length - frontInner - 0.08]);
     expectPoint(layout.walls.left.origin, [-wallOuter, 0, frontInner]);
@@ -64,7 +65,7 @@ describe('wall descriptors', () => {
     expectPoint(wallPointToWorld(back, back.spanH, 0), [-wallOuter, 0, back.origin[2]]);
     expectPoint(wallPointToWorld(right, right.spanH, 0), [wallOuter, 0, back.origin[2] + back.thickness]);
     expectPoint(wallPointToWorld(left, 0, 0), [-wallOuter, 0, front.origin[2] - front.thickness]);
-    expect(right.spanH).toBeCloseTo(base.length + FRAME_FLANGE_WIDTH, 12);
+    expect(right.spanH).toBeCloseTo(base.length + FRAME_FLANGE_WIDTH + 2 * END_WALL_GIRT_DEPTH, 12);
     expect(front.spanH).toBeCloseTo(2 * wallOuter, 12);
   });
 

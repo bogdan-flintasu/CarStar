@@ -301,7 +301,7 @@ export default function SummaryStep() {
               />
               <button
                 onClick={handleCopyLink}
-                className="px-3 py-2 rounded-lg bg-[var(--color-primary)] text-white text-xs font-bold cursor-pointer hover:bg-orange-600 transition-colors shrink-0"
+                className="px-3 py-2 rounded-lg bg-[var(--color-primary)] text-[var(--ui-accent-text)] text-xs font-bold cursor-pointer hover:bg-[var(--color-primary-hover)] transition-colors shrink-0"
               >
                 {copied ? '✓' : 'Copiază'}
               </button>
@@ -389,7 +389,7 @@ export default function SummaryStep() {
               <button
                 onClick={handleSubmitEmail}
                 disabled={!email || sending}
-                className="w-full py-3 rounded-xl bg-[var(--color-primary)] text-white font-bold text-sm hover:bg-orange-600 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                className="w-full py-3 rounded-xl bg-[var(--color-primary)] text-[var(--ui-accent-text)] font-bold text-sm hover:bg-[var(--color-primary-hover)] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               >
                 {sending ? 'Se trimite...' : 'Trimite Cererea'}
               </button>

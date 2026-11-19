@@ -25,6 +25,7 @@ import { useHallUrlParams } from '@/components/3d/hall/useHallUrlParams';
 import PlacementMarkers from '@/components/3d/PlacementMarkers';
 import WallOpenings from '@/components/3d/WallOpenings';
 import DimensionLines from '@/components/3d/DimensionLines';
+import { useUiTheme } from './UiThemeScope';
 
 /**
  * A reset or a loaded configuration replaces the hall wholesale (several dimensions in one store update):
@@ -84,6 +85,8 @@ export default function ConfiguratorEngine() {
   // In step 2 (panels) the cladding is always shown, so the effect of the panel options is visible.
   const claddingVisible = currentStep === 2 || wallsVisible;
   const gfx = getGraphicsSettings();
+  // The admin can turn the sky off: the hall then stands on the plain viewport colour of the theme.
+  const { sky } = useUiTheme();
 
   return (
     <Canvas
@@ -91,13 +94,13 @@ export default function ConfiguratorEngine() {
       shadows={{ type: PCFShadowMap }}
       frameloop="demand"
       dpr={gfx.dpr}
-      style={{ background: '#dddddd', width: '100%', height: '100%' }}
+      style={{ background: 'var(--ui-viewport, #dddddd)', width: '100%', height: '100%' }}
       gl={{ powerPreference: 'high-performance', antialias: gfx.antialias }}
     >
       <Sun layout={layout} intensity={0.7} shadowMapSize={gfx.shadowMapSize} />
       <ambientLight intensity={0.5} />
       {/* Quote renders bring their own sky (src/components/3d/stage). */}
-      {gfx.enableSky && (
+      {gfx.enableSky && sky && (
         <group {...renderHiddenProps}>
           <Sky distance={450000} sunPosition={[-5, 10, 5]} inclination={0} azimuth={0.25} />
         </group>

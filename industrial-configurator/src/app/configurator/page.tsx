@@ -1,45 +1,15 @@
-'use client';
+import UiThemeScope from '@/components/configurator/UiThemeScope';
+import ConfiguratorApp from '@/components/configurator/ConfiguratorApp';
+import { getUiTheme } from '@/app/api/_lib/settings';
 
-import { useProgress } from '@react-three/drei';
-import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
-import ConfiguratorLayout from '@/components/configurator/ConfiguratorLayout';
-import ConfiguratorEngine from '@/components/configurator/ConfiguratorEngine';
+// The admin's interface theme is read on every request, so a saved change shows on the next visit (and without a flash).
+export const dynamic = 'force-dynamic';
 
-function GlobalLoader() {
-  const { active, progress } = useProgress();
-  const hallReady = useConfiguratorStore((s) => s.hallReady);
-
-  // Hidden once the hall reports ready, or when assets finished loading (cached).
-  if (hallReady || (!active && progress === 100)) return null;
-
+export default async function ConfiguratorPage() {
+  const theme = await getUiTheme();
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white transition-opacity duration-500">
-      <div className="relative flex flex-col items-center">
-        <div className="relative w-16 h-16 mb-8">
-          <div className="absolute inset-0 rounded-full border-4 border-gray-100" />
-          <div className="absolute inset-0 rounded-full border-4 border-t-[var(--color-primary)] animate-spin" />
-        </div>
-        
-        <div className="w-48 h-1 bg-gray-100 rounded-full overflow-hidden mb-4 relative">
-          <div 
-            className="h-full bg-[var(--color-primary)] rounded-full transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-        
-        <p className="text-gray-400 font-bold tracking-widest text-sm uppercase">Se încarcă modelul 3D {Math.round(progress)}%</p>
-      </div>
-    </div>
-  );
-}
-
-export default function ConfiguratorPage() {
-  return (
-    <main className="w-full h-[100dvh] overflow-hidden bg-[var(--color-bg-primary)]">
-      <GlobalLoader />
-      <ConfiguratorLayout>
-        <ConfiguratorEngine />
-      </ConfiguratorLayout>
-    </main>
+    <UiThemeScope theme={theme}>
+      <ConfiguratorApp />
+    </UiThemeScope>
   );
 }

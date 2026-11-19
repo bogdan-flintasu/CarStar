@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { Matrix4, Quaternion, Vector3 } from 'three';
 import reference from '../../../../assets/blender/kit_reference.json';
-import { computeHallLayout } from '@/lib/hall';
+import { computeHallLayout, GUTTER_OUTLET_LENGTH } from '@/lib/hall';
 import type { KitPieceName } from './kit';
 import { placeBolts, placeKit, type Placement } from './placements';
 
@@ -56,10 +56,13 @@ describe('placeKit on the source frame', () => {
     },
   );
 
-  // Seats are spread evenly (the source's vary by a few cm), and purlins run 75 mm past the end frames, flush with
-  // the flanges, so their start and stretch differ slightly.
-  it.each(labelled(of('Purlin', 'PurlinCleat')))('runs %s (%s) on the source seat', (_piece, _src, instance) => {
+  // Seats are spread evenly (the source's vary by a few cm). Cleats sit on the frames as in the source; purlins run on
+  // past the end frames to the end walls (the source's stop at the flanges), so only their section is compared.
+  it.each(labelled(of('PurlinCleat')))('puts %s (%s) on the source seat', (_piece, _src, instance) => {
     expect(closestMatch(instance, false)).toBeLessThan(0.08);
+  });
+  it.each(labelled(of('Purlin')))('runs %s (%s) on the source seat line', (_piece, _src, instance) => {
+    expect(closestMatch(instance, true)).toBeLessThan(0.08);
   });
 
   // Rainwater follows the cladding: same section position and orientation, its own extent along the hall.
@@ -115,5 +118,26 @@ describe('placeKit in general', () => {
       const openDirection = new Vector3(0, 0, cleat.openSide === '+Z' ? 1 : -1).transformDirection(cleat.matrix);
       expect(openDirection.z).toBeCloseTo(1, 9); // the open side faces out of the front of the hall
     }
+  });
+});
+
+describe('gutter outlets', () => {
+  const layout = computeHallLayout({ width: 15, height: 5, length: 30, foundation: true, panels: true, insulationMm: 100 });
+  const all = placeKit(layout);
+
+  it('puts an outlet piece over every downpipe', () => {
+    const outlets = all.GutterOutlet.map(decompose);
+    expect(outlets).toHaveLength(layout.downpipes.length);
+    for (const pipe of layout.downpipes) {
+      const gutter = layout.gutters.find((g) => g.side === pipe.side)!;
+      expect(outlets.some(({ position }) => position.distanceTo(new Vector3(gutter.x, gutter.y, pipe.z)) < 1e-9)).toBe(true);
+    }
+  });
+
+  it('runs the plain gutter between the outlets, so that together they cover the gutter end to end', () => {
+    const plain = all.Gutter.map((p) => decompose(p).scale.z).reduce((sum, z) => sum + z, 0);
+    const gutterLength = layout.gutters.reduce((sum, g) => sum + (g.zFrom - g.zTo), 0);
+    expect(plain + all.GutterOutlet.length * GUTTER_OUTLET_LENGTH).toBeCloseTo(gutterLength, 9);
+    expect(all.Gutter).toHaveLength(layout.gutters.length * 3);
   });
 });

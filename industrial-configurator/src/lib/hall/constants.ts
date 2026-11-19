@@ -55,6 +55,12 @@ export const EAVE_PURLIN_INSET = 0.07;
 /** Gap between the outer column face and the side cladding (girt cleats). Source: cleat 0.12 deep. */
 export const GIRT_DEPTH = 0.12;
 
+/**
+ * Gap between the end frames' flanges and the end-wall cladding (the end walls' girts). The end frames' base plates
+ * reach 0.20 m either side of the frame line (the apex joint 0.11 m): the end walls stand clear of them, 0.21 m out.
+ */
+export const END_WALL_GIRT_DEPTH = 0.135;
+
 /** Largest vertical spacing of the cladding fixings (girt cleats) on a column; wall panels span up to about 1.5 m. */
 export const MAX_GIRT_SPACING = 1.5;
 
@@ -64,7 +70,10 @@ export const GIRT_END_CLEARANCE = 0.3;
 /** Thickness of single-skin trapezoidal sheeting, used when no sandwich panels are selected (T40 profile depth). */
 export const SHEET_THICKNESS = 0.04;
 
-/** Roof projection beyond the outer wall face on all four sides: a drip edge into the gutter. */
+/**
+ * Roof projection beyond the end walls (the verges) and, on a mono-pitch roof, beyond the high side wall. At a gutter
+ * eave the panel stops at the wall face, over the gutter's back edge; the gutter runs the roof's full length.
+ */
 export const ROOF_OVERHANG = 0.05;
 
 // ── Slab and site ─────────────────────────────────────────────────────────────
@@ -91,6 +100,13 @@ export const DOWNPIPE_OUTLET_DROP = 0.0971;
 
 /** Downpipes stand this far in from each end of the side wall (source: only at the four corners). */
 export const DOWNPIPE_END_INSET = 0.15;
+
+/**
+ * Over each downpipe the gutter is a short outlet piece with a round hole in its floor, where the downpipe's outlet
+ * funnel comes up through it (source: a hole about 65 mm across). Length along the gutter, and the hole's radius.
+ */
+export const GUTTER_OUTLET_LENGTH = 0.16;
+export const GUTTER_OUTLET_HOLE_RADIUS = 0.032;
 
 // ── Input limits (what the product sells) ─────────────────────────────────────
 

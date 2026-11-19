@@ -9,6 +9,7 @@ import { calculatePrice, countOpenings } from '@/lib/pricing';
 import { surchargeRates } from '@/lib/colors';
 import { getGraphicsSettings } from '@/lib/hardwareTier';
 import AdminModelBar from './AdminModelBar';
+import ViewToolbar from './ViewToolbar';
 import ConfigHeader from './ConfigHeader';
 import ConfigFooter from './ConfigFooter';
 import DimensionsStep from './steps/DimensionsStep';
@@ -125,7 +126,7 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
   };
 
   return (
-    <div className="w-full h-[100dvh] flex flex-col bg-[#F8F9FA] overflow-hidden">
+    <div className="w-full h-[100dvh] flex flex-col bg-[var(--color-bg-primary)] overflow-hidden">
       {/* Header */}
       <div className="shrink-0">
         <ConfigHeader currentStep={currentStep} onStepClick={setStep} />
@@ -162,7 +163,8 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
           </div>
 
           <AdminModelBar />
-          
+          <ViewToolbar />
+
           {/* Navigation Hint Overlay — Desktop (bottom-left) */}
           <div className="hidden md:flex absolute bottom-6 left-6 bg-white/90 backdrop-blur-md px-4 py-3 rounded-xl border border-gray-200 shadow-sm pointer-events-none z-10 flex-col gap-1.5">
             <span className="text-[10px] font-bold text-gray-800 uppercase tracking-wider mb-0.5">Control 3D</span>
@@ -176,13 +178,21 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
                 Mișcă
               </span>
               <span className="flex items-center gap-1.5">
-                <kbd className="px-1.5 py-0.5 bg-white border border-gray-200 rounded-md text-gray-700 shadow-sm font-sans">Scroll</kbd> 
+                <kbd className="px-1.5 py-0.5 bg-white border border-gray-200 rounded-md text-gray-700 shadow-sm font-sans">Scroll</kbd>
                 Zoom
+              </span>
+              <span className="flex items-center gap-1.5">
+                <kbd className="px-1.5 py-0.5 bg-white border border-gray-200 rounded-md text-gray-700 shadow-sm font-sans">0–5</kbd>
+                Vederi
+              </span>
+              <span className="flex items-center gap-1.5">
+                <kbd className="px-1.5 py-0.5 bg-white border border-gray-200 rounded-md text-gray-700 shadow-sm font-sans">P</kbd>
+                Proiecție
               </span>
             </div>
           </div>
 
-          {/* Navigation Hint Overlay — Mobile (top-right, hidden when panel is open) */}
+          {/* Navigation Hint Overlay — Mobile (top-right, hidden when panel is open; the view toolbar is at the bottom) */}
           {!isMobilePanelOpen && (
             <div className="md:hidden absolute top-3 right-3 bg-white/90 backdrop-blur-md px-3 py-2 rounded-xl border border-gray-200 shadow-sm pointer-events-none z-10 flex flex-col gap-1">
               <span className="text-[9px] font-bold text-gray-800 uppercase tracking-wider">Control 3D</span>
@@ -201,7 +211,7 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
           {!isMobilePanelOpen && (
             <button
               onClick={() => setIsMobilePanelOpen(true)}
-              className="md:hidden absolute bottom-5 left-1/2 -translate-x-1/2 bg-[#F5A623] text-black font-bold px-6 py-3 rounded-full shadow-lg z-20 flex items-center gap-2 whitespace-nowrap"
+              className="md:hidden absolute bottom-16 left-1/2 -translate-x-1/2 bg-[var(--color-primary)] text-[var(--ui-accent-text)] font-bold px-6 py-3 rounded-full shadow-lg z-20 flex items-center gap-2 whitespace-nowrap"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />

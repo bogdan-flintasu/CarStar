@@ -6,8 +6,8 @@
  * Rotations per piece follow the placement table of public/models/ASSET_CONTRACT.md (section 3).
  */
 import { Euler, Matrix4, Quaternion, Vector3 } from 'three';
-import { COLUMN_DEPTH, GUTTER_WIDTH, type HallLayout, type HallPurlin, type Side } from '@/lib/hall';
-import { KIT_PIECES, type HallKit, type KitPieceName, type SocketSide } from './kit';
+import { GUTTER_OUTLET_LENGTH, GUTTER_WIDTH, type HallGutter, type HallLayout, type HallPurlin, type HallRafter, type Side } from '@/lib/hall';
+import { KIT_PIECES, RAFTER_CUT_SLOPE, RAFTER_END, type HallKit, type KitPieceName, type SocketSide } from './kit';
 
 export interface Placement {
   matrix: Matrix4;
@@ -62,6 +62,26 @@ function purlinCleats(purlin: HallPurlin, layout: HallLayout): Placement[] {
   });
 }
 
+/**
+ * A rafter: its 1 m piece stretched from the eave joint E. A gable's ends short of the apex (the apex plates); a
+ * mono-pitch one runs on to the high column's inner face. The stretch would lean the piece's plumb end cuts, so the
+ * piece is first sheared (x += h y) to keep them plumb at any length (see RAFTER_CUT_SLOPE).
+ */
+function placeRafter(r: HallRafter, pitch: number, mono: boolean): Placement {
+  const stretch = mono ? r.length / RAFTER_END : r.length;
+  const { matrix } = place(r.from[0], r.from[1], r.z, { turned: isRight(r.side), pitch, scale: [stretch, 1, 1] });
+  const h = Math.tan(pitch) / stretch - RAFTER_CUT_SLOPE;
+  return { matrix: matrix.multiply(new Matrix4().set(1, h, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)) };
+}
+
+/** The plain lengths of a gutter, from its front end back, between its outlet pieces (centred on `outlets`). */
+function gutterSpans(gutter: HallGutter, outlets: readonly number[]): [number, number][] {
+  const cuts = [gutter.zFrom, ...outlets.flatMap((z) => [z + GUTTER_OUTLET_LENGTH / 2, z - GUTTER_OUTLET_LENGTH / 2]), gutter.zTo];
+  const spans: [number, number][] = [];
+  for (let i = 0; i < cuts.length; i += 2) if (cuts[i] - cuts[i + 1] > 1e-6) spans.push([cuts[i], cuts[i + 1]]);
+  return spans;
+}
+
 /** Transforms of every steel piece except the bolts. */
 export function placeKit(layout: HallLayout): KitPlacements {
   const { columns, rafters, purlins, gutters, downpipes, halfWidths, roof, pitch } = layout;
@@ -69,15 +89,13 @@ export function placeKit(layout: HallLayout): KitPlacements {
   const mono = layout.roofType === 'mono';
   const ridge = roof[0];
   const ridgeTopY = ridge.ridge[1] + ridge.plumbThickness;
+  /** Where the gutter has an outlet: over each of its downpipes, from the front of the hall back. */
+  const outletsUnder = (g: HallGutter) =>
+    downpipes.filter((d) => d.side === g.side).map((d) => d.z).sort((a, b) => b - a);
   const haunch = (c: (typeof columns)[number]) => place(c.x, c.topY, c.z, { turned: isRight(c.side) });
 
   return {
-    // The high-side joint (EaveHaunchHigh) is sheared, so its base plate rises towards the outer column face by
-    // up to 2 tan(pitch) x column depth: that column's steel goes up as far, the rest hides inside the joint.
-    Column: columns.map((c) => {
-      const reach = c.isHigh ? 2 * Math.tan(pitch) * COLUMN_DEPTH : 0;
-      return place(c.x, c.baseY, c.z, { turned: isRight(c.side), scale: [1, c.height + reach, 1] });
-    }),
+    Column: columns.map((c) => place(c.x, c.baseY, c.z, { turned: isRight(c.side), scale: [1, c.height, 1] })),
     BasePlate: columns.map((c) => place(c.x, 0, c.z, { turned: isRight(c.side) })),
     EaveHaunch: columns.filter((c) => !c.isHigh).map(haunch),
     EaveHaunchHigh: columns.filter((c) => c.isHigh).map(haunch),
@@ -87,11 +105,12 @@ export function placeKit(layout: HallLayout): KitPlacements {
         place(outwards(c.side) * halfWidths.columnOuter, y, c.z, { turned: isRight(c.side), flipped: row % 2 === 1 }),
       ),
     ),
-    Rafter: rafters.map((r) => place(r.from[0], r.from[1], r.z, { turned: isRight(r.side), pitch, scale: [r.length, 1, 1] })),
+    Rafter: rafters.map((r) => placeRafter(r, pitch, mono)),
     RidgeJoint: mono ? [] : rafters.filter((r) => !isRight(r.side)).map((r) => place(r.to[0], r.to[1], r.z)),
     Purlin: purlins.flatMap((p) => purlinSpans(p, layout)),
     PurlinCleat: purlins.flatMap((p) => purlinCleats(p, layout)),
-    Gutter: gutters.map((g) => placeAlong(g.side, g.x, g.y, g.zFrom, g.zTo)),
+    Gutter: gutters.flatMap((g) => gutterSpans(g, outletsUnder(g)).map(([from, to]) => placeAlong(g.side, g.x, g.y, from, to))),
+    GutterOutlet: gutters.flatMap((g) => outletsUnder(g).map((z) => place(g.x, g.y, z, { turned: isRight(g.side) }))),
     GutterEndCap: gutters.flatMap((g) => [
       place(gutterCentre(g.side, g.x), g.y, g.zFrom),
       place(gutterCentre(g.side, g.x), g.y, g.zTo, { turned: true }),
