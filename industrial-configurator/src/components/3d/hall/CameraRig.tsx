@@ -42,8 +42,8 @@ type Orbit = {
   target: Vector3;
   object: Camera;
   update: () => void;
-  addEventListener: (type: 'start', listener: () => void) => void;
-  removeEventListener: (type: 'start', listener: () => void) => void;
+  addEventListener: (type: 'start' | 'change' | 'end', listener: () => void) => void;
+  removeEventListener: (type: 'start' | 'change' | 'end', listener: () => void) => void;
 };
 
 interface Glide {
@@ -165,17 +165,34 @@ export default function CameraRig({ layout, enabled = true, frameKey }: CameraRi
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projection]);
 
-  // Any orbit, pan or zoom by the user leaves the fixed view and cancels a glide.
+  // Any orbit, pan or zoom by the user leaves the fixed view and cancels a glide. A press alone does not: clicking an
+  // opening or a hall component on a flat view must keep the view (and its dimensions), so the view is left only on
+  // the first camera change between the controls' `start` and `end`.
   useEffect(() => {
     if (!controls) return;
+    let pressed = false;
     const onStart = () => {
+      pressed = true;
+    };
+    const onChange = () => {
+      if (!pressed) return;
+      pressed = false;
       glide.current = null;
       poseDue.current = null;
       followed.current.copy(centre);
       useViewStore.getState().leaveView();
     };
+    const onEnd = () => {
+      pressed = false;
+    };
     controls.addEventListener('start', onStart);
-    return () => controls.removeEventListener('start', onStart);
+    controls.addEventListener('change', onChange);
+    controls.addEventListener('end', onEnd);
+    return () => {
+      controls.removeEventListener('start', onStart);
+      controls.removeEventListener('change', onChange);
+      controls.removeEventListener('end', onEnd);
+    };
   }, [controls, centre]);
 
   useFrame(({ camera, controls: current, size }, delta) => {
