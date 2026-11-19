@@ -75,3 +75,10 @@ Gate: `cd industrial-configurator && pnpm install && pnpm exec tsc --noEmit && p
   and T4 tuning (sonnet). Worker dev-server ports: T1 3014, T3 3015, T4 3016 (Chrome via CDP, temp profile).
   Gate now includes `pnpm exec prisma generate` (stale client after a schema merge).
 - Batch A launched: T1b+c, T3b+c, T4 (all opus).
+- T3b+c done (5d9db40 T3b, b8d2c14 T3c). Own files only (12). FlatViewDimensions (ortho fixed views, constant screen size,
+  accent colour, hidden in perspective/after orbit, inside renderHiddenProps); DimensionLines takes `color`, formatMetres.
+  PDF: 2 drawing pages (front + busiest side, plan + section), scale note; QuoteModel.drawings. Reviewed sample page
+  (gable 52x16): chains sum, bubbles, dashed hidden steel OK. Merged r2-t3bc -> 77d824d. Gate GREEN (671 tests).
+  Known limits: text wider than its segment is not drawn; CameraRig framing ignores annotation extent (can sit under the
+  toolbar on small screens) -> candidate for T3d/T1f-time fix in CameraRig (unowned this round; orchestrator decides);
+  quote now 5 pages.
