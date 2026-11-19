@@ -82,3 +82,10 @@ Gate: `cd industrial-configurator && pnpm install && pnpm exec tsc --noEmit && p
   Known limits: text wider than its segment is not drawn; CameraRig framing ignores annotation extent (can sit under the
   toolbar on small screens) -> candidate for T3d/T1f-time fix in CameraRig (unowned this round; orchestrator decides);
   quote now 5 pages.
+- T1b+c done (e5692e1 T1b, 0f7211c T1c). Own files + 1 mount line for PlacementStatus in ConfiguratorLayout (HTML, can't
+  live in the Canvas; accepted). Plus markers deleted -> PlacementPreview (bay band, red "nu încape", status line / phone
+  "Gata" bar, first-time hint, drag card onto wall), snap() 0.30 m (bay centre, wall middle never on a column, equal gaps,
+  sill), Alt/⌥ or phone switch -> wallStart, "Centrează în travee/pe perete"; new store API moveOpening, centreOpening,
+  snapEnabled, snapGuides. 32 tests. Merged r2-t1bc -> d1ccc51 (engine auto-merged with T3's lines). Gate GREEN (703 tests).
+  Not browser-checked by worker: card drop, Alt-drag, touch tap, right-click exit -> orchestrator's wave-2 check.
+  Pre-existing: OrbitControls can rotate slightly at the start of an opening drag (CameraRig); legend cramped at ~800 px.
