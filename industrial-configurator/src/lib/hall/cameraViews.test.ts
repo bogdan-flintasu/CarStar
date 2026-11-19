@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { OrthographicCamera, Vector3 } from 'three';
+import { OrthographicCamera, PerspectiveCamera, Vector3 } from 'three';
 import { computeHallLayout } from './computeHallLayout';
 import { hallOutlinePoints } from './renderViews';
 import {
   CAMERA_VIEWS,
+  CONFIGURATOR_FOV,
   CAMERA_VIEW_DIRECTIONS,
   VIEW_FILL,
   cameraViewPose,
@@ -14,7 +15,7 @@ import {
 import type { HallParams, Vec3 } from './types';
 
 const base: HallParams = { length: 30, width: 15, height: 5, foundation: true, panels: true, insulationMm: 80 };
-const viewport = { width: 1200, height: 800, fov: 75 };
+const viewport = { width: 1200, height: 800, fov: CONFIGURATOR_FOV };
 
 /** Extents of the points in normalised device coordinates, as a real three.js orthographic camera projects them. */
 function orthoExtents(pose: CameraPose, points: readonly Vec3[], width: number, height: number) {
@@ -80,9 +81,45 @@ describe('fixed camera views', () => {
   });
 
   it('projection switch keeps the picture size: zoom and distance convert both ways', () => {
-    const zoom = zoomForDistance(40, 75, 800);
-    expect(distanceForZoom(zoom, 75, 800)).toBeCloseTo(40, 8);
+    const zoom = zoomForDistance(40, CONFIGURATOR_FOV, 800);
+    expect(distanceForZoom(zoom, CONFIGURATOR_FOV, 800)).toBeCloseTo(40, 8);
     // Visible height at the target is the same for both cameras.
-    expect(800 / zoom).toBeCloseTo(2 * 40 * Math.tan((75 * Math.PI) / 360), 8);
+    expect(800 / zoom).toBeCloseTo(2 * 40 * Math.tan((CONFIGURATOR_FOV * Math.PI) / 360), 8);
   });
+
+  it('uses a 45 degree lens', () => {
+    expect(CONFIGURATOR_FOV).toBe(45);
+  });
+
+  const halls: Array<[string, HallParams]> = [
+    ['102x20x6', { ...base, length: 102, width: 20, height: 6 }],
+    ['12x12x4', { ...base, length: 12, width: 12, height: 4 }],
+  ];
+  const viewports = [
+    { width: 1200, height: 800, fov: CONFIGURATOR_FOV },
+    { width: 375, height: 700, fov: CONFIGURATOR_FOV },
+  ];
+  for (const [name, params] of halls) {
+    const layout = computeHallLayout(params);
+    const points = hallOutlinePoints(layout);
+    for (const vp of viewports) {
+      for (const view of CAMERA_VIEWS) {
+        it(`${name} ${view} at ${vp.width}x${vp.height}: whole hall inside the 45 degree frustum`, () => {
+          const pose = cameraViewPose(layout, view, 'perspective', vp);
+          const cam = new PerspectiveCamera(vp.fov, vp.width / vp.height, 0.1, 1000);
+          cam.position.set(...pose.position);
+          cam.lookAt(new Vector3(...pose.target));
+          cam.updateMatrixWorld();
+          cam.updateProjectionMatrix();
+          for (const p of points) {
+            const ndc = new Vector3(...p).project(cam);
+            expect(Math.abs(ndc.x)).toBeLessThanOrEqual(1);
+            expect(Math.abs(ndc.y)).toBeLessThanOrEqual(1);
+            expect(ndc.z).toBeLessThan(1);
+            expect(ndc.z).toBeGreaterThan(-1);
+          }
+        });
+      }
+    }
+  }
 });

@@ -16,6 +16,7 @@ import { clampHallDimensions, computeHallLayout } from '@/lib/hall';
 import { colorHexes } from '@/lib/colors';
 import Hall from '@/components/3d/hall/Hall';
 import CameraRig from '@/components/3d/hall/CameraRig';
+import { CONFIGURATOR_FOV } from '@/lib/hall/cameraViews';
 import { Ground, Sun } from '@/components/3d/hall/Site';
 import { requestHallFraming, useHallFramingRequests } from '@/components/3d/hall/framing';
 import HallStatsProbe from '@/components/3d/hall/HallStatsProbe';
@@ -90,7 +91,7 @@ export default function ConfiguratorEngine() {
 
   return (
     <Canvas
-      camera={{ fov: 75, near: 0.1, far: 1000, position: [-6, 7, 13] }}
+      camera={{ fov: CONFIGURATOR_FOV, near: 0.1, far: 1000, position: [-11, 13, 24] }}
       shadows={{ type: PCFShadowMap }}
       frameloop="demand"
       dpr={gfx.dpr}

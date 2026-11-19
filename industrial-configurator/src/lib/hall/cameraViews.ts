@@ -54,6 +54,9 @@ export const CAMERA_VIEW_DIRECTIONS: Record<CameraView, Vec3> = {
   top: normalize([0, 1, 1e-3]),
 };
 
+/** Vertical field of view (degrees) of the configurator's perspective camera: a narrow lens keeps the hall undistorted. */
+export const CONFIGURATOR_FOV = 45;
+
 /** Share of the frame the hall fills on its limiting axis: room is left for the overlays around the 3D view. */
 export const VIEW_FILL = 0.72;
 
