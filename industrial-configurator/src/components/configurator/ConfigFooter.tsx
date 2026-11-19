@@ -22,7 +22,7 @@ export default function ConfigFooter({ length, width, height, estimatedPrice }: 
     : `${length} x ${width} x ${height} m | Structură Metalică`;
 
   return (
-    <footer className="w-full bg-[#1A1A1A] text-white flex flex-row items-center justify-between border-t-4 border-[var(--color-primary)] shrink-0 z-50 h-[70px] md:h-auto">
+    <footer className="w-full cfg-bar bg-black text-white flex flex-row items-center justify-between border-t-4 border-[var(--color-primary)] shrink-0 z-50 h-[70px] md:h-auto">
       <div className="flex flex-col md:flex-row items-start md:items-center gap-0.5 md:gap-12 px-4 md:px-8 py-2 md:py-4 flex-1 min-w-0">
         {/* Total Price */}
         <div className="shrink-0 flex items-baseline gap-2 md:block">
@@ -51,7 +51,7 @@ export default function ConfigFooter({ length, width, height, estimatedPrice }: 
           onClick={nextStep}
           disabled={hasConflicts}
           title={hasConflicts ? 'Rezolvați suprapunerile dintre goluri pentru a continua.' : undefined}
-          className="disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:brightness-100 h-full px-5 md:px-12 bg-gradient-to-r from-[var(--color-primary)] to-[#E6951A] text-black font-bold text-sm md:text-lg hover:brightness-110 transition-all flex items-center justify-center gap-1.5 self-stretch cursor-pointer shrink-0"
+          className="disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:brightness-100 h-full px-5 md:px-12 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-hover)] text-[var(--ui-accent-text)] font-bold text-sm md:text-lg hover:brightness-110 transition-all flex items-center justify-center gap-1.5 self-stretch cursor-pointer shrink-0"
         >
           <span className="hidden sm:inline">CONTINUĂ</span>
           <span className="sm:hidden">CONT.</span>
@@ -60,7 +60,7 @@ export default function ConfigFooter({ length, width, height, estimatedPrice }: 
           </svg>
         </button>
       ) : (
-        <div className="h-full px-5 md:px-12 bg-[#111] flex items-center justify-center self-stretch border-l border-gray-800 shrink-0">
+        <div className="h-full px-5 md:px-12 bg-black flex items-center justify-center self-stretch border-l border-gray-800 shrink-0">
           <span className="text-gray-500 font-bold text-sm md:text-base">SUMAR</span>
         </div>
       )}

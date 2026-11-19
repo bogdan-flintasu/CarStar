@@ -119,7 +119,7 @@ export default function AdminModelBar() {
   return (
     <div className="absolute top-3 left-3 right-3 md:right-auto md:max-w-[min(560px,calc(100%-24px))] z-20 bg-gray-950/90 backdrop-blur-md text-white rounded-xl shadow-lg px-4 py-3 text-xs">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="font-bold uppercase tracking-wider text-[10px] text-[#F5A623]">Admin · Modele</span>
+        <span className="font-bold uppercase tracking-wider text-[10px] text-[var(--color-primary)]">Admin · Modele</span>
         <span className="text-gray-300 min-w-0 truncate">
           {editing ? (
             <>
@@ -131,7 +131,7 @@ export default function AdminModelBar() {
         </span>
         <span className="flex-1" />
         {editing && (
-          <button type="button" disabled={status.kind === 'saving'} onClick={updateModel} className={`${button} bg-[#F5A623] text-black hover:bg-[#e6951a]`}>
+          <button type="button" disabled={status.kind === 'saving'} onClick={updateModel} className={`${button} bg-[var(--color-primary)] text-[var(--ui-accent-text)] hover:bg-[var(--color-primary-hover)]`}>
             Actualizează modelul
           </button>
         )}
@@ -139,7 +139,7 @@ export default function AdminModelBar() {
           type="button"
           disabled={status.kind === 'saving'}
           onClick={() => setForm(form ? null : { name: '', description: '' })}
-          className={`${button} ${editing ? 'bg-white/10 hover:bg-white/20' : 'bg-[#F5A623] text-black hover:bg-[#e6951a]'}`}
+          className={`${button} ${editing ? 'bg-white/10 hover:bg-white/20' : 'bg-[var(--color-primary)] text-[var(--ui-accent-text)] hover:bg-[var(--color-primary-hover)]'}`}
         >
           Salvează ca model nou
         </button>
@@ -163,7 +163,7 @@ export default function AdminModelBar() {
             placeholder="Nume (ex. Hală depozit 12 × 24 m)"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className="px-3 py-2 rounded-lg bg-white/10 border border-white/10 outline-none focus:border-[#F5A623]/60"
+            className="px-3 py-2 rounded-lg bg-white/10 border border-white/10 outline-none focus:border-[var(--color-primary)]"
           />
           <textarea
             maxLength={400}
@@ -171,10 +171,10 @@ export default function AdminModelBar() {
             placeholder="Descriere scurtă pentru clienți (opțional)"
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
-            className="px-3 py-2 rounded-lg bg-white/10 border border-white/10 outline-none focus:border-[#F5A623]/60 resize-none"
+            className="px-3 py-2 rounded-lg bg-white/10 border border-white/10 outline-none focus:border-[var(--color-primary)] resize-none"
           />
           <div className="flex items-center gap-2">
-            <button type="submit" disabled={status.kind === 'saving'} className={`${button} bg-[#F5A623] text-black hover:bg-[#e6951a]`}>
+            <button type="submit" disabled={status.kind === 'saving'} className={`${button} bg-[var(--color-primary)] text-[var(--ui-accent-text)] hover:bg-[var(--color-primary-hover)]`}>
               {status.kind === 'saving' ? 'Se salvează…' : 'Salvează'}
             </button>
             <span className="text-gray-400">Poza modelului se face din vederea 3D de acum.</span>

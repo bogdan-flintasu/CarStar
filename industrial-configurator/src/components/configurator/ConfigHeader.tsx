@@ -52,7 +52,7 @@ export default function ConfigHeader({ currentStep, onStepClick }: ConfigHeaderP
           <span className="hidden sm:block h-6 w-px bg-gray-200" />
           <Link href="/" className="text-base md:text-lg font-extrabold tracking-tight select-none ml-1 md:ml-0">
             <span className="text-gray-900">Car</span>
-            <span className="text-[#F5A623]">Star</span>
+            <span className="text-[var(--color-primary)]">Star</span>
           </Link>
         </div>
 

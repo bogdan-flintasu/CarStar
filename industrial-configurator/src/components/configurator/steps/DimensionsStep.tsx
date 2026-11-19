@@ -83,7 +83,7 @@ function DimensionField({ label, value, min, max, step, onCommit, first }: Dimen
 const optionCard = (selected: boolean) =>
   `p-3 rounded-xl border-2 text-left transition-all cursor-pointer ${
     selected
-      ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 shadow-[0_0_15px_rgba(245,166,35,0.1)]'
+      ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 shadow-[0_0_15px_var(--color-primary-light)]'
       : 'border-gray-200 bg-white hover:border-gray-300'
   }`;
 

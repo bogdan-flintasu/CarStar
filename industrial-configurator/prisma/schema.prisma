@@ -75,3 +75,11 @@ model HallModel {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+/// Small admin settings stored as JSON under a fixed key, e.g. "uiTheme" (src/app/api/_lib/settings.ts).
+/// One row per key; validated on write and normalised on read, so an old or partial value never breaks a page.
+model AppSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}

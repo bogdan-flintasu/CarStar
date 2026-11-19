@@ -70,7 +70,7 @@ function SwatchRow({ component }: { component: ColorComponent }) {
               {option.surcharge > 0 && (
                 <span
                   aria-hidden
-                  className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-[var(--color-primary)] text-[9px] leading-[14px] text-black font-bold text-center"
+                  className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-[var(--color-primary)] text-[9px] leading-[14px] text-[var(--ui-accent-text)] font-bold text-center"
                 >
                   €
                 </span>
