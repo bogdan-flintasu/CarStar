@@ -70,3 +70,7 @@ Gate: `cd industrial-configurator && pnpm install && pnpm exec tsc --noEmit && p
 - Wave 1 layout fixes (orchestrator, small): ConfigHeader md+ grid (name truncates, title tooltip), StepIndicator labels
   lg+, HistoryButtons phone bottom-left above the view bar, toast bottom centre. Checked at 1440, 820 and 375 px with a
   38-character name (verify DB). Gate GREEN (tsc, lint 0/0, 643 tests, build). User OK'd wave 2 after these fixes.
+- Wave 2 plan: batch A now = T1b+c (opus, r2-t1bc), T3b+c (opus, r2-t3bc), T4 measure+design+build (opus, r2-t4).
+  Batch B after T4 merges = T5b pick mapping (opus; needs KitInstances, which T4 owns) -> T5b UI/info card (sonnet),
+  and T4 tuning (sonnet). Worker dev-server ports: T1 3014, T3 3015, T4 3016 (Chrome via CDP, temp profile).
+  Gate now includes `pnpm exec prisma generate` (stale client after a schema merge).
