@@ -20,6 +20,8 @@ import { CONFIGURATOR_FOV } from '@/lib/hall/cameraViews';
 import { Ground, Sun } from '@/components/3d/hall/Site';
 import { requestHallFraming, useHallFramingRequests } from '@/components/3d/hall/framing';
 import HallStatsProbe from '@/components/3d/hall/HallStatsProbe';
+import QualityController from '@/components/3d/hall/qualityController';
+import { useLiveQuality } from '@/components/3d/hall/qualityStore';
 import { SnapshotProvider } from '@/components/3d/hall/snapshot';
 import { HallRenderProvider, renderHiddenProps } from '@/components/3d/hall/renders';
 import { useHallUrlParams } from '@/components/3d/hall/useHallUrlParams';
@@ -90,6 +92,8 @@ export default function ConfiguratorEngine() {
   // In step 2 (panels) the cladding is always shown, so the effect of the panel options is visible.
   const claddingVisible = currentStep === 2 || wallsVisible;
   const gfx = getGraphicsSettings();
+  // Adaptive quality (qualityController.tsx): starts at the tier's settings, lowered while frames are slow.
+  const quality = useLiveQuality();
   // The admin can turn the sky off: the hall then stands on the plain viewport colour of the theme.
   const { sky } = useUiTheme();
   const accent = useAccentColor();
@@ -101,11 +105,11 @@ export default function ConfiguratorEngine() {
       camera={{ fov: CONFIGURATOR_FOV, near: 0.1, far: 1000, position: [-11, 13, 24] }}
       shadows={{ type: PCFShadowMap }}
       frameloop="demand"
-      dpr={gfx.dpr}
+      dpr={quality.dpr}
       style={{ background: 'var(--ui-viewport, #dddddd)', width: '100%', height: '100%' }}
       gl={{ powerPreference: 'high-performance', antialias: gfx.antialias }}
     >
-      <Sun layout={layout} intensity={0.7} shadowMapSize={gfx.shadowMapSize} />
+      <Sun layout={layout} intensity={0.7} shadowMapSize={quality.shadowMapSize} />
       <ambientLight intensity={0.5} />
       {/* Quote renders bring their own sky (src/components/3d/stage). */}
       {gfx.enableSky && sky && (
@@ -113,7 +117,7 @@ export default function ConfiguratorEngine() {
           <Sky distance={450000} sunPosition={[-5, 10, 5]} inclination={0} azimuth={0.25} />
         </group>
       )}
-      {gfx.enableEnvironment && <Environment preset="city" />}
+      {quality.environment && <Environment preset="city" />}
       <Ground layout={layout} textured={gfx.tier !== 'low'} />
 
       <CameraRig layout={layout} enabled={!isDraggingOpening} frameKey={framingRequests} />
@@ -139,6 +143,7 @@ export default function ConfiguratorEngine() {
 
       <SnapshotProvider />
       <HallRenderProvider layout={layout} />
+      <QualityController />
       {process.env.NODE_ENV !== 'production' && <HallStatsProbe layout={layout} />}
     </Canvas>
   );

@@ -11,6 +11,7 @@ import { getGraphicsSettings } from '@/lib/hardwareTier';
 import AdminModelBar from './AdminModelBar';
 import ViewToolbar from './ViewToolbar';
 import HistoryButtons from './HistoryButtons';
+import QualityToggle from './QualityToggle';
 import MovedOpeningsToast from './MovedOpeningsToast';
 import PlacementStatus from './PlacementStatus';
 import ConfigHeader from './ConfigHeader';
@@ -168,6 +169,7 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
           <AdminModelBar />
           <ViewToolbar />
           <HistoryButtons />
+          <QualityToggle />
           <MovedOpeningsToast />
           <PlacementStatus />
 
