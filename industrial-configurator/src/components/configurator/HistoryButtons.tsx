@@ -68,7 +68,7 @@ export default function HistoryButtons() {
     <div
       role="toolbar"
       aria-label="Istoric modificări"
-      className="absolute top-3 left-3 md:top-auto md:bottom-[112px] md:left-6 z-20 flex gap-0.5 p-1 bg-white/90 backdrop-blur-md border border-gray-200 rounded-xl shadow-sm"
+      className="absolute bottom-16 left-3 md:bottom-[112px] md:left-6 z-20 flex gap-0.5 p-1 bg-white/90 backdrop-blur-md border border-gray-200 rounded-xl shadow-sm"
     >
       <button
         type="button"
