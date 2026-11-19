@@ -3,7 +3,11 @@
 import type { HallLayout } from '@/lib/hall';
 import type { Opening, WallId, WallRect, WallSpan, WallSpans } from './types';
 
-export type ConflictKind = 'overlap' | 'support' | 'blocker';
+/**
+ * `fit` (T1a): after a change of the hall the opening no longer fits where its anchor puts it (too wide for its bay
+ * or wall, under a mono-pitch slope, off the wall, or its bay is gone and no other bay is free).
+ */
+export type ConflictKind = 'overlap' | 'support' | 'blocker' | 'fit';
 
 export interface OpeningConflict {
   kind: ConflictKind;
@@ -33,6 +37,8 @@ export function blockersForWall(layout: HallLayout, wallId: WallId): WallRect[] 
 export function wallSpansFromLayout(layout: HallLayout): WallSpans {
   const spans = {} as WallSpans;
   for (const wall of Object.values(layout.walls)) {
+    const side = wall.key === 'left' || wall.key === 'right';
+    const axes = [...wall.supports].sort((a, b) => a - b);
     spans[wall.id] = {
       length: wall.spanH,
       height: wall.spanV,
@@ -41,6 +47,7 @@ export function wallSpansFromLayout(layout: HallLayout): WallSpans {
       supports: wall.supports,
       supportHalfWidth: wall.supportHalfWidth,
       blockers: blockersForWall(layout, wall.id),
+      ...(side && axes.length >= 2 ? { bays: axes.slice(1).map((h1, i) => ({ h0: axes[i], h1 })) } : {}),
     };
   }
   return spans;
@@ -79,10 +86,15 @@ function validateWall(openings: readonly Opening[], span: WallSpan | undefined, 
 
 /**
  * All conflicts between openings, columns/frames and downpipes. Empty = the configuration may continue.
- * Out-of-bounds cannot happen: every mutation goes through `clampOpening`.
+ * `unfit`: ids of openings that do not fit where their anchor puts them (see `placeAll`); each gets a `fit` conflict.
  */
-export function validateOpenings(openings: readonly Opening[], spans: WallSpans | null): OpeningConflict[] {
+export function validateOpenings(
+  openings: readonly Opening[],
+  spans: WallSpans | null,
+  unfit: Iterable<string> = [],
+): OpeningConflict[] {
   const out: OpeningConflict[] = [];
+  for (const id of unfit) out.push({ kind: 'fit', openingId: id });
   const byWall = new Map<WallId, Opening[]>();
   for (const o of openings) byWall.set(o.wallId, [...(byWall.get(o.wallId) ?? []), o]);
   for (const [wallId, list] of byWall) validateWall(list, spans?.[wallId], out);

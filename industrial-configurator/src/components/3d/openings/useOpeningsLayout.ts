@@ -17,6 +17,8 @@ export function useOpeningsLayout(layoutProp?: HallLayout): HallLayout {
       showFoundation: s.showFoundation,
       isIsolated: s.isIsolated,
       insulation: s.insulation,
+      roofType: s.roofType,
+      highSide: s.highSide,
     })),
   );
   return useMemo(() => layoutProp ?? layoutFromHallState(hall), [layoutProp, hall]);

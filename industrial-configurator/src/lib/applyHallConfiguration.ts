@@ -6,10 +6,14 @@
  */
 import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
 import { useOpeningsStore } from '@/stores/useOpeningsStore';
+import { useHistoryStore } from '@/stores/useHistoryStore';
 import { requestHallFraming } from '@/components/3d/hall/framing';
 import type { HallModelData } from '@/lib/validation/models';
 
-/** Loads a hall, replacing whatever was there. Openings are re-clamped to the new hall by the openings store. */
+/**
+ * Loads a hall, replacing whatever was there. Openings (v0, v1 or v2 shape) become anchors on the new hall. The undo
+ * history starts again from the loaded hall.
+ */
 export function applyHallConfiguration(data: HallModelData, model: { id: string; name: string } | null = null): void {
   const hall = useConfiguratorStore.getState();
   const openings = useOpeningsStore.getState();
@@ -33,6 +37,7 @@ export function applyHallConfiguration(data: HallModelData, model: { id: string;
   hall.setModel(model);
   // setOpenings normalises legacy (posX/posY) openings itself, against the hall set above.
   openings.setOpenings(data.openingsList);
+  useHistoryStore.getState().reset();
 
   requestHallFraming();
 }
@@ -47,7 +52,8 @@ export function currentHallData(): HallModelData {
     foundation: s.showFoundation,
     sandwichPanels: s.hasSandwichPanels,
     insulation: s.isIsolated ? s.insulation : 0,
-    openingsList: useOpeningsStore.getState().openings.map(({ id, type, wallId, offsetX, sill, width, height }) => ({
+    // The placed rectangle (read by older clients and the server) plus the intent it came from.
+    openingsList: useOpeningsStore.getState().openings.map(({ id, type, wallId, offsetX, sill, width, height, anchor }) => ({
       id,
       type,
       wallId,
@@ -55,6 +61,7 @@ export function currentHallData(): HallModelData {
       sill,
       width,
       height,
+      ...(anchor ? { anchor } : {}),
     })),
     colors: s.colors,
   };
