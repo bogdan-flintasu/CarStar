@@ -45,3 +45,10 @@ Gate: `cd industrial-configurator && pnpm install && pnpm exec tsc --noEmit && p
   Handoffs: useAccentColor()/useBrand() in UiThemeScope.tsx -> T1b (placement preview, selected opening), T3b (DimensionLines).
   Landing page + root layout title/siteName still say "CarStar" (not in T2 scope; left as is).
   Dev server must be restarted (schema change).
+- T1a done (78e180d). Own files only (16). Intents {anchor: bay|axis|wallStart, sill, width, height, linkId?} are the
+  persisted truth (store v2), `openings` derived with metric fields + anchor; 'fit' conflict; autoPlace ("Reașază automat");
+  useHistoryStore (100 entries, 400 ms coalescing, drag commits on end); HistoryButtons + MovedOpeningsToast mounted in
+  ConfiguratorLayout; server openingSchema accepts v0/v1/v2 (strict anchor; legacy rejects anchor). 49 tests.
+  Merged r2-t1a -> 7fa94ff. Gate GREEN (tsc, lint 0/0, 643 tests, build). Not browser-checked by the worker.
+  Handoffs: T1b use addOpening(rect) + placement[id].fits; T1c addOpening(rect, {free:true}); T1e linkId reserved.
+- Wave 1 merged (T1a, T2, T3a, T5a). Browser verification pending: port 3000 occupied, waiting for the user's OK.
