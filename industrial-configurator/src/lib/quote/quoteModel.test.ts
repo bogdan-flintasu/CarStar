@@ -4,7 +4,16 @@ import { DEFAULT_PALETTE } from '@/lib/colors';
 import { DEFAULT_PRICES } from '@/lib/pricing';
 import { withServerPrice } from '@/app/api/_lib/serverPrice';
 import { configurationDataSchema, type ConfigurationData } from '@/lib/validation/configuration';
-import { buildQuoteModel, formatDateRo, formatEuro, formatNumberRo, openingRows, type QuoteInput } from './quoteModel';
+import {
+  buildQuoteModel,
+  drawingOpenings,
+  formatDateRo,
+  formatEuro,
+  formatNumberRo,
+  openingRows,
+  quoteSideView,
+  type QuoteInput,
+} from './quoteModel';
 import { DEFAULT_QUOTE_SETTINGS, getQuoteSettings } from './settings';
 
 const data = (overrides: Partial<ConfigurationData> = {}): ConfigurationData =>
@@ -148,5 +157,31 @@ describe('getQuoteSettings', () => {
     expect(getQuoteSettings({ QUOTE_VAT_RATE: 'abc' }).vatRate).toBe(0.21);
     expect(getQuoteSettings({ QUOTE_VAT_RATE: '0' }).vatRate).toBe(0);
     expect(getQuoteSettings({ QUOTE_VAT_RATE: '150' }).vatRate).toBe(0.21);
+  });
+});
+
+describe('drawings', () => {
+  it('draws the front, the side with the most openings, the plan and the section, with the placed openings', () => {
+    const model = buildQuoteModel(input());
+    expect(model.drawings.map((d) => d.view)).toEqual(['front', 'left', 'plan', 'section']);
+    const refs = (view: string) => model.drawings.find((d) => d.view === view)!.polylines.map((p) => p.ref);
+    expect(refs('front')).toContain('opening:c');
+    expect(refs('left')).toEqual(expect.arrayContaining(['opening:a', 'opening:b']));
+    expect(refs('plan')).toEqual(expect.arrayContaining(['opening:a', 'opening:b', 'opening:c', 'opening:d']));
+  });
+
+  it('leaves legacy (normalised) openings out of the drawings only', () => {
+    const legacy = data({
+      openingsList: [
+        { id: 'old', type: 'door', wallId: 'PereteDR', posX: 0.5, posY: 0, width: 1, height: 2 },
+        { id: 'new', type: 'door', wallId: 'PereteDR', offsetX: 2, sill: 0, width: 1, height: 2 },
+      ] as ConfigurationData['openingsList'],
+    });
+    expect(drawingOpenings(legacy.openingsList).map((o) => o.id)).toEqual(['new']);
+    expect(quoteSideView(drawingOpenings(legacy.openingsList))).toBe('right');
+    const model = buildQuoteModel(input({ data: legacy }));
+    expect(model.openings).toHaveLength(1);
+    expect(model.openings[0].count).toBe(2);
+    expect(model.drawings[1].view).toBe('right');
   });
 });

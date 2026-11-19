@@ -7,7 +7,7 @@
  */
 import { contactLines, type Branding } from '@/lib/branding';
 import { COLOR_COMPONENTS, COMPONENT_LABELS, defaultColors } from '@/lib/colors';
-import { clampHallDimensions, computeHallLayout } from '@/lib/hall';
+import { buildDrawing, clampHallDimensions, computeHallLayout, type Drawing, type DrawingOpening } from '@/lib/hall';
 import { RENDER_VIEW_LABELS, type RenderView } from '@/lib/hall/renderViews';
 import { wallLabelRo } from '@/lib/i18n/ro';
 import { renderCreditLine } from '@/lib/renderCredits';
@@ -48,6 +48,8 @@ export interface QuoteModel {
   disclaimer: string[];
   link: string;
   filename: string;
+  /** The hall as drawn on the drawing pages: the front, one side, the plan and the cross-section. */
+  drawings: Drawing[];
 }
 
 export interface QuoteInput {
@@ -128,6 +130,24 @@ export function openingRows(list: ConfigurationData['openingsList']): QuoteOpeni
     .map(({ type, wall, size, count }) => ({ type, wall, size, count }));
 }
 
+/**
+ * The placed openings, as the drawings take them. Openings saved before metric coordinates (normalised posX/posY,
+ * v0) are left out of the drawings: they are still listed in the table.
+ */
+export function drawingOpenings(list: ConfigurationData['openingsList']): DrawingOpening[] {
+  return list.flatMap((o) =>
+    'offsetX' in o && typeof o.offsetX === 'number'
+      ? [{ id: o.id, type: o.type, wallId: o.wallId, offsetX: o.offsetX, sill: o.sill, width: o.width, height: o.height }]
+      : [],
+  );
+}
+
+/** The side elevation of the quote: the side wall with the most openings, the left one on a tie. */
+export function quoteSideView(openings: readonly DrawingOpening[]): 'left' | 'right' {
+  const count = (wallId: DrawingOpening['wallId']) => openings.filter((o) => o.wallId === wallId).length;
+  return count('PereteDR') > count('PereteSTG') ? 'right' : 'left';
+}
+
 const originOf = (link: string) => {
   try {
     return new URL(link).origin;
@@ -167,6 +187,9 @@ export function buildQuoteModel(input: QuoteInput): QuoteModel {
   const images = input.renderViews.map((view) => ({ view, label: RENDER_VIEW_LABELS[view] }));
   const heroIndex = Math.max(0, images.findIndex((i) => i.view === 'front'));
 
+  const placed = drawingOpenings(data.openingsList);
+  const drawings = (['front', quoteSideView(placed), 'plan', 'section'] as const).map((view) => buildDrawing(layout, view, placed));
+
   const amount = data.estimatedPrice ?? 0;
   const vatPercent = formatNumberRo(settings.vatRate * 100);
   return {
@@ -192,5 +215,6 @@ export function buildQuoteModel(input: QuoteInput): QuoteModel {
     ],
     link: input.link,
     filename: quoteFilename(token),
+    drawings,
   };
 }
