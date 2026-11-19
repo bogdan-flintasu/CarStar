@@ -9,6 +9,8 @@ import { countOpenings } from '@/lib/pricing';
 import { wallLabelRo } from '@/lib/i18n/ro';
 import { OPENING_DRAG_TYPE } from '@/components/3d/openings/placement';
 import { isPlacementHintSeen, subscribePlacementHint } from '@/components/3d/openings/placementHint';
+import { wallKindOf } from '@/components/3d/openings/anchors';
+import { useTouchLayout } from '../PlacementStatus';
 
 /** Hidden on the server and during hydration; the browser's flag afterwards. */
 const usePlacementHintSeen = () => useSyncExternalStore(subscribePlacementHint, () => isPlacementHintSeen(), () => true);
@@ -87,6 +89,10 @@ export default function ClosingsStep() {
   const wallSpans = useOpeningsStore((s) => s.wallSpans);
   const conflicts = useOpeningsStore((s) => s.conflicts);
   const autoPlaceOpening = useOpeningsStore((s) => s.autoPlaceOpening);
+  const centreOpening = useOpeningsStore((s) => s.centreOpening);
+  const snapEnabled = useOpeningsStore((s) => s.snapEnabled);
+  const setSnapEnabled = useOpeningsStore((s) => s.setSnapEnabled);
+  const touch = useTouchLayout();
   const [autoPlaceFailed, setAutoPlaceFailed] = useState<string | null>(null);
   const conflictKinds = new Map<string, Set<string>>();
   for (const c of conflicts) conflictKinds.set(c.openingId, (conflictKinds.get(c.openingId) ?? new Set()).add(c.kind));
@@ -183,6 +189,21 @@ export default function ClosingsStep() {
           </p>
         )}
 
+        {/* Phones have no Alt key: snapping is switched here (not remembered). */}
+        {touch && (
+          <label className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2 cursor-pointer">
+            <span className="text-xs font-bold text-gray-800">Aliniere: {snapEnabled ? 'on' : 'off'}</span>
+            <input
+              type="checkbox"
+              role="switch"
+              aria-checked={snapEnabled}
+              checked={snapEnabled}
+              onChange={(e) => setSnapEnabled(e.target.checked)}
+              className="w-4 h-4 accent-[var(--color-primary)]"
+            />
+          </label>
+        )}
+
         {/* Openings summary */}
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-white border border-gray-200 rounded-lg p-2.5 text-center shadow-sm">
@@ -274,6 +295,26 @@ export default function ClosingsStep() {
                 />
                 <span className="text-gray-500 ml-1">m</span>
               </div>
+            </div>
+
+            {/* T1c: centre buttons ("în travee" only on side walls, which have bays). */}
+            <div className="flex gap-2">
+              {wallKindOf(selectedOpening.wallId) === 'side' && (
+                <button
+                  type="button"
+                  onClick={() => centreOpening(selectedOpening.id, 'bay')}
+                  className="flex-1 px-2 py-1.5 rounded-md border border-gray-300 text-xs font-bold text-gray-700 hover:border-[var(--color-primary)] hover:text-black cursor-pointer transition-colors"
+                >
+                  Centrează în travee
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => centreOpening(selectedOpening.id, 'wall')}
+                className="flex-1 px-2 py-1.5 rounded-md border border-gray-300 text-xs font-bold text-gray-700 hover:border-[var(--color-primary)] hover:text-black cursor-pointer transition-colors"
+              >
+                Centrează pe perete
+              </button>
             </div>
 
             {doesNotFit(selectedOpening.id) && (

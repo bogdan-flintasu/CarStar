@@ -24,6 +24,7 @@ import {
 } from '@/components/3d/openings/anchors';
 import { spansFromHallState, type HallState } from '@/components/3d/openings/wallSpans';
 import { validateOpenings } from '@/components/3d/openings/validateOpenings';
+import { centreInBayAnchor, centreOnWallAnchor, type SnapGuide } from '@/components/3d/openings/snapping';
 import type { OpeningConflict } from '@/components/3d/openings/validateOpenings';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -41,6 +42,7 @@ export type {
 } from '@/components/3d/openings/types';
 export type { OpeningConflict, ConflictKind } from '@/components/3d/openings/validateOpenings';
 export type { PlacementStatus } from '@/components/3d/openings/anchors';
+export type { SnapGuide } from '@/components/3d/openings/snapping';
 export {
   clampOpening,
   resizeOpening,
@@ -88,6 +90,10 @@ interface OpeningsState {
   conflicts: OpeningConflict[];
   /** Set by a change of the hall that moved or unfitted openings; cleared once none are affected. */
   relayoutNotice: RelayoutNotice | null;
+  /** T1c: snapping on (the phone "Aliniere" switch). Alt / ⌥ turns it off for one gesture. Not persisted. */
+  snapEnabled: boolean;
+  /** T1c: guides of the snaps holding during the running drag (drawn by `WallOpenings`). Not persisted. */
+  snapGuides: { wallId: WallId; guides: SnapGuide[] } | null;
 
   // Actions
   /**
@@ -105,6 +111,19 @@ interface OpeningsState {
    * size fits there (a centred door stays centred), else it is clamped and re-anchored too. `anchor` sets it directly.
    */
   updateOpening: (id: string, updates: OpeningUpdate) => void;
+  /**
+   * T1c: moves an opening to a new position (drag; the caller has snapped it). Clamped to the wall, then anchored with
+   * `anchorFromRect`: a bay / axis anchor, or the wall start when `free` (snapping off).
+   */
+  moveOpening: (id: string, pos: Pick<Opening, 'offsetX' | 'sill'>, opts?: { free?: boolean }) => void;
+  /**
+   * T1c: "Centrează în travee" (`'bay'`: `{ kind: 'bay', offset: 'centre' }`, side walls only) and "Centrează pe
+   * perete" (`'wall'`: `{ kind: 'axis', fromCentre: 0 }` on end walls, the wall's middle on side walls).
+   * Returns false when the mode does not apply to the wall.
+   */
+  centreOpening: (id: string, mode: 'bay' | 'wall') => boolean;
+  setSnapEnabled: (v: boolean) => void;
+  setSnapGuides: (v: { wallId: WallId; guides: SnapGuide[] } | null) => void;
   /** Sets intent fields directly (no clamping beyond the wall-independent rules). For T1c–T1e tools. */
   updateIntent: (id: string, updates: Partial<Omit<OpeningIntent, 'id'>>) => void;
   /** "Reașază automat": moves (and, as a last resort, shrinks) the opening to the nearest valid spot. */
@@ -194,6 +213,8 @@ export const useOpeningsStore = create<OpeningsState>()(
         hoveredWallId: null,
         wallSpans: null,
         relayoutNotice: null,
+        snapEnabled: true,
+        snapGuides: null,
 
         addOpening: (opening, opts = {}) => {
           const id = newId();
@@ -244,6 +265,35 @@ export const useOpeningsStore = create<OpeningsState>()(
           }
           commit(intents.map((o) => (o.id === id ? next : o)));
         },
+
+        moveOpening: (id, pos, opts = {}) => {
+          const { intents, openings } = get();
+          const intent = intents.find((o) => o.id === id);
+          const placed = openings.find((o) => o.id === id);
+          if (!intent || !placed) return;
+          const span = spansNow()[placed.wallId];
+          const rect = clampOpening({ ...placed, offsetX: pos.offsetX, sill: pos.sill }, span);
+          const base = { id, type: intent.type, wallId: intent.wallId, linkId: intent.linkId };
+          const next = intentFromRect(base, rect, span, { free: opts.free ?? false });
+          commit(intents.map((o) => (o.id === id ? next : o)));
+        },
+
+        centreOpening: (id, mode) => {
+          const { intents, openings } = get();
+          const intent = intents.find((o) => o.id === id);
+          const placed = openings.find((o) => o.id === id);
+          if (!intent || !placed) return false;
+          const span = spansNow()[placed.wallId];
+          const anchor =
+            mode === 'bay' ? centreInBayAnchor(placed, span, placed.wallId) : centreOnWallAnchor(placed, span, placed.wallId);
+          if (!anchor) return false;
+          commit(intents.map((o) => (o.id === id ? { ...o, anchor } : o)));
+          return true;
+        },
+
+        setSnapEnabled: (v) => set({ snapEnabled: v }),
+
+        setSnapGuides: (v) => set({ snapGuides: v }),
 
         updateIntent: (id, updates) => {
           const intents = get().intents.map((o) => {
@@ -339,6 +389,7 @@ export const useOpeningsStore = create<OpeningsState>()(
             isDragging: false,
                 hoveredWallId: null,
             relayoutNotice: null,
+            snapGuides: null,
           }),
       };
     },

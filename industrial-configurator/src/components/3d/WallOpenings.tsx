@@ -7,6 +7,9 @@ import WallOpening from './WallOpening';
 import type { HallColorHexes } from '@/lib/colors';
 import { wallSpansFromLayout } from './openings/validateOpenings';
 import { useOpeningsLayout, useOpeningsVisible, wallById } from './openings/useOpeningsLayout';
+import SnapGuides from './openings/SnapGuides';
+import { renderHiddenProps } from './hall/renders';
+import { useAccentColor } from '@/components/configurator/UiThemeScope';
 
 interface WallOpeningsProps {
   /** The engine's layout. Omit to derive it from the configurator store. */
@@ -36,6 +39,8 @@ export default function WallOpenings({ layout: layoutProp, visible, realHoles = 
   const openings = useOpeningsStore((s) => s.openings);
   const conflicts = useOpeningsStore((s) => s.conflicts);
   const setWallSpans = useOpeningsStore((s) => s.setWallSpans);
+  const snapGuides = useOpeningsStore((s) => s.snapGuides);
+  const accent = useAccentColor();
 
   // Runs even while hidden: validation must not depend on the walls being drawn.
   useEffect(() => {
@@ -57,6 +62,12 @@ export default function WallOpenings({ layout: layoutProp, visible, realHoles = 
           colors={colors}
         />
       ))}
+      {/* T1c: guides of the snaps holding during a drag. Editing feedback: never in the quote renders. */}
+      {snapGuides && (
+        <group {...renderHiddenProps}>
+          <SnapGuides wall={wallById(layout, snapGuides.wallId)} guides={snapGuides.guides} color={accent} />
+        </group>
+      )}
     </group>
   );
 }

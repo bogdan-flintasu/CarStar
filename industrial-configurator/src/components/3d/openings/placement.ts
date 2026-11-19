@@ -3,6 +3,7 @@
 //
 // - Side walls: the item settles into the centre of the bay under the pointer.
 // - End walls: it centres on the wall's axis when the pointer is near it, else follows the pointer on a 0.1 m grid.
+// - Then the snaps of `snapping.ts` apply (sill of other windows, equal gaps, wall middle), with their guides.
 // - Free placement (snapping off): it follows the pointer on the grid everywhere.
 // - Windows follow the pointer vertically (0.1 m grid); doors stand on the floor.
 
@@ -10,6 +11,7 @@ import { anchorFromRect, baysOf, bayIndexAt, faceStretch, placeOpening, wallKind
 import { DEFAULT_DIMENSIONS, isFloorStanding } from './openingMath';
 import type { Opening, OpeningAnchor, OpeningRect, OpeningType, WallBay, WallId, WallSpan } from './types';
 import { validateOpenings } from './validateOpenings';
+import { snap, type SnapGuide } from './snapping';
 
 /** MIME type of a type card dragged from the panel onto a wall (`ClosingsStep` -> `PlacementPreview`). */
 export const OPENING_DRAG_TYPE = 'application/x-carstar-opening';
@@ -39,6 +41,8 @@ export interface PlacementPreview {
   reason: NoFitReason | null;
   /** The placement is free (anchored to the wall start). */
   free: boolean;
+  /** Snap guides to draw while the preview holds (T1c). */
+  guides: SnapGuide[];
 }
 
 const grid = (v: number) => Math.round(v / PLACEMENT_GRID) * PLACEMENT_GRID;
@@ -114,8 +118,8 @@ export interface PreviewInput {
   size?: { width: number; height: number };
 }
 
-/** The rectangle the pointer asks for, before checking whether it fits. */
-export function previewRect(input: PreviewInput): OpeningRect {
+/** The rectangle the pointer asks for (centred and snapped), before checking whether it fits. */
+export function previewRect(input: PreviewInput): { rect: OpeningRect; guides: SnapGuide[] } {
   const { type, wallId, h, v, span, free } = input;
   const { width, height } = input.size ?? DEFAULT_DIMENSIONS[type];
   let left = grid(h - width / 2);
@@ -128,19 +132,22 @@ export function previewRect(input: PreviewInput): OpeningRect {
       left = span.length / 2 - width / 2;
     }
   }
+  const others = input.others.filter((o) => o.wallId === wallId);
+  const snapped = snap({ offsetX: left, sill, width, height }, span, others, { type, wallKind: wallKindOf(wallId), free });
   // Keep it on the wall (ends, floor, top), never resized: whether it fits there is `fitsAt`'s call.
   const maxTop = Math.max(span.height, span.apex ?? 0);
-  const offsetX = Math.min(Math.max(0, left), Math.max(0, span.length - width));
-  return { offsetX: mm(offsetX), sill: mm(Math.min(Math.max(0, sill), Math.max(0, maxTop - height))), width, height };
+  const offsetX = Math.min(Math.max(0, snapped.rect.offsetX), Math.max(0, span.length - width));
+  const top = Math.min(Math.max(0, snapped.rect.sill), Math.max(0, maxTop - height));
+  return { rect: { offsetX: mm(offsetX), sill: mm(top), width, height }, guides: snapped.guides };
 }
 
 /** The preview for a pointer at (h, v) on a wall. */
 export function previewAt(input: PreviewInput): PlacementPreview {
-  const rect = previewRect(input);
+  const { rect, guides } = previewRect(input);
   const free = input.free ?? false;
   const { band, bayIndex } = bandAt(input.h, input.span, input.wallId);
   const { fits, reason, anchor } = fitsAt(input.type, input.wallId, rect, input.span, input.others, { free });
-  return { type: input.type, wallId: input.wallId, rect, anchor, band, bayIndex, fits, reason, free };
+  return { type: input.type, wallId: input.wallId, rect, anchor, band, bayIndex, fits, reason, free, guides };
 }
 
 /** Short Romanian label for the reason (the red band always says "nu încape"; this is the detail). */

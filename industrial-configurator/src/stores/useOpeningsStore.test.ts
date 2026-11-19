@@ -295,3 +295,47 @@ describe('T1a: a change of the hall re-places openings from their anchors (E7/E8
     expect(useOpeningsStore.getState().conflicts).toEqual([{ kind: 'support', openingId: id }]);
   });
 });
+
+describe('T1c: moving with or without snapping, centre buttons', () => {
+  const big = spansFromHallState({ width: 12, height: 4, length: 30 });
+
+  it('moveOpening anchors to a bay, or to the wall start when free (Alt / Aliniere off)', async () => {
+    const mod = await loadStore();
+    const s = mod.useOpeningsStore.getState;
+    s().setWallSpans(big);
+    const id = s().addOpening({ type: 'window', wallId: 'PereteDR', offsetX: 2, sill: 1, width: 1, height: 1 });
+    s().moveOpening(id, { offsetX: 8.71, sill: 1.2 });
+    expect(s().intents[0].anchor).toEqual({ kind: 'bay', bay: 1, offset: 'centre' });
+    s().moveOpening(id, { offsetX: 8.5, sill: 1.2 }, { free: true });
+    expect(s().intents[0].anchor).toEqual({ kind: 'wallStart', offsetX: 8.5 });
+    // Clamped to the wall like every user edit.
+    s().moveOpening(id, { offsetX: 99, sill: 1 }, { free: true });
+    expect(s().openings[0].offsetX).toBeCloseTo(big.PereteDR.length - 1, 3);
+  });
+
+  it('"Centrează în travee" and "Centrează pe perete"', async () => {
+    const mod = await loadStore();
+    const s = mod.useOpeningsStore.getState;
+    s().setWallSpans(big);
+    const side = s().addOpening({ type: 'door', wallId: 'PereteDR', offsetX: 13, sill: 0, width: 1, height: 2.1 });
+    const end = s().addOpening({ type: 'door', wallId: 'PereteFata', offsetX: 1, sill: 0, width: 1, height: 2.1 });
+    const anchorOf = (id: string) => s().intents.find((o) => o.id === id)!.anchor;
+
+    expect(s().centreOpening(side, 'bay')).toBe(true);
+    expect(anchorOf(side)).toEqual({ kind: 'bay', bay: 2, offset: 'centre' });
+    expect(s().centreOpening(end, 'bay')).toBe(false);
+    expect(s().centreOpening(end, 'wall')).toBe(true);
+    expect(anchorOf(end)).toEqual({ kind: 'axis', fromCentre: 0 });
+    const placed = s().openings.find((o) => o.id === end)!;
+    expect(placed.offsetX + placed.width / 2).toBeCloseTo(big.PereteFata.length / 2, 3);
+  });
+
+  it('snapping is on by default and its switch is not persisted', async () => {
+    const mod = await loadStore();
+    const s = mod.useOpeningsStore.getState;
+    expect(s().snapEnabled).toBe(true);
+    s().setSnapEnabled(false);
+    s().addOpening({ type: 'window', wallId: 'PereteDR', offsetX: 2, sill: 1, width: 1, height: 1 });
+    expect(localStorage.getItem(mod.OPENINGS_STORAGE_KEY)).not.toContain('snapEnabled');
+  });
+});

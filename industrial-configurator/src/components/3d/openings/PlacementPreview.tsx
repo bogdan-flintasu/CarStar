@@ -19,6 +19,7 @@ import { useAccentColor } from '@/components/configurator/UiThemeScope';
 import type { OpeningType, WallId } from './types';
 import { OPENING_DRAG_TYPE, previewAt, type PlacementPreview as Preview } from './placement';
 import { markPlacementHintSeen } from './placementHint';
+import SnapGuides from './SnapGuides';
 import { wallSpansFromLayout } from './validateOpenings';
 import { useOpeningsLayout, useOpeningsVisible } from './useOpeningsLayout';
 
@@ -42,6 +43,26 @@ function buildWallHitGeometry(wall: WallDescriptor): THREE.BufferGeometry {
   geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
   geo.setIndex(THREE.ShapeUtils.triangulateShape(outline, []).flat());
   return geo;
+}
+
+/** Whether Alt / ⌥ is held (while `active`). Reset when the window loses focus, so it never sticks. */
+function useAltKey(active: boolean): boolean {
+  const [alt, setAlt] = useState(false);
+  useEffect(() => {
+    if (!active) return;
+    const onKey = (e: KeyboardEvent) => setAlt(e.altKey);
+    const onBlur = () => setAlt(false);
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('keyup', onKey);
+    window.addEventListener('blur', onBlur);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('keyup', onKey);
+      window.removeEventListener('blur', onBlur);
+      setAlt(false);
+    };
+  }, [active]);
+  return alt;
 }
 
 /** World point on a wall -> (h, v) on its face. */
@@ -73,25 +94,30 @@ export default function PlacementPreview({ layout: layoutProp, visible }: Placem
 
   /** The last pointer on a wall; the preview is derived from it, so it follows store and layout changes too. */
   const [pointer, setPointer] = useState<{ tool: OpeningType; wallId: WallId; h: number; v: number } | null>(null);
+  const snapEnabled = useOpeningsStore((s) => s.snapEnabled);
+  const altHeld = useAltKey(activeTool !== null);
+  /** Snapping off: Alt / ⌥ held, or the "Aliniere" switch off. */
+  const free = altHeld || !snapEnabled;
   const [flash, setFlash] = useState<Preview | null>(null);
 
   const preview = useMemo<Preview | null>(() => {
     if (!pointer || pointer.tool !== activeTool) return null;
-    return previewAt({ type: pointer.tool, wallId: pointer.wallId, h: pointer.h, v: pointer.v, span: spans[pointer.wallId], others: openings });
-  }, [pointer, activeTool, spans, openings]);
+    return previewAt({ type: pointer.tool, wallId: pointer.wallId, h: pointer.h, v: pointer.v, span: spans[pointer.wallId], others: openings, free });
+  }, [pointer, activeTool, spans, openings, free]);
 
   const previewFor = useCallback(
-    (tool: OpeningType, wallId: WallId, h: number, v: number) =>
-      previewAt({ type: tool, wallId, h, v, span: spans[wallId], others: useOpeningsStore.getState().openings }),
+    (tool: OpeningType, wallId: WallId, h: number, v: number, free: boolean) =>
+      previewAt({ type: tool, wallId, h, v, span: spans[wallId], others: useOpeningsStore.getState().openings, free }),
     [spans],
   );
 
   /** Adds the previewed item when it fits; returns the preview used. */
   const place = useCallback(
-    (tool: OpeningType, wallId: WallId, h: number, v: number): Preview => {
-      const p = previewFor(tool, wallId, h, v);
+    (tool: OpeningType, wallId: WallId, h: number, v: number, alt: boolean): Preview => {
+      const free = alt || !useOpeningsStore.getState().snapEnabled;
+      const p = previewFor(tool, wallId, h, v, free);
       if (p.fits) {
-        useOpeningsStore.getState().addOpening({ type: tool, wallId, ...p.rect });
+        useOpeningsStore.getState().addOpening({ type: tool, wallId, ...p.rect }, { free });
         // Keep the tool for the next item (addOpening selects the new one; the tool stays as it is).
         markPlacementHintSeen();
       }
@@ -158,7 +184,7 @@ export default function PlacementPreview({ layout: layoutProp, visible }: Placem
       if (!isOurDrag(e) || !tool) return;
       e.preventDefault();
       const hit = hitAt(e);
-      if (hit) place(tool, hit.wallId, hit.h, hit.v);
+      if (hit) place(tool, hit.wallId, hit.h, hit.v, e.altKey);
       setPointer(null);
     };
     el.addEventListener('dragover', onOver);
@@ -197,7 +223,7 @@ export default function PlacementPreview({ layout: layoutProp, visible }: Placem
             e.stopPropagation();
             if (e.delta > CLICK_SLOP) return; // the end of an orbit drag, not a click
             const { h, v } = wallCoords(wall, e.point);
-            const p = place(activeTool, wall.id, h, v);
+            const p = place(activeTool, wall.id, h, v, e.nativeEvent.altKey);
             const touch = (e.nativeEvent as PointerEvent).pointerType === 'touch';
             if (touch) setFlash(p);
           }}
@@ -226,6 +252,7 @@ function PreviewMarks({
   showItem: boolean;
 }) {
   const color = preview.fits ? accent : NO_FIT_COLOR;
+  const guides = showItem ? preview.guides : [];
   const { band, rect } = preview;
   const bandW = band.h1 - band.h0;
   const bandH = wall.spanV;
@@ -255,6 +282,8 @@ function PreviewMarks({
           <meshBasicMaterial color={color} transparent opacity={0.4} depthWrite={false} />
         </mesh>
       )}
+
+      {guides.length > 0 && <SnapGuides wall={wall} guides={guides} color={accent} />}
 
       {!preview.fits && (
         <Html
