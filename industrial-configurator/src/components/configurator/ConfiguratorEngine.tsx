@@ -26,7 +26,10 @@ import { useHallUrlParams } from '@/components/3d/hall/useHallUrlParams';
 import PlacementMarkers from '@/components/3d/PlacementMarkers';
 import WallOpenings from '@/components/3d/WallOpenings';
 import DimensionLines from '@/components/3d/DimensionLines';
-import { useUiTheme } from './UiThemeScope';
+import FlatViewDimensions from '@/components/3d/drawings/FlatViewDimensions';
+import { drawingForView } from '@/components/3d/drawings/flatView';
+import { useViewStore } from '@/stores/useViewStore';
+import { useAccentColor, useUiTheme } from './UiThemeScope';
 
 /**
  * A reset or a loaded configuration replaces the hall wholesale (several dimensions in one store update):
@@ -88,6 +91,9 @@ export default function ConfiguratorEngine() {
   const gfx = getGraphicsSettings();
   // The admin can turn the sky off: the hall then stands on the plain viewport colour of the theme.
   const { sky } = useUiTheme();
+  const accent = useAccentColor();
+  // On an orthographic elevation or plan, the drawing's dimensions replace the 3D ones.
+  const onFlatView = useViewStore((s) => drawingForView(s.view, s.projection) !== null);
 
   return (
     <Canvas
@@ -122,7 +128,8 @@ export default function ConfiguratorEngine() {
 
       {/* Editing helpers: never in the quote renders. */}
       <group {...renderHiddenProps}>
-        <DimensionLines layout={layout} visible={!claddingVisible} />
+        <DimensionLines layout={layout} visible={!claddingVisible && !onFlatView} color={accent} />
+        <FlatViewDimensions layout={layout} openings={openings} color={accent} />
         {/* Openings hide themselves with the cladding (same rule as above). */}
         <PlacementMarkers layout={layout} />
       </group>
