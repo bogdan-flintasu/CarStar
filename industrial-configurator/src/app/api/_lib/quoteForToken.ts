@@ -6,7 +6,8 @@ import { readFile } from 'fs/promises';
 import path from 'path';
 import QRCode from 'qrcode';
 import prisma from '@/lib/prisma';
-import { getBranding } from '@/lib/branding';
+import sharp from 'sharp';
+import { brandingFromSnapshot, getActiveBranding, type Branding } from '@/lib/branding';
 import { buildQuoteModel } from '@/lib/quote/quoteModel';
 import { getQuoteSettings } from '@/lib/quote/settings';
 import { configurationDataSchema } from '@/lib/validation/configuration';
@@ -14,6 +15,7 @@ import { buildConfigurationLink } from '@/lib/validation/email';
 import { getCurrentPrices, getOrSeedPalette } from './prices';
 import { withServerPrice } from './serverPrice';
 import { loadRenders } from './renderStore';
+import { loadAsset } from './assetStore';
 import { renderQuotePdf, type QuoteAssets } from './quotePdf';
 
 export interface QuotePdf {
@@ -37,11 +39,33 @@ async function readLogo(logoPath: string | null): Promise<QuoteAssets['logo']> {
 }
 
 /**
+ * The uploaded logo as the PDF can draw it (PNG or JPEG; an SVG is rasterized to PNG), or null when the asset is gone
+ * or cannot be read: the company name is printed instead.
+ */
+async function readLogoAsset(assetId: string): Promise<QuoteAssets['logo']> {
+  try {
+    const asset = await loadAsset(assetId);
+    if (!asset) return null;
+    const data = Buffer.from(asset.bytes);
+    if (asset.mime === 'image/png') return { data, format: 'png' };
+    if (asset.mime === 'image/jpeg') return { data, format: 'jpg' };
+    const png = await sharp(data, { density: 288 }).resize({ width: 1200, height: 240, fit: 'inside' }).png().toBuffer();
+    return { data: png, format: 'png' };
+  } catch (error) {
+    console.warn('Brand logo could not be prepared for the PDF:', error);
+    return null;
+  }
+}
+
+/** The logo of `branding`: the uploaded asset, else the BRAND_LOGO file. */
+const readBrandLogo = (branding: Branding) => (branding.logoAssetId ? readLogoAsset(branding.logoAssetId) : readLogo(branding.logoPath));
+
+/**
  * The quote of configuration `token`, or null when there is no such configuration or its data predates the current
  * schema. `origin` is the public origin the link and QR code point to.
  */
 export async function buildQuotePdfForToken(token: string, origin: string, now = new Date()): Promise<QuotePdf | null> {
-  const row = await prisma.configuration.findUnique({ where: { token }, select: { id: true, data: true } });
+  const row = await prisma.configuration.findUnique({ where: { token }, select: { id: true, data: true, organizationId: true, brandingSnapshot: true } });
   if (!row) return null;
   const stored = configurationDataSchema.safeParse(row.data);
   if (!stored.success) return null;
@@ -54,7 +78,8 @@ export async function buildQuotePdfForToken(token: string, origin: string, now =
   }
 
   const renders = await loadRenders(row.id);
-  const branding = getBranding();
+  // The branding frozen when the configuration was saved; rows from before that use the current one.
+  const branding = brandingFromSnapshot(row.brandingSnapshot, row.organizationId) ?? (await getActiveBranding());
   const link = buildConfigurationLink(origin, token);
   const model = buildQuoteModel({
     token,
@@ -67,7 +92,7 @@ export async function buildQuotePdfForToken(token: string, origin: string, now =
   });
   const assets: QuoteAssets = {
     renders: Object.fromEntries(renders.map((r) => [r.view, r.bytes])),
-    logo: await readLogo(branding.logoPath),
+    logo: await readBrandLogo(branding),
     qr: await QRCode.toBuffer(link, { type: 'png', errorCorrectionLevel: 'M', margin: 1, width: 300 }),
   };
   return { pdf: await renderQuotePdf(model, assets), filename: model.filename };

@@ -4,7 +4,7 @@
  * Public page of a saved configuration (the shared link and the QR code in the PDF quote): its pictures, the main
  * figures, the PDF quote and a button that opens it in the configurator.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { applyHallConfiguration } from '@/lib/applyHallConfiguration';
@@ -17,6 +17,26 @@ interface SavedConfiguration {
   pdfUrl: string;
 }
 
+interface PublicBrand {
+  name: string;
+  logoUrl: string | null;
+  accent: string;
+  accentText: string;
+}
+
+/** Shown until /api/brand answers (and when it fails): the stock orange, no company name. */
+const FALLBACK_BRAND: PublicBrand = { name: '', logoUrl: null, accent: '#F5A623', accentText: '#111111' };
+
+/** The company's logo, or its name when it has none. */
+function BrandMark({ brand, className = '' }: { brand: PublicBrand; className?: string }) {
+  return brand.logoUrl ? (
+    // eslint-disable-next-line @next/next/no-img-element -- the logo is a user upload served by our own route (SVG or raster)
+    <img src={brand.logoUrl} alt={brand.name} className={`h-11 w-auto max-w-[240px] object-contain rounded-lg bg-white p-1.5 ${className}`} />
+  ) : (
+    <span className={`text-2xl font-extrabold tracking-tight text-white ${className}`}>{brand.name}</span>
+  );
+}
+
 const roofText = (d: ConfigurationData) =>
   d.roofType === 'mono' ? `O apă (înalt ${d.highSide === 'left' ? 'stânga' : 'dreapta'})` : '2 ape';
 
@@ -27,6 +47,14 @@ export default function ConfigurationTokenPage() {
 
   const [config, setConfig] = useState<SavedConfiguration | null>(null);
   const [error, setError] = useState('');
+  const [brand, setBrand] = useState<PublicBrand>(FALLBACK_BRAND);
+
+  useEffect(() => {
+    fetch('/api/brand')
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`))))
+      .then((b: PublicBrand) => setBrand(b))
+      .catch((err) => console.error('Failed to load the brand:', err));
+  }, []);
 
   useEffect(() => {
     if (!token) return;
@@ -52,11 +80,13 @@ export default function ConfigurationTokenPage() {
     router.push('/configurator');
   };
 
+  // The brand's accent drives every highlight on this page (buttons, spinner).
+  const accentVars = { '--brand-accent': brand.accent, '--brand-accent-text': brand.accentText } as CSSProperties;
   const background = { background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0a0a0a 100%)' };
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: '#0f0f0f' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: '#0f0f0f', ...accentVars }}>
         <div className="text-center">
           <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -67,7 +97,7 @@ export default function ConfigurationTokenPage() {
           <p className="text-gray-500 text-sm mb-6">{error}</p>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#F5A623] text-black font-bold text-sm hover:bg-[#e6951a] transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--brand-accent)] text-[var(--brand-accent-text)] font-bold text-sm hover:brightness-90 transition"
           >
             Înapoi la Pagina Principală
           </Link>
@@ -78,13 +108,12 @@ export default function ConfigurationTokenPage() {
 
   if (!config) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center" style={background}>
+      <div className="min-h-screen flex flex-col items-center justify-center" style={{ ...background, ...accentVars }}>
         <div className="text-center">
-          <div className="text-3xl font-extrabold tracking-tight select-none mb-6">
-            <span className="text-white">Car</span>
-            <span className="text-[#F5A623]">Star</span>
+          <div className="select-none mb-6 flex justify-center">
+            <BrandMark brand={brand} />
           </div>
-          <div className="w-10 h-10 rounded-full border-2 border-gray-800 border-t-[#F5A623] animate-spin mx-auto mb-4" />
+          <div className="w-10 h-10 rounded-full border-2 border-gray-800 border-t-[var(--brand-accent)] animate-spin mx-auto mb-4" />
           <p className="text-gray-400 text-sm font-medium">Se încarcă configurarea…</p>
         </div>
       </div>
@@ -102,11 +131,10 @@ export default function ConfigurationTokenPage() {
   ];
 
   return (
-    <main className="min-h-screen text-white" style={background}>
+    <main className="min-h-screen text-white" style={{ ...background, ...accentVars }}>
       <div className="mx-auto max-w-4xl px-4 py-8 md:py-12">
-        <Link href="/" className="text-2xl font-extrabold tracking-tight select-none">
-          <span className="text-white">Car</span>
-          <span className="text-[#F5A623]">Star</span>
+        <Link href="/" className="inline-block select-none">
+          <BrandMark brand={brand} />
         </Link>
 
         <h1 className="mt-6 text-2xl md:text-3xl font-bold">Configurația halei tale</h1>
@@ -133,7 +161,7 @@ export default function ConfigurationTokenPage() {
           <a
             href={config.pdfUrl}
             download={`oferta-hala-${token}.pdf`}
-            className="inline-flex justify-center items-center px-6 py-3 rounded-xl bg-[#F5A623] text-black font-bold text-sm hover:bg-[#e6951a] transition-colors"
+            className="inline-flex justify-center items-center px-6 py-3 rounded-xl bg-[var(--brand-accent)] text-[var(--brand-accent-text)] font-bold text-sm hover:brightness-90 transition"
           >
             Descarcă oferta PDF
           </a>

@@ -6,6 +6,7 @@ import type { ConfigStep } from '@/stores/useConfiguratorStore';
 import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
 import { requestHallFraming } from '@/components/3d/hall/framing';
 import { useOpeningsStore } from '@/stores/useOpeningsStore';
+import { useBrand } from './UiThemeScope';
 
 interface ConfigHeaderProps {
   currentStep: ConfigStep;
@@ -15,6 +16,7 @@ interface ConfigHeaderProps {
 export default function ConfigHeader({ currentStep, onStepClick }: ConfigHeaderProps) {
   const resetConfigurator = useConfiguratorStore(s => s.resetConfigurator);
   const resetOpenings = useOpeningsStore(s => s.resetOpenings);
+  const brand = useBrand();
 
   const handleReset = () => {
     resetConfigurator();
@@ -50,9 +52,13 @@ export default function ConfigHeader({ currentStep, onStepClick }: ConfigHeaderP
             <span className="hidden sm:inline">Înapoi</span>
           </Link>
           <span className="hidden sm:block h-6 w-px bg-gray-200" />
-          <Link href="/" className="text-base md:text-lg font-extrabold tracking-tight select-none ml-1 md:ml-0">
-            <span className="text-gray-900">Car</span>
-            <span className="text-[var(--color-primary)]">Star</span>
+          <Link href="/" className="flex items-center text-base md:text-lg font-extrabold tracking-tight select-none ml-1 md:ml-0 text-gray-900 max-w-[40vw] md:max-w-xs">
+            {brand.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- the logo is a user upload served by our own route (SVG or raster)
+              <img src={brand.logoUrl} alt={brand.name} className="h-7 md:h-9 w-auto max-w-full object-contain" />
+            ) : (
+              <span className="truncate">{brand.name}</span>
+            )}
           </Link>
         </div>
 

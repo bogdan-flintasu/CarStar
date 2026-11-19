@@ -32,6 +32,8 @@ export const metadata: Metadata = {
     locale: 'ro_RO',
     siteName: 'CarStar',
   },
+  // The tab icon is the uploaded logo when there is one, else the stock /favicon.ico (see api/brand/icon).
+  icons: { icon: '/api/brand/icon' },
   robots: {
     index: true,
     follow: true,

@@ -8,6 +8,7 @@ import { getCurrentPrices, getOrSeedPalette } from '../_lib/prices';
 import { withServerPrice } from '../_lib/serverPrice';
 import { isMultipart, MAX_PAYLOAD_BYTES, parseConfigurationUpload } from '../_lib/configurationUpload';
 import { saveRenders } from '../_lib/renderStore';
+import { brandingSnapshot, getActiveBranding } from '@/lib/branding';
 import type { ValidRender } from '@/lib/validation/renders';
 
 /** 200 openings at ~200 bytes each plus the summary stays well below this. */
@@ -46,8 +47,18 @@ export async function POST(req: NextRequest) {
       ? await prisma.hallModel.findUnique({ where: { id: data.model.id }, select: { id: true, name: true } })
       : null;
     priced.model = model ?? undefined;
+    // Freeze the company's branding into the quote: a later rebrand never changes an old PDF.
+    const branding = await getActiveBranding();
     const configuration = await prisma.configuration.create({
-      data: { token: nanoid(12), data: priced, userName, userEmail, userPhone },
+      data: {
+        token: nanoid(12),
+        data: priced,
+        userName,
+        userEmail,
+        userPhone,
+        organizationId: branding.organizationId ?? null,
+        brandingSnapshot: brandingSnapshot(branding),
+      },
     });
     try {
       await saveRenders(configuration.id, renders);
