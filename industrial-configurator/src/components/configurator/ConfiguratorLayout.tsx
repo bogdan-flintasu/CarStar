@@ -12,6 +12,7 @@ import AdminModelBar from './AdminModelBar';
 import ViewToolbar from './ViewToolbar';
 import HistoryButtons from './HistoryButtons';
 import MovedOpeningsToast from './MovedOpeningsToast';
+import PlacementStatus from './PlacementStatus';
 import ConfigHeader from './ConfigHeader';
 import ConfigFooter from './ConfigFooter';
 import DimensionsStep from './steps/DimensionsStep';
@@ -168,6 +169,7 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
           <ViewToolbar />
           <HistoryButtons />
           <MovedOpeningsToast />
+          <PlacementStatus />
 
           {/* Navigation Hint Overlay — Desktop (bottom-left) */}
           <div className="hidden md:flex absolute bottom-6 left-6 bg-white/90 backdrop-blur-md px-4 py-3 rounded-xl border border-gray-200 shadow-sm pointer-events-none z-10 flex-col gap-1.5">

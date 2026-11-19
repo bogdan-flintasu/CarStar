@@ -80,8 +80,6 @@ interface OpeningsState {
   selectedOpeningId: string | null;
   /** True while the user is dragging/resizing an opening — disables OrbitControls */
   isDragging: boolean;
-  /** True while the user hovers over the Închideri panel — shows placement markers */
-  showMarkers: boolean;
   /** The wall currently hovered in the 3D scene */
   hoveredWallId: WallId | null;
   /** Wall rectangles of the rendered hall, pushed by the 3D layer (`WallOpenings`). Not persisted. */
@@ -114,7 +112,6 @@ interface OpeningsState {
   setActiveTool: (tool: OpeningType | null) => void;
   selectOpening: (id: string | null) => void;
   setIsDragging: (v: boolean) => void;
-  setShowMarkers: (v: boolean) => void;
   setHoveredWallId: (wallId: WallId | null) => void;
   clearHoveredWallId: () => void;
   /** The walls of the rendered hall changed: re-place every intent (the intents themselves are untouched). */
@@ -194,7 +191,6 @@ export const useOpeningsStore = create<OpeningsState>()(
         activeTool: null,
         selectedOpeningId: null,
         isDragging: false,
-        showMarkers: false,
         hoveredWallId: null,
         wallSpans: null,
         relayoutNotice: null,
@@ -274,8 +270,6 @@ export const useOpeningsStore = create<OpeningsState>()(
 
         setIsDragging: (v) => set({ isDragging: v }),
 
-        setShowMarkers: (v) => set({ showMarkers: v }),
-
         setHoveredWallId: (wallId) => {
           if (_clearHoverTimeout) {
             clearTimeout(_clearHoverTimeout);
@@ -343,8 +337,7 @@ export const useOpeningsStore = create<OpeningsState>()(
             activeTool: null,
             selectedOpeningId: null,
             isDragging: false,
-            showMarkers: false,
-            hoveredWallId: null,
+                hoveredWallId: null,
             relayoutNotice: null,
           }),
       };

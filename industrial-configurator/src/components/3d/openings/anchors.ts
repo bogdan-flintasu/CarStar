@@ -65,7 +65,7 @@ export function bayIndexAt(h: number, bays: readonly WallBay[]): number {
  * The stretch [lo, hi] of the wall along which the face is at least `top` high. Empty (lo > hi) when the face is
  * lower everywhere. The face rises linearly from `height` at the ends to `apex` at `apexAt`.
  */
-function freeStretch(span: WallSpan, top: number): { lo: number; hi: number } {
+export function faceStretch(span: WallSpan, top: number): { lo: number; hi: number } {
   const eave = span.height;
   const apex = Math.max(eave, span.apex ?? eave);
   if (top <= eave + EPS) return { lo: 0, hi: span.length };
@@ -121,7 +121,7 @@ export function placeOpening(
 ): Placement {
   const { sill, width, height } = intentSize(intent);
   const target = targetOf(intent.anchor, width, span);
-  const { lo, hi } = freeStretch(span, sill + height);
+  const { lo, hi } = faceStretch(span, sill + height);
   const roomy = hi - lo >= width - EPS;
   // Not enough room anywhere: keep it on the wall, as near to its spot as possible.
   const range = roomy ? { lo, hi: hi - width } : { lo: 0, hi: Math.max(0, span.length - width) };

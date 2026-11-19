@@ -12,6 +12,7 @@ import type { OpeningType, ResizeHandle, WallSpan } from './openings/types';
 import { isFloorStanding, openingCentre } from './openings/openingMath';
 import { clipOpeningToWall, isMirrored } from './openings/wallShapeWithHoles';
 import { renderHiddenProps, renderPlainProps } from './hall/renders';
+import { useAccentColor } from '@/components/configurator/UiThemeScope';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface WallOpeningProps {
@@ -27,7 +28,6 @@ interface WallOpeningProps {
 }
 
 // ─── Look ─────────────────────────────────────────────────────────────────────
-const SELECTED_EMISSIVE = '#F5A623';
 const CONFLICT_COLOR = '#E5252A';
 const HANDLE_COLOR = '#ffffff';
 const HANDLE_SIZE = 0.08;
@@ -127,6 +127,8 @@ export default function WallOpening({
   colors = DEFAULT_COLOR_HEXES,
 }: WallOpeningProps) {
   const { camera, gl } = useThree();
+  /** Selection glow and handles follow the interface theme. */
+  const accent = useAccentColor();
 
   const selectedId = useOpeningsStore((s) => s.selectedOpeningId);
   const selectOpening = useOpeningsStore((s) => s.selectOpening);
@@ -213,14 +215,14 @@ export default function WallOpening({
     // A window's only hardware is its sill flashing, in the frame colour.
     materials.hardware.color.set(opening.type === 'window' ? frameHex : HARDWARE_COLOR);
     const active = isSelected || interaction !== null;
-    const glow = conflict ? CONFLICT_COLOR : active ? SELECTED_EMISSIVE : '#000000';
+    const glow = conflict ? CONFLICT_COLOR : active ? accent : '#000000';
     const strength = conflict ? 0.6 : active ? 0.35 : 0;
     for (const m of [materials.frame, materials.leaf, materials.glass]) {
       m.emissive.set(glow);
       m.emissiveIntensity = strength;
     }
     invalidate();
-  }, [materials, frameHex, colors.doors, opening.type, conflict, isSelected, interaction, invalidate]);
+  }, [materials, frameHex, colors.doors, opening.type, conflict, isSelected, interaction, invalidate, accent]);
 
   // ── Pointer sessions ────────────────────────────────────────────────────
   // Move/up are tracked on `window`, so fast drags that leave the mesh (or the canvas) keep working.
@@ -384,7 +386,7 @@ export default function WallOpening({
             <sphereGeometry args={[HANDLE_SIZE, 12, 12]} />
             <meshStandardMaterial
               color={HANDLE_COLOR}
-              emissive="#F5A623"
+              emissive={accent}
               emissiveIntensity={interaction === hp.id ? 1 : 0.5}
             />
           </mesh>

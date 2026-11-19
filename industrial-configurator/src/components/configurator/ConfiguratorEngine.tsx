@@ -23,7 +23,7 @@ import HallStatsProbe from '@/components/3d/hall/HallStatsProbe';
 import { SnapshotProvider } from '@/components/3d/hall/snapshot';
 import { HallRenderProvider, renderHiddenProps } from '@/components/3d/hall/renders';
 import { useHallUrlParams } from '@/components/3d/hall/useHallUrlParams';
-import PlacementMarkers from '@/components/3d/PlacementMarkers';
+import PlacementPreview from '@/components/3d/openings/PlacementPreview';
 import WallOpenings from '@/components/3d/WallOpenings';
 import DimensionLines from '@/components/3d/DimensionLines';
 import { useUiTheme } from './UiThemeScope';
@@ -124,7 +124,7 @@ export default function ConfiguratorEngine() {
       <group {...renderHiddenProps}>
         <DimensionLines layout={layout} visible={!claddingVisible} />
         {/* Openings hide themselves with the cladding (same rule as above). */}
-        <PlacementMarkers layout={layout} />
+        <PlacementPreview layout={layout} />
       </group>
       <WallOpenings layout={layout} realHoles colors={hexes} />
 
