@@ -228,6 +228,17 @@ describe('computeHallLayout: cladding, slab and site', () => {
     expect(layout.slab.l).toBeGreaterThan(30);
   });
 
+  it.each([0, 100, 250])('ends the roof at the wall face over a gutter as long as the roof (%s mm panels)', (insulationMm) => {
+    const layout = layoutOf({ length: 30, panels: insulationMm > 0, insulationMm });
+    for (const gutter of layout.gutters) {
+      const plane = layout.roof.find((p) => p.side === gutter.side)!;
+      // The panel's eave end is over the gutter's back edge, its underside on the gutter's top.
+      expect(plane.eave[0]).toBeCloseTo(gutter.x, 9);
+      expect(plane.eave[1]).toBeCloseTo(gutter.y, 9);
+      expect([gutter.zFrom, gutter.zTo]).toEqual([plane.zFront, plane.zBack]);
+    }
+  });
+
   it('hangs one gutter per eave and a downpipe at each corner', () => {
     const layout = layoutOf({ length: 30 });
     expect(layout.gutters.map((gutter) => gutter.side)).toEqual(['left', 'right']);
@@ -284,5 +295,33 @@ describe('computeHallLayout: purity and input checking', () => {
   it('treats a missing or negative insulation as none', () => {
     expect(layoutOf({ panels: true, insulationMm: NaN }).panelThickness).toBe(SHEET_THICKNESS);
     expect(layoutOf({ panels: true, insulationMm: -50 }).panelThickness).toBe(SHEET_THICKNESS);
+  });
+});
+
+describe('end walls', () => {
+  it.each([
+    [false, 0],
+    [true, 250],
+  ])('stand clear of the end frames, with the roof, side walls, purlins and gutters reaching them (panels %s)', (panels, insulationMm) => {
+    const layout = computeHallLayout({ width: 12, height: 6, length: 18, foundation: true, panels, insulationMm });
+    const { front, back, left } = layout.walls;
+    const frontInner = front.origin[2] - front.thickness;
+    const backInner = back.origin[2] + back.thickness;
+    // The end frames' base plates reach 0.20 m either side of the frame line: the end walls are beyond them.
+    expect(frontInner).toBeGreaterThan(0.2);
+    expect(backInner).toBeLessThan(-18 - 0.2);
+    // The side walls close the corners on the end walls' inner faces.
+    expect(left.origin[2]).toBeCloseTo(frontInner, 9);
+    expect(left.spanH).toBeCloseTo(frontInner - backInner, 9);
+    // Purlins carry the roof to the end walls; the roof and the gutters overhang them.
+    for (const purlin of layout.purlins) {
+      expect(purlin.zFrom).toBeCloseTo(frontInner, 9);
+      expect(purlin.zTo).toBeCloseTo(backInner, 9);
+    }
+    for (const plane of layout.roof) {
+      expect(plane.zFront).toBeGreaterThan(front.origin[2]);
+      expect(plane.zBack).toBeLessThan(back.origin[2]);
+    }
+    for (const gutter of layout.gutters) expect([gutter.zFrom, gutter.zTo]).toEqual([layout.roof[0].zFront, layout.roof[0].zBack]);
   });
 });

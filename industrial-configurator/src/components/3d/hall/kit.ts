@@ -11,8 +11,9 @@
  */
 import { useEffect, useMemo } from 'react';
 import { useGLTF } from '@react-three/drei';
-import { Matrix4, Vector3, type BufferGeometry, type Material, type Mesh, type Object3D } from 'three';
-import { COLUMN_DEPTH, ROOF_PITCH_DEG } from '@/lib/hall';
+import { Matrix4, type BufferGeometry, type Material, type Mesh, type Object3D } from 'three';
+import { GUTTER_OUTLET_HOLE_RADIUS, GUTTER_OUTLET_LENGTH, ROOF_PITCH_DEG } from '@/lib/hall';
+import { deriveGutterOutlet, deriveHighEaveJoint } from './kitGeometry';
 
 const KIT_URL = '/models/hall-kit.glb';
 
@@ -27,6 +28,7 @@ export const KIT_PIECES = [
   'PurlinCleat',
   'GirtCleat',
   'Gutter',
+  'GutterOutlet',
   'GutterEndCap',
   'Downpipe',
   'DownpipeShoe',
@@ -74,31 +76,24 @@ function readPiece(nodes: Record<string, Object3D>, name: KitPieceName, detail: 
   return { geometry: full.geometry, sockets: full.children.filter(isSocket).map(readSocket) };
 }
 
-/** Pieces not in the asset: built here from another piece. */
-const DERIVED: Partial<Record<KitPieceName, { from: KitPieceName; matrix: Matrix4 }>> = {
-  /**
-   * The eave joint of a mono-pitch roof's HIGH side, where the rafter runs down into the hall instead of up.
-   * It is `EaveHaunch` sheared vertically about the inner column face (the rafter's joint point), so its rafter
-   * seat and tapered haunch slope at -pitch instead of +pitch: y' = y - 2 tan(pitch) (x - xInner).
-   * Vertical members stay vertical and keep their length, only their ends move.
-   */
-  EaveHaunchHigh: (() => {
-    const k = -2 * Math.tan((ROOF_PITCH_DEG * Math.PI) / 180);
-    const xInner = COLUMN_DEPTH / 2;
-    return { from: 'EaveHaunch', matrix: new Matrix4().set(1, 0, 0, 0, k, 1, 0, -k * xInner, 0, 0, 1, 0, 0, 0, 0, 1) };
-  })(),
-};
+/**
+ * The rafter's plumb end cuts are baked into its 1 m geometry for the source rafter (|A - E| = 6.0877 m at 10 degrees):
+ * the top of each cut sits `RAFTER_CUT_SLOPE` x height further along than its bottom. Stretched to another length the
+ * cuts would lean (a wedge opens at the top of each joint), so placements.ts shears every rafter back to plumb.
+ */
+export const RAFTER_CUT_SLOPE = Math.tan((ROOF_PITCH_DEG * Math.PI) / 180) / 6.0877;
+/**
+ * Where the rafter's bottom flange ends, in its 1 m geometry. Short of 1 by the apex plates' thickness: a gable's
+ * rafters stop there; a mono-pitch rafter runs on to the high column's inner face.
+ */
+export const RAFTER_END = 0.9983;
 
-/** A derived piece: the source geometry transformed, and its bolts moved with it (but not sheared). */
-function derivePiece(source: KitPiece, matrix: Matrix4): KitPiece {
-  return {
-    geometry: source.geometry.clone().applyMatrix4(matrix),
-    sockets: source.sockets.map(({ matrix: socket, side }) => {
-      const at = new Vector3().setFromMatrixPosition(socket).applyMatrix4(matrix);
-      return { matrix: socket.clone().setPosition(at), side };
-    }),
-  };
-}
+/** Pieces not in the asset: built here from another one (kitGeometry.ts). Bolt sockets are the source's. */
+const DERIVED: Partial<Record<KitPieceName, { from: KitPieceName; derive: (geometry: BufferGeometry) => BufferGeometry }>> = {
+  EaveHaunchHigh: { from: 'EaveHaunch', derive: (geometry) => deriveHighEaveJoint(geometry, (ROOF_PITCH_DEG * Math.PI) / 180) },
+  // Over each downpipe: a short gutter with a hole in its floor for the downpipe's outlet.
+  GutterOutlet: { from: 'Gutter', derive: (geometry) => deriveGutterOutlet(geometry, GUTTER_OUTLET_LENGTH, GUTTER_OUTLET_HOLE_RADIUS) },
+};
 
 /**
  * Suspends until the kit is loaded. The asset's geometries belong to drei's loader cache: do not dispose them.
@@ -110,8 +105,8 @@ export function useHallKit(detail: KitDetail = 'full'): HallKit {
     const pieces = Object.fromEntries(
       KIT_PIECES.filter((name) => !DERIVED[name]).map((name) => [name, readPiece(nodes, name, detail)]),
     ) as Record<KitPieceName, KitPiece>;
-    for (const [name, { from, matrix }] of Object.entries(DERIVED) as [KitPieceName, { from: KitPieceName; matrix: Matrix4 }][]) {
-      pieces[name] = derivePiece(pieces[from], matrix);
+    for (const [name, derived] of Object.entries(DERIVED) as [KitPieceName, NonNullable<(typeof DERIVED)[KitPieceName]>][]) {
+      pieces[name] = { geometry: derived.derive(pieces[derived.from].geometry), sockets: pieces[derived.from].sockets };
     }
     return { pieces, materials } as unknown as HallKit;
   }, [nodes, materials, detail]);

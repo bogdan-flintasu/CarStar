@@ -39,7 +39,7 @@ function Piece({ name, kit, placements, material, castShadow }: SteelProps & { n
 
 const FRAME_PIECES = ['Column', 'BasePlate', 'EaveHaunch', 'EaveHaunchHigh', 'Rafter', 'RidgeJoint', 'GirtCleat'] as const;
 const PURLIN_PIECES = ['Purlin', 'PurlinCleat'] as const;
-const RAINWATER_PIECES = ['Gutter', 'GutterEndCap', 'Downpipe', 'DownpipeShoe', 'DownpipeOutlet', 'RidgeCap'] as const;
+const RAINWATER_PIECES = ['Gutter', 'GutterOutlet', 'GutterEndCap', 'Downpipe', 'DownpipeShoe', 'DownpipeOutlet', 'RidgeCap'] as const;
 
 /** Portal frames: columns on base plates, rafters, the eave and ridge joints, and the cladding cleats. */
 export function Frames(props: SteelProps) {

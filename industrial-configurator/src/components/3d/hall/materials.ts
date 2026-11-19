@@ -13,6 +13,7 @@ import { useEffect, useLayoutEffect, useMemo } from 'react';
 import { useTexture } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
 import {
+  DoubleSide,
   MeshStandardMaterial,
   RepeatWrapping,
   SRGBColorSpace,
@@ -108,7 +109,8 @@ export function useHallMaterials(
       wall: painted(panels ? profileMaps(WALL_PANEL_PROFILE, 'v') : profileMaps(SHEET_PROFILE, 'u')),
       wallEdge: painted(),
       roof: painted(profileMaps(ROOF_PROFILE, 'v')),
-      trim: painted(),
+      // Sheet metal seen from both sides: the inside of a gutter, and of a downpipe seen through its outlet hole.
+      trim: Object.assign(painted(), { side: DoubleSide }),
       concrete: textured(Concrete, concreteMaps, METRES_PER_TILE),
     };
   }, [Steel, Concrete, steelMaps, concreteMaps, panels]);

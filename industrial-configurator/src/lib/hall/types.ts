@@ -124,7 +124,7 @@ export interface WallDescriptor {
 export interface RoofPlane {
   /** The side of its (low) eave. */
   side: Side;
-  /** Underside at the outer edge (the drip edge). */
+  /** Underside at the eave end of the panel: flush with the outer wall face, over the gutter. */
   eave: Vec2;
   /** Underside at the top of the slope: the ridge (x = 0) on a gable, the high edge on a mono-pitch roof. */
   ridge: Vec2;

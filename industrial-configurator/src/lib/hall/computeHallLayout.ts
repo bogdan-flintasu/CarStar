@@ -12,6 +12,7 @@ import {
   DOWNPIPE_DISCHARGE_HEIGHT,
   DOWNPIPE_OUTLET_DROP,
   EAVE_JOINT_HEIGHT,
+  END_WALL_GIRT_DEPTH,
   FRAME_FLANGE_WIDTH,
   GIRT_END_CLEARANCE,
   GUTTER_WIDTH,
@@ -50,10 +51,10 @@ function placeFrames(length: number, maxBay: number): HallFrame[] {
   }));
 }
 
-/** The cladding sits directly on the end frames' flanges. */
+/** The end walls stand on girts outside the end frames, clear of their base plates and joints. */
 function placeEnds(length: number, panelThickness: number): HallEnds {
-  const frontInner = FRAME_FLANGE_WIDTH / 2;
-  const backInner = -length - FRAME_FLANGE_WIDTH / 2;
+  const frontInner = FRAME_FLANGE_WIDTH / 2 + END_WALL_GIRT_DEPTH;
+  const backInner = -length - frontInner;
   return { frontInner, frontOuter: frontInner + panelThickness, backInner, backOuter: backInner - panelThickness };
 }
 
@@ -101,7 +102,7 @@ function placeRafters(frames: readonly HallFrame[], section: HallSection): HallR
   );
 }
 
-/** Purlins run the whole length in one line, flush with the outer flange edges of the end frames. */
+/** Purlins run the whole length in one line, on past the end frames to the end walls, carrying the roof to its edge. */
 function placePurlins(section: HallSection, ends: HallEnds): HallPurlin[] {
   const indexOnSide = new Map<Side, number>();
   return section.purlinSeats.map(({ side, x }) => {
@@ -111,13 +112,17 @@ function placePurlins(section: HallSection, ends: HallEnds): HallPurlin[] {
   });
 }
 
-/** Gable: one plane per side, eave to ridge. Mono: one plane from the low eave's edge to the high one's. */
+/**
+ * Gable: one plane per side, eave to ridge. Mono: one plane from the low eave to the high edge.
+ * At a gutter eave the panel ends flush with the outer wall face, over the gutter's back edge, and drips straight
+ * into it; its flashing (Trims.tsx) caps the panel's end. The verges and a mono roof's high edge overhang the walls.
+ */
 function placeRoof(section: HallSection, ends: HallEnds): RoofPlane[] {
-  const edgeX = section.halfWidths.roofEdge;
+  const { roofEdge: edgeX, wallOuter } = section.halfWidths;
   const zFront = ends.frontOuter + ROOF_OVERHANG;
   const zBack = ends.backOuter - ROOF_OVERHANG;
   const plane = (side: Side, topX: number): RoofPlane => {
-    const eaveX = sign(side) * edgeX;
+    const eaveX = sign(side) * wallOuter;
     const slopeLength = Math.abs(topX - eaveX) / Math.cos(section.pitch);
     return {
       side,
@@ -149,7 +154,10 @@ function placeSlab(section: HallSection, ends: HallEnds): HallSlab {
   };
 }
 
-/** A gutter under each low eave, hung on the outer wall face, with a downpipe at both ends of it. */
+/**
+ * A gutter under each low eave, hung on the outer wall face and as long as the roof above it, with a downpipe at both
+ * ends of it.
+ */
 function placeRainwater(section: HallSection, ends: HallEnds): { gutters: HallGutter[]; downpipes: HallDownpipe[] } {
   const wallX = section.halfWidths.wallOuter;
   const sides = SIDES.filter(section.isLowSide);
@@ -157,8 +165,8 @@ function placeRainwater(section: HallSection, ends: HallEnds): { gutters: HallGu
     side,
     x: sign(side) * wallX,
     y: section.roofUndersideY(sign(side) * wallX),
-    zFrom: ends.frontOuter,
-    zTo: ends.backOuter,
+    zFrom: ends.frontOuter + ROOF_OVERHANG,
+    zTo: ends.backOuter - ROOF_OVERHANG,
   }));
   const pipeEnds = [
     { end: 'front', z: ends.frontOuter - DOWNPIPE_END_INSET },
