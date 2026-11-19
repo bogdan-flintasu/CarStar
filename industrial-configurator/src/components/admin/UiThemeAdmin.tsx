@@ -5,7 +5,7 @@
  * sky on/off and corner rounding, with ready-made presets, contrast checks and a live preview drawn with the same
  * theme mechanism as the configurator. Saved as a whole (PUT /api/admin/theme).
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   DEFAULT_UI_THEME,
   UI_RADII,
@@ -22,6 +22,8 @@ import {
 } from '@/lib/uiTheme';
 import { HEX_PATTERN } from '@/lib/colors';
 import UiThemeScope from '@/components/configurator/UiThemeScope';
+import { generateThemes } from '@/lib/themeGenerator';
+import BrandAdmin, { type AdminBrand } from './BrandAdmin';
 
 type AdminFetch = (input: string, init?: RequestInit) => Promise<Response>;
 
@@ -70,15 +72,17 @@ function ColorField({ field, value, onChange }: { field: UiThemeColorField; valu
 }
 
 /** A small configurator drawn with the theme, using the same classes as the real components. */
-function ThemePreview({ theme }: { theme: UiTheme }) {
+function ThemePreview({ theme, brand }: { theme: UiTheme; brand: AdminBrand | null }) {
   return (
     <UiThemeScope theme={theme} className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
       <div className="bg-[var(--color-bg-primary)] text-[13px] select-none" aria-hidden>
         <div className="bg-white border-b border-gray-200 px-4 py-2.5 flex items-center justify-between">
-          <span className="font-extrabold tracking-tight">
-            <span className="text-gray-900">Firma</span>
-            <span className="text-[var(--color-primary)]">Ta</span>
-          </span>
+          {brand?.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- the logo is a user upload served by our own route
+            <img src={brand.logoUrl} alt="" className="h-6 w-auto max-w-[120px] object-contain" />
+          ) : (
+            <span className="font-extrabold tracking-tight text-gray-900">{brand?.effectiveName || 'Firma ta'}</span>
+          )}
           <div className="flex items-center gap-1.5">
             <span className="w-6 h-6 rounded-full bg-black text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-offset-1 ring-[var(--color-primary)]">1</span>
             <span className="w-6 h-6 rounded-full bg-gray-200 text-gray-600 text-[10px] font-bold flex items-center justify-center">2</span>
@@ -140,7 +144,14 @@ function ThemePreview({ theme }: { theme: UiTheme }) {
   );
 }
 
-export default function UiThemeAdmin({ adminFetch }: { adminFetch: AdminFetch }) {
+interface UiThemeAdminProps {
+  adminFetch: AdminFetch;
+  /** The company identity (loaded by the admin page, which also shows it in its header). */
+  brand: AdminBrand | null;
+  onBrandChange: (brand: AdminBrand) => void;
+}
+
+export default function UiThemeAdmin({ adminFetch, brand, onBrandChange }: UiThemeAdminProps) {
   const [theme, setTheme] = useState<UiTheme | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -156,6 +167,12 @@ export default function UiThemeAdmin({ adminFetch }: { adminFetch: AdminFetch })
         setError('Tema salvată nu a putut fi citită; se afișează tema implicită.');
       });
   }, [adminFetch]);
+
+  // The three themes generated from the brand colours (empty until the company has a colour).
+  const variants = useMemo(
+    () => (brand && HEX_PATTERN.test(brand.primaryColor) ? generateThemes(brand.primaryColor, brand.secondaryColor) : []),
+    [brand],
+  );
 
   if (!theme) return <div className="text-sm text-gray-500">Se încarcă...</div>;
 
@@ -221,6 +238,43 @@ export default function UiThemeAdmin({ adminFetch }: { adminFetch: AdminFetch })
         </div>
       )}
 
+      <BrandAdmin
+        adminFetch={adminFetch}
+        brand={brand}
+        onBrandChange={onBrandChange}
+        onColorsApplied={(primary, secondary) => {
+          // The colours are saved with the brand; the generated "Luminos" theme is only put in the editor (Salvează keeps it).
+          const [light] = generateThemes(primary, secondary);
+          setTheme(light.theme);
+        }}
+      />
+
+      {variants.length > 0 && (
+        <div className="mb-6">
+          <span className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-2">Din culorile firmei</span>
+          <div className="flex flex-wrap gap-2">
+            {variants.map((v) => (
+              <button
+                key={v.id}
+                type="button"
+                onClick={() => setTheme({ ...v.theme })}
+                className={`flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer transition-colors ${
+                  JSON.stringify(v.theme) === JSON.stringify(theme) ? 'border-[#F5A623] text-white bg-[#F5A623]/10' : 'border-white/10 text-gray-400 hover:text-white'
+                }`}
+              >
+                <span className="flex -space-x-1">
+                  {[v.theme.accent, v.theme.surface, v.theme.barBackground].map((c, i) => (
+                    <span key={i} className="w-3.5 h-3.5 rounded-full border border-black/30" style={{ background: c }} />
+                  ))}
+                </span>
+                {v.name}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1.5 text-[11px] text-gray-500">Toate cele trei variante respectă contrastul WCAG AA. Apasă „Salvează” pentru a le păstra.</p>
+        </div>
+      )}
+
       <div className="mb-6">
         <span className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-2">Teme predefinite</span>
         <div className="flex flex-wrap gap-2">
@@ -280,7 +334,7 @@ export default function UiThemeAdmin({ adminFetch }: { adminFetch: AdminFetch })
         </div>
 
         <div className="lg:sticky lg:top-24 space-y-4">
-          <ThemePreview theme={theme} />
+          <ThemePreview theme={theme} brand={brand} />
           <div className="space-y-1.5">
             <span className="block text-[11px] font-bold uppercase tracking-wider text-gray-500">Lizibilitate (contrast WCAG)</span>
             {UI_THEME_CONTRAST_PAIRS.map(({ label, fg, bg }) => {

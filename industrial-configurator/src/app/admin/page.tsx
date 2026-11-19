@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import ColorsAdmin from '@/components/admin/ColorsAdmin';
 import ModelsAdmin from '@/components/admin/ModelsAdmin';
 import UiThemeAdmin from '@/components/admin/UiThemeAdmin';
+import type { AdminBrand } from '@/components/admin/BrandAdmin';
 
 interface PricesData {
   id: string;
@@ -76,6 +77,7 @@ function AdminDashboard() {
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [brand, setBrand] = useState<AdminBrand | null>(null);
   const router = useRouter();
 
   /** fetch() for admin endpoints: an expired session sends the user back to login. */
@@ -98,6 +100,14 @@ function AdminDashboard() {
       .then((data) => setPrices(data))
       .catch((err) => console.error('Failed to load prices:', err))
       .finally(() => setLoading(false));
+  }, [adminFetch]);
+
+  // The company identity: shown in this header and edited under "Interfață".
+  useEffect(() => {
+    adminFetch('/api/admin/brand')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then((data: AdminBrand) => setBrand(data))
+      .catch((err) => console.error('Failed to load the brand:', err));
   }, [adminFetch]);
 
   const loadConfigs = useCallback(
@@ -199,9 +209,13 @@ function AdminDashboard() {
       <header className="border-b border-white/5 bg-black/30 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/" className="text-xl font-extrabold tracking-tight select-none">
-              <span className="text-white">Car</span>
-              <span className="text-[#F5A623]">Star</span>
+            <Link href="/" className="flex items-center text-xl font-extrabold tracking-tight select-none text-white max-w-[50vw]">
+              {brand?.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- the logo is a user upload served by our own route
+                <img src={brand.logoUrl} alt={brand.effectiveName} className="h-9 w-auto max-w-[200px] object-contain rounded-md bg-white p-1" />
+              ) : (
+                <span className="truncate">{brand?.effectiveName ?? ''}</span>
+              )}
             </Link>
             <span className="text-gray-600">|</span>
             <span className="text-sm font-medium text-gray-400">Admin</span>
@@ -346,7 +360,7 @@ function AdminDashboard() {
 
         {activeTab === 'colors' && <ColorsAdmin adminFetch={adminFetch} />}
         {activeTab === 'models' && <ModelsAdmin adminFetch={adminFetch} />}
-        {activeTab === 'theme' && <UiThemeAdmin adminFetch={adminFetch} />}
+        {activeTab === 'theme' && <UiThemeAdmin adminFetch={adminFetch} brand={brand} onBrandChange={setBrand} />}
 
         {/* ── Configs Tab ────────────────────────────── */}
         {activeTab === 'configs' && (

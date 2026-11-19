@@ -1,11 +1,16 @@
 import { escapeHtml as e, toHeaderSafe } from '@/lib/validation/html';
 import type { SendEmailInput } from '@/lib/validation/email';
 import { COLOR_COMPONENTS, COMPONENT_LABELS } from '@/lib/colors';
-import { getBranding } from '@/lib/branding';
+import { getBranding, type Branding } from '@/lib/branding';
+import { HEX_PATTERN } from '@/lib/colors';
 
 export interface LeadEmailOptions {
   /** Defaults to the branding's company name. */
   companyName?: string;
+  /** The active branding (see getActiveBranding): name, accent colour. Without it the environment's is used. */
+  branding?: Pick<Branding, 'name' | 'colors'>;
+  /** Absolute https URL of the logo to show above the title (raster logos only: email clients ignore SVG). */
+  logoUrl?: string | null;
   /** File name of the attached PDF quote, if any. */
   attachment?: string | null;
 }
@@ -40,7 +45,12 @@ export function buildLeadSubject(lead: Lead): string {
  * `link` must already be the canonical, server-built configuration URL.
  */
 export function buildLeadEmailHtml(lead: Lead, link: string | null, options: LeadEmailOptions = {}): string {
-  const company = options.companyName ?? getBranding().name;
+  const brand = options.branding ?? getBranding();
+  const company = options.companyName ?? brand.name;
+  const accent = HEX_PATTERN.test(brand.colors.primary) ? brand.colors.primary : '#F5A623';
+  const logo = options.logoUrl && /^https?:\/\//i.test(options.logoUrl)
+    ? `<img src="${e(options.logoUrl)}" alt="${e(company)}" style="max-height:48px;max-width:240px;display:block;margin-bottom:8px"/>`
+    : '';
   const s = lead.configurationSummary;
   const dims = s?.dimensions;
   const price =
@@ -49,8 +59,9 @@ export function buildLeadEmailHtml(lead: Lead, link: string | null, options: Lea
   const message = lead.message ? e(lead.message).replace(/\r?\n/g, '<br/>') : null;
 
   return `
+      ${logo}
       <h2>Cerere Nouă de Configurare - ${e(company)}</h2>
-      <hr/>
+      <hr style="border:0;border-top:3px solid ${accent}"/>
       <h3>Detalii Contact</h3>
       <p><strong>Nume:</strong> ${e(lead.name || 'N/A')}</p>
       <p><strong>Email:</strong> ${e(lead.email)}</p>

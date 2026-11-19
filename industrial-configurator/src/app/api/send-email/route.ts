@@ -9,6 +9,7 @@ import {
   parseConfigurationLink,
   sendEmailSchema,
 } from '@/lib/validation/email';
+import { brandLogoUrl, getActiveBranding } from '@/lib/branding';
 import { buildLeadEmailHtml, buildLeadLog, buildLeadSubject } from '../_lib/emailTemplate';
 import { getCurrentPrices, getOrSeedPalette } from '../_lib/prices';
 import { resolveEmailSummary } from '../_lib/serverPrice';
@@ -81,6 +82,10 @@ export async function POST(req: NextRequest) {
         console.error('send-email: PDF quote not attached:', error);
       }
     }
+    const branding = await getActiveBranding();
+    // Email clients do not draw SVG: only a PNG/JPEG logo goes into the email.
+    const logoPath = brandLogoUrl(branding);
+    const logoUrl = logoPath && branding.logoMime !== 'image/svg+xml' ? `${origin}${logoPath}` : null;
     if (apiKey) {
       const { Resend } = await import('resend');
       const resend = new Resend(apiKey);
@@ -89,7 +94,7 @@ export async function POST(req: NextRequest) {
         to: [toEmail],
         replyTo: input.email,
         subject: buildLeadSubject(lead),
-        html: buildLeadEmailHtml(lead, link, { attachment: quote?.filename }),
+        html: buildLeadEmailHtml(lead, link, { attachment: quote?.filename, branding, logoUrl }),
         attachments: quote ? [{ filename: quote.filename, content: quote.pdf, contentType: 'application/pdf' }] : undefined,
       });
       if (error) throw new Error(error.message);

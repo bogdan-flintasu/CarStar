@@ -20,6 +20,18 @@ vi.mock('@/lib/prisma', () => ({
     hallModel: {
       findUnique: async () => null,
     },
+    organization: {
+      findUnique: async () => ({
+        id: 'default',
+        name: '',
+        address: '',
+        phone: '+40 700 000 000',
+        email: '',
+        website: '',
+        brand: { displayName: 'Firma Test', logoAssetId: null, primaryColor: '#dc2626' },
+      }),
+    },
+    asset: { findUnique: async () => null },
     colorOption: {
       count: async () => db.colors.length,
       createMany: async ({ data }: { data: Array<Record<string, unknown>> }) => {
@@ -89,6 +101,16 @@ describe('server-side price (B5)', () => {
     expect(stored.estimatedPrice).toBe(43200 + 150 + 5040);
     expect(stored.floorArea).toBe(144);
     expect(stored.openings).toEqual({ windows: 1, doors: 0, garageDoors: 0 });
+  });
+
+  it('POST /api/configurations freezes the branding into the quote', async () => {
+    const res = await createConfiguration(
+      post('http://localhost/api/configurations', { data: tamperedData }, '10.0.0.9'),
+    );
+    expect(res.status).toBe(201);
+    const row = db.created[0].data;
+    expect(row.organizationId).toBe('default');
+    expect(row.brandingSnapshot).toMatchObject({ v: 1, name: 'Firma Test', phone: '+40 700 000 000', colors: { primary: '#dc2626' } });
   });
 
   it('POST /api/send-email quotes the server price', async () => {

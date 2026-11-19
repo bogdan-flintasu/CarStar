@@ -8,8 +8,13 @@
  *   BRAND_PRIMARY_COLOR  #rrggbb accent colour             (default #F5A623)
  *   BRAND_TEXT_COLOR     #rrggbb text/heading colour       (default #1A1A1A)
  *   BRAND_ADDRESS, BRAND_PHONE, BRAND_EMAIL, BRAND_WEBSITE  contact lines (default empty: not shown)
+ *
+ * `getBranding(env)` is that environment-only, synchronous reading. `getActiveBranding()` is what the app uses: the
+ * default organization's brand identity from the database (name, logo, colours, contact details set in the admin),
+ * with the environment filling in whatever is missing, and as a whole when the database cannot be read.
  */
 import { HEX_PATTERN } from './colors';
+import { brandingSnapshotSchema, type BrandingSnapshot } from './validation/brand';
 
 export interface Branding {
   name: string;
@@ -20,6 +25,11 @@ export interface Branding {
   phone: string;
   email: string;
   website: string;
+  /** Uploaded logo (an Asset of the organization), when there is one. It wins over `logoPath`. */
+  logoAssetId?: string | null;
+  logoSha256?: string | null;
+  logoMime?: string | null;
+  organizationId?: string | null;
 }
 
 export const DEFAULT_BRANDING: Branding = {
@@ -64,4 +74,82 @@ export function getBranding(env: Env = process.env): Branding {
 /** Non-empty contact lines, in display order. */
 export function contactLines(branding: Branding): string[] {
   return [branding.address, branding.phone, branding.email, branding.website].filter(Boolean);
+}
+
+/** Public URL of the uploaded logo, versioned by its hash so a new logo shows at once; null without an uploaded logo. */
+export function brandLogoUrl(branding: Pick<Branding, 'logoAssetId' | 'logoSha256'>): string | null {
+  return branding.logoAssetId && branding.logoSha256 ? `/api/brand/logo?v=${branding.logoSha256.slice(0, 8)}` : null;
+}
+
+const DEFAULT_ORGANIZATION_ID = 'default';
+
+/**
+ * The branding the app shows now: the default organization's brand identity from the database over the environment
+ * (name: display name, then organization name, then BRAND_NAME). Never throws: any database problem gives the
+ * environment branding, so pages and quotes always render.
+ */
+export async function getActiveBranding(env: Env = process.env): Promise<Branding> {
+  const base = getBranding(env);
+  try {
+    const { default: prisma } = await import('./prisma');
+    const org = await prisma.organization.findUnique({ where: { id: DEFAULT_ORGANIZATION_ID }, include: { brand: true } });
+    if (!org) return base;
+    const brand = org.brand;
+    let logo: { id: string; sha256: string; mime: string } | null = null;
+    if (brand?.logoAssetId) {
+      const asset = await prisma.asset.findUnique({ where: { id: brand.logoAssetId }, select: { id: true, sha256: true, mime: true } });
+      if (asset) logo = { id: asset.id, sha256: asset.sha256, mime: asset.mime };
+    }
+    return {
+      ...base,
+      name: text(brand?.displayName, 120) || text(org.name, 120) || base.name,
+      logoAssetId: logo?.id ?? null,
+      logoSha256: logo?.sha256 ?? null,
+      logoMime: logo?.mime ?? null,
+      organizationId: org.id,
+      colors: { ...base.colors, primary: color(brand?.primaryColor, base.colors.primary) },
+      address: text(org.address) || base.address,
+      phone: text(org.phone, 60) || base.phone,
+      email: text(org.email, 254) || base.email,
+      website: text(org.website) || base.website,
+    };
+  } catch (error) {
+    console.error('Failed to read the brand identity, using the environment:', error);
+    return base;
+  }
+}
+
+/** What is frozen into a saved quote: everything its PDF shows about the company. */
+export function brandingSnapshot(branding: Branding): BrandingSnapshot {
+  return {
+    v: 1,
+    name: branding.name,
+    address: branding.address,
+    phone: branding.phone,
+    email: branding.email,
+    website: branding.website,
+    colors: branding.colors,
+    logoAssetId: branding.logoAssetId ?? null,
+    logoSha256: branding.logoSha256 ?? null,
+    logoPath: branding.logoPath,
+  };
+}
+
+/** The branding of a stored snapshot, or null when the value is missing or not a valid snapshot (old rows). */
+export function brandingFromSnapshot(value: unknown, organizationId?: string | null): Branding | null {
+  const parsed = brandingSnapshotSchema.safeParse(value);
+  if (!parsed.success) return null;
+  const s = parsed.data;
+  return {
+    name: s.name || DEFAULT_BRANDING.name,
+    logoPath: s.logoPath && LOGO_PATTERN.test(s.logoPath) ? s.logoPath : null,
+    colors: s.colors,
+    address: s.address,
+    phone: s.phone,
+    email: s.email,
+    website: s.website,
+    logoAssetId: s.logoAssetId,
+    logoSha256: s.logoSha256,
+    organizationId: organizationId ?? null,
+  };
 }
