@@ -67,3 +67,6 @@ Gate: `cd industrial-configurator && pnpm install && pnpm exec tsc --noEmit && p
   - ISSUES: (1) T2 ConfigHeader: a long name ("Configurator hale", the default) is clipped and runs into the step
     indicator at 1440 and 800 px (needs truncate + room). (2) T1a HistoryButtons on phones sit on top of the admin
     models bar (admins only). (3) T1a toast overlaps the admin bar at desktop (minor). -> small fix before/with wave 2.
+- Wave 1 layout fixes (orchestrator, small): ConfigHeader md+ grid (name truncates, title tooltip), StepIndicator labels
+  lg+, HistoryButtons phone bottom-left above the view bar, toast bottom centre. Checked at 1440, 820 and 375 px with a
+  38-character name (verify DB). Gate GREEN (tsc, lint 0/0, 643 tests, build). User OK'd wave 2 after these fixes.
