@@ -12,6 +12,7 @@ import AdminModelBar from './AdminModelBar';
 import ViewToolbar from './ViewToolbar';
 import HistoryButtons from './HistoryButtons';
 import MovedOpeningsToast from './MovedOpeningsToast';
+import PlacementStatus from './PlacementStatus';
 import ConfigHeader from './ConfigHeader';
 import ConfigFooter from './ConfigFooter';
 import DimensionsStep from './steps/DimensionsStep';
@@ -168,9 +169,10 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
           <ViewToolbar />
           <HistoryButtons />
           <MovedOpeningsToast />
+          <PlacementStatus />
 
           {/* Navigation Hint Overlay — Desktop (bottom-left) */}
-          <div className="hidden md:flex absolute bottom-6 left-6 bg-white/90 backdrop-blur-md px-4 py-3 rounded-xl border border-gray-200 shadow-sm pointer-events-none z-10 flex-col gap-1.5">
+          <div className="hidden md:flex absolute bottom-6 left-6 max-w-[calc(100%-3rem)] bg-white/90 backdrop-blur-md px-4 py-3 rounded-xl border border-gray-200 shadow-sm pointer-events-none z-10 flex-col gap-1.5">
             <span className="text-[10px] font-bold text-gray-800 uppercase tracking-wider mb-0.5">Control 3D</span>
             <div className="flex items-center gap-4 text-xs font-medium text-gray-600">
               <span className="flex items-center gap-1.5">
@@ -193,6 +195,12 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
                 <kbd className="px-1.5 py-0.5 bg-white border border-gray-200 rounded-md text-gray-700 shadow-sm font-sans">P</kbd>
                 Proiecție
               </span>
+              {currentStep === 3 && (
+                <span className="flex items-center gap-1.5">
+                  <kbd className="px-1.5 py-0.5 bg-white border border-gray-200 rounded-md text-gray-700 shadow-sm font-sans">Alt/⌥</kbd>
+                  Fără aliniere
+                </span>
+              )}
             </div>
           </div>
 

@@ -1,12 +1,19 @@
 'use client';
 
 import ColorPicker from '../ColorPicker';
-import { useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { motion } from 'framer-motion';
 import { useOpeningsStore, MIN_OPENING_SIZE } from '@/stores/useOpeningsStore';
 import type { OpeningType } from '@/stores/useOpeningsStore';
 import { countOpenings } from '@/lib/pricing';
 import { wallLabelRo } from '@/lib/i18n/ro';
+import { OPENING_DRAG_TYPE } from '@/components/3d/openings/placement';
+import { isPlacementHintSeen, subscribePlacementHint } from '@/components/3d/openings/placementHint';
+import { wallKindOf } from '@/components/3d/openings/anchors';
+import { useTouchLayout } from '../PlacementStatus';
+
+/** Hidden on the server and during hydration; the browser's flag afterwards. */
+const usePlacementHintSeen = () => useSyncExternalStore(subscribePlacementHint, () => isPlacementHintSeen(), () => true);
 
 // ─── Custom SVG Icons ─────────────────────────────────────────────────────────
 function WindowIcon({ className = 'w-7 h-7' }: { className?: string }) {
@@ -82,6 +89,10 @@ export default function ClosingsStep() {
   const wallSpans = useOpeningsStore((s) => s.wallSpans);
   const conflicts = useOpeningsStore((s) => s.conflicts);
   const autoPlaceOpening = useOpeningsStore((s) => s.autoPlaceOpening);
+  const centreOpening = useOpeningsStore((s) => s.centreOpening);
+  const snapEnabled = useOpeningsStore((s) => s.snapEnabled);
+  const setSnapEnabled = useOpeningsStore((s) => s.setSnapEnabled);
+  const touch = useTouchLayout();
   const [autoPlaceFailed, setAutoPlaceFailed] = useState<string | null>(null);
   const conflictKinds = new Map<string, Set<string>>();
   for (const c of conflicts) conflictKinds.set(c.openingId, (conflictKinds.get(c.openingId) ?? new Set()).add(c.kind));
@@ -118,6 +129,10 @@ export default function ClosingsStep() {
   const handleToolClick = (tool: OpeningType) => {
     setActiveTool(activeTool === tool ? null : tool);
   };
+  const hintSeen = usePlacementHintSeen();
+
+  // The tool belongs to this step: leaving it ends placing.
+  useEffect(() => () => useOpeningsStore.getState().setActiveTool(null), []);
 
   // Count openings by type
   const { windows: windowCount, doors: doorCount, garageDoors: garageDoorCount } = countOpenings(openings);
@@ -143,7 +158,17 @@ export default function ClosingsStep() {
             return (
               <button
                 key={tool.type}
+                type="button"
+                aria-pressed={activeTool === tool.type}
                 onClick={() => handleToolClick(tool.type)}
+                // Desktop alternative: drag the card straight onto a wall (PlacementPreview handles the drop).
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.setData(OPENING_DRAG_TYPE, tool.type);
+                  e.dataTransfer.effectAllowed = 'copy';
+                  setActiveTool(tool.type);
+                }}
+                title="Click și apoi click pe perete, sau trage pe un perete"
                 className={`flex-1 flex flex-col items-center gap-2 py-3.5 px-2 rounded-xl border-2 transition-all duration-200 cursor-pointer
                   ${activeTool === tool.type
                     ? 'bg-orange-50 border-[var(--color-primary)] text-[var(--color-primary)] shadow-md'
@@ -157,12 +182,26 @@ export default function ClosingsStep() {
           })}
         </div>
 
-        {/* Active tool hint */}
-        {activeTool && (
-          <p className="text-xs text-gray-500 text-center animate-pulse">
-            Apasă pe un perete și apoi pe{' '}
-            <span className="text-[var(--color-primary)] font-bold">+</span> pentru a adăuga
+        {/* First-time hint: until the first placement in this browser. */}
+        {!hintSeen && (
+          <p className="text-xs text-gray-600 text-center rounded-lg bg-gray-50 border border-gray-200 px-3 py-2">
+            1. Alege tipul · 2. Click pe perete · 3. Trage pentru a muta
           </p>
+        )}
+
+        {/* Phones have no Alt key: snapping is switched here (not remembered). */}
+        {touch && (
+          <label className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2 cursor-pointer">
+            <span className="text-xs font-bold text-gray-800">Aliniere: {snapEnabled ? 'on' : 'off'}</span>
+            <input
+              type="checkbox"
+              role="switch"
+              aria-checked={snapEnabled}
+              checked={snapEnabled}
+              onChange={(e) => setSnapEnabled(e.target.checked)}
+              className="w-4 h-4 accent-[var(--color-primary)]"
+            />
+          </label>
         )}
 
         {/* Openings summary */}
@@ -256,6 +295,26 @@ export default function ClosingsStep() {
                 />
                 <span className="text-gray-500 ml-1">m</span>
               </div>
+            </div>
+
+            {/* T1c: centre buttons ("în travee" only on side walls, which have bays). */}
+            <div className="flex gap-2">
+              {wallKindOf(selectedOpening.wallId) === 'side' && (
+                <button
+                  type="button"
+                  onClick={() => centreOpening(selectedOpening.id, 'bay')}
+                  className="flex-1 px-2 py-1.5 rounded-md border border-gray-300 text-xs font-bold text-gray-700 hover:border-[var(--color-primary)] hover:text-black cursor-pointer transition-colors"
+                >
+                  Centrează în travee
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => centreOpening(selectedOpening.id, 'wall')}
+                className="flex-1 px-2 py-1.5 rounded-md border border-gray-300 text-xs font-bold text-gray-700 hover:border-[var(--color-primary)] hover:text-black cursor-pointer transition-colors"
+              >
+                Centrează pe perete
+              </button>
             </div>
 
             {doesNotFit(selectedOpening.id) && (

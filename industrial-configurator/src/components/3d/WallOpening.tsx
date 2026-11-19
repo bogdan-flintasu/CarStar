@@ -11,7 +11,10 @@ import { DEFAULT_COLOR_HEXES, type HallColorHexes } from '@/lib/colors';
 import type { OpeningType, ResizeHandle, WallSpan } from './openings/types';
 import { isFloorStanding, openingCentre } from './openings/openingMath';
 import { clipOpeningToWall, isMirrored } from './openings/wallShapeWithHoles';
+import { wallKindOf } from './openings/anchors';
+import { snap } from './openings/snapping';
 import { renderHiddenProps, renderPlainProps } from './hall/renders';
+import { useAccentColor } from '@/components/configurator/UiThemeScope';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface WallOpeningProps {
@@ -27,7 +30,6 @@ interface WallOpeningProps {
 }
 
 // ─── Look ─────────────────────────────────────────────────────────────────────
-const SELECTED_EMISSIVE = '#F5A623';
 const CONFLICT_COLOR = '#E5252A';
 const HANDLE_COLOR = '#ffffff';
 const HANDLE_SIZE = 0.08;
@@ -127,10 +129,14 @@ export default function WallOpening({
   colors = DEFAULT_COLOR_HEXES,
 }: WallOpeningProps) {
   const { camera, gl } = useThree();
+  /** Selection glow and handles follow the interface theme. */
+  const accent = useAccentColor();
 
   const selectedId = useOpeningsStore((s) => s.selectedOpeningId);
   const selectOpening = useOpeningsStore((s) => s.selectOpening);
   const updateOpening = useOpeningsStore((s) => s.updateOpening);
+  const moveOpening = useOpeningsStore((s) => s.moveOpening);
+  const setSnapGuides = useOpeningsStore((s) => s.setSnapGuides);
   const setIsDragging = useOpeningsStore((s) => s.setIsDragging);
 
   const isSelected = selectedId === opening.id;
@@ -213,14 +219,14 @@ export default function WallOpening({
     // A window's only hardware is its sill flashing, in the frame colour.
     materials.hardware.color.set(opening.type === 'window' ? frameHex : HARDWARE_COLOR);
     const active = isSelected || interaction !== null;
-    const glow = conflict ? CONFLICT_COLOR : active ? SELECTED_EMISSIVE : '#000000';
+    const glow = conflict ? CONFLICT_COLOR : active ? accent : '#000000';
     const strength = conflict ? 0.6 : active ? 0.35 : 0;
     for (const m of [materials.frame, materials.leaf, materials.glass]) {
       m.emissive.set(glow);
       m.emissiveIntensity = strength;
     }
     invalidate();
-  }, [materials, frameHex, colors.doors, opening.type, conflict, isSelected, interaction, invalidate]);
+  }, [materials, frameHex, colors.doors, opening.type, conflict, isSelected, interaction, invalidate, accent]);
 
   // ── Pointer sessions ────────────────────────────────────────────────────
   // Move/up are tracked on `window`, so fast drags that leave the mesh (or the canvas) keep working.
@@ -239,9 +245,13 @@ export default function WallOpening({
     [camera, gl, raycaster],
   );
 
-  /** Starts a drag; `onDelta` gets the pointer delta in metres along the wall (dH) and up (dV). */
+  /** Starts a drag; `onDelta` gets the pointer delta in metres along the wall (dH) and up (dV), and the event. */
   const startSession = useCallback(
-    (e: ThreeEvent<PointerEvent>, kind: 'move' | ResizeHandle, onDelta: (dH: number, dV: number) => void) => {
+    (
+      e: ThreeEvent<PointerEvent>,
+      kind: 'move' | ResizeHandle,
+      onDelta: (dH: number, dV: number, ev: PointerEvent) => void,
+    ) => {
       e.stopPropagation();
       endSessionRef.current?.();
 
@@ -259,7 +269,7 @@ export default function WallOpening({
         const hit = intersect(ev.clientX, ev.clientY, plane);
         if (!hit) return;
         const d = hit.sub(start);
-        onDelta(d.dot(axisH), d.y);
+        onDelta(d.dot(axisH), d.y, ev);
       };
       const end = () => {
         window.removeEventListener('pointermove', onMove);
@@ -267,6 +277,7 @@ export default function WallOpening({
         window.removeEventListener('pointercancel', onUp);
         endSessionRef.current = null;
         setInteraction(null);
+        setSnapGuides(null);
         setIsDragging(false);
       };
       const onUp = (ev: PointerEvent) => {
@@ -280,7 +291,7 @@ export default function WallOpening({
       setInteraction(kind);
       setIsDragging(true); // disables OrbitControls
     },
-    [wall, worldPos, intersect, setIsDragging],
+    [wall, worldPos, intersect, setIsDragging, setSnapGuides],
   );
 
   // End any running session on unmount (e.g. the opening was deleted mid-drag).
@@ -289,15 +300,29 @@ export default function WallOpening({
   const handleMovePointerDown = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
       const startOpening = opening;
-      startSession(e, 'move', (dH, dV) => {
-        // The store clamps to the wall and keeps doors on the floor.
-        updateOpening(startOpening.id, {
+      startSession(e, 'move', (dH, dV, ev) => {
+        // T1c: snap to bay centre / wall middle / equal gaps / window sills; Alt (⌥) or "Aliniere" off = free.
+        const { wallSpans, openings, snapEnabled } = useOpeningsStore.getState();
+        const wallSpan = wallSpans?.[startOpening.wallId] ?? span;
+        const free = ev.altKey || !snapEnabled;
+        const others = openings.filter((o) => o.wallId === startOpening.wallId && o.id !== startOpening.id);
+        const candidate = {
           offsetX: startOpening.offsetX + dH,
           sill: startOpening.sill + dV,
+          width: startOpening.width,
+          height: startOpening.height,
+        };
+        const snapped = snap(candidate, wallSpan, others, {
+          type: startOpening.type,
+          wallKind: wallKindOf(startOpening.wallId),
+          free,
         });
+        // The store clamps to the wall, keeps doors on the floor and anchors the result.
+        moveOpening(startOpening.id, snapped.rect, { free });
+        setSnapGuides(snapped.guides.length > 0 ? { wallId: startOpening.wallId, guides: snapped.guides } : null);
       });
     },
-    [opening, startSession, updateOpening],
+    [opening, span, startSession, moveOpening, setSnapGuides],
   );
 
   const handleResizePointerDown = useCallback(
@@ -384,7 +409,7 @@ export default function WallOpening({
             <sphereGeometry args={[HANDLE_SIZE, 12, 12]} />
             <meshStandardMaterial
               color={HANDLE_COLOR}
-              emissive="#F5A623"
+              emissive={accent}
               emissiveIntensity={interaction === hp.id ? 1 : 0.5}
             />
           </mesh>
