@@ -189,7 +189,7 @@ export default function ClosingsStep() {
                 title="Click și apoi click pe perete, sau trage pe un perete"
                 className={`flex-1 flex flex-col items-center gap-2 py-3.5 px-2 rounded-xl border-2 transition-all duration-200 cursor-pointer
                   ${activeTool === tool.type
-                    ? 'bg-orange-50 border-[var(--color-primary)] text-[var(--color-primary)] shadow-md'
+                    ? 'bg-[var(--color-primary)]/10 border-[var(--color-primary)] text-[var(--color-primary)] shadow-md'
                     : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700'
                   }`}
               >
@@ -509,7 +509,7 @@ export default function ClosingsStep() {
                     conflictKinds.has(o.id)
                       ? 'bg-red-50 border-2 border-red-500 text-red-700'
                       : selectedOpeningId === o.id
-                      ? 'bg-orange-50 border-2 border-[var(--color-primary)] text-black'
+                      ? 'bg-[var(--color-primary)]/10 border-2 border-[var(--color-primary)] text-black'
                       : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
                   } ${unfit ? 'pr-1.5' : ''}`}
                 >

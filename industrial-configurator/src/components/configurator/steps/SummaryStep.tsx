@@ -310,7 +310,7 @@ export default function SummaryStep() {
             <button
               onClick={handleGenerateLink}
               disabled={saving}
-              className="w-full py-2 rounded-lg border border-[var(--color-primary)] text-[var(--color-primary)] text-sm font-bold cursor-pointer hover:bg-orange-55 transition-colors disabled:opacity-50"
+              className="w-full py-2 rounded-lg border border-[var(--color-primary)] text-[var(--color-primary)] text-sm font-bold cursor-pointer transition-colors disabled:opacity-50"
             >
               {saving ? 'Se salvează…' : 'Generează Link'}
             </button>
