@@ -2,9 +2,9 @@
 
 import { ReactNode, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
+import { useConfiguratorStore, type ConfigStep } from '@/stores/useConfiguratorStore';
 import { useShallow } from 'zustand/react/shallow';
-import { useOpeningsStore } from '@/stores/useOpeningsStore';
+import { selectHasOpeningConflicts, useOpeningsStore } from '@/stores/useOpeningsStore';
 import { calculatePrice, countOpenings } from '@/lib/pricing';
 import { surchargeRates } from '@/lib/colors';
 import { getGraphicsSettings } from '@/lib/hardwareTier';
@@ -33,6 +33,12 @@ function readDismissed(): boolean {
 export default function ConfiguratorLayout({ children }: { children: ReactNode }) {
   const currentStep = useConfiguratorStore((s) => s.currentStep);
   const setStep = useConfiguratorStore((s) => s.setStep);
+  const hasOpeningConflicts = useOpeningsStore(selectHasOpeningConflicts);
+  // Same rule as "Continuă": no jump past the openings step while an opening is red.
+  const goToStep = (step: ConfigStep) => {
+    if (step > 3 && hasOpeningConflicts) return;
+    setStep(step);
+  };
   const setPrices = useConfiguratorStore((s) => s.setPrices);
   const length = useConfiguratorStore((s) => s.length);
   const width = useConfiguratorStore((s) => s.width);
@@ -134,7 +140,7 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
     <div className="w-full h-[100dvh] flex flex-col bg-[var(--color-bg-primary)] overflow-hidden">
       {/* Header */}
       <div className="shrink-0">
-        <ConfigHeader currentStep={currentStep} onStepClick={setStep} />
+        <ConfigHeader currentStep={currentStep} onStepClick={goToStep} />
       </div>
       {/* Desktop recommendation banner for mobile */}
       {showDesktopBanner && (
