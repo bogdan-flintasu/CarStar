@@ -28,6 +28,7 @@ import { centreInBayAnchor, centreOnWallAnchor, type SnapGuide } from '@/compone
 import type { OpeningConflict } from '@/components/3d/openings/validateOpenings';
 import { clipboardOf, nextFreeSpot, type NewIntent, type OpeningClipboard } from '@/components/3d/openings/copyPaste';
 import { planRepeat, type RepeatPattern } from '@/components/3d/openings/repeat';
+import { snapsToAxis, syncTwin, twinFor, twinOf, type SymmetryMode } from '@/components/3d/openings/symmetry';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type {
@@ -47,6 +48,7 @@ export type { PlacementStatus } from '@/components/3d/openings/anchors';
 export type { SnapGuide } from '@/components/3d/openings/snapping';
 export type { OpeningClipboard, NewIntent } from '@/components/3d/openings/copyPaste';
 export type { RepeatPattern } from '@/components/3d/openings/repeat';
+export type { SymmetryMode } from '@/components/3d/openings/symmetry';
 export {
   clampOpening,
   resizeOpening,
@@ -118,6 +120,8 @@ interface OpeningsState {
   pasting: boolean;
   /** T1d: a short message for the user (no room for a copy, …). Not persisted. */
   message: OpeningsMessage | null;
+  /** T1e: new placements and copies get a mirrored twin (shared `linkId`). Per session: not persisted. */
+  symmetry: SymmetryMode;
 
   // Actions
   /**
@@ -128,7 +132,11 @@ interface OpeningsState {
   addOpening: (opening: NewOpening, opts?: { free?: boolean }) => string;
   /** Adds an intent as is (anchor, size, sill), selects it and returns its id. */
   addIntent: (intent: Omit<OpeningIntent, 'id'>) => string;
-  removeOpening: (id: string) => void;
+  /**
+   * Deletes the opening. T1e: `withTwin` deletes its twin too (one undo step); otherwise the twin stays and loses
+   * its `linkId`.
+   */
+  removeOpening: (id: string, opts?: { withTwin?: boolean }) => void;
   /**
    * A user edit of the placed opening (drag, resize, panel inputs). Position updates (`offsetX`/`sill`/`wallId`)
    * are clamped to the wall and re-anchored with `anchorFromRect`. A size-only update keeps the anchor when the new
@@ -165,6 +173,8 @@ interface OpeningsState {
   repeatOpening: (id: string, pattern: RepeatPattern) => RepeatResult | null;
   showMessage: (text: string) => void;
   dismissMessage: () => void;
+  /** T1e: the symmetry mode for new placements (existing items get no twins). */
+  setSymmetry: (mode: SymmetryMode) => void;
   setActiveTool: (tool: OpeningType | null) => void;
   selectOpening: (id: string | null) => void;
   setIsDragging: (v: boolean) => void;
@@ -243,10 +253,24 @@ export const useOpeningsStore = create<OpeningsState>()(
       /** Adds new intents in one commit (one undo step); returns their ids. */
       const addNew = (news: readonly NewIntent[], extraIntents: (list: OpeningIntent[]) => OpeningIntent[] = (l) => l) => {
         const added = news.map((n) => sanitizeSize({ ...n, id: newId() }));
-        const intents = extraIntents([...get().intents, ...added]);
+        const intents = extraIntents([...get().intents, ...withTwins(added)]);
         return { intents, ids: added.map((a) => a.id) };
       };
       const showMessage = (text: string) => set({ message: { text, seq: (get().message?.seq ?? 0) + 1 } });
+      /** T1e: `added` (new intents) plus a linked twin for each that gets one under the current symmetry mode. */
+      const withTwins = (added: readonly OpeningIntent[]): OpeningIntent[] => {
+        const mode = get().symmetry;
+        if (mode === 'none') return [...added];
+        const spans = spansNow();
+        return added.flatMap((a) => {
+          const twin = twinFor(a, mode, spans);
+          if (!twin) return [a];
+          const linkId = newId();
+          return [{ ...a, linkId }, { ...twin, id: newId(), linkId }];
+        });
+      };
+      /** T1e: `list` with the twin of `id` following it (mirrored). */
+      const synced = (list: OpeningIntent[], id: string) => syncTwin(list, id, spansNow());
 
       return {
         intents: [],
@@ -262,6 +286,7 @@ export const useOpeningsStore = create<OpeningsState>()(
         clipboard: null,
         pasting: false,
         message: null,
+        symmetry: 'none',
 
         addOpening: (opening, opts = {}) => {
           const id = newId();
@@ -269,7 +294,11 @@ export const useOpeningsStore = create<OpeningsState>()(
           const rect = clampOpening({ ...opening, id }, span);
           let intent = intentFromRect({ ...opening, id }, rect, span, opts);
           if (opening.anchor && anchorFitsWall(opening.anchor, opening.wallId)) intent = { ...intent, anchor: opening.anchor };
-          commit([...get().intents, intent], { selectedOpeningId: id });
+          if (snapsToAxis(intent.type, intent.wallId, get().symmetry)) {
+            const centred: OpeningIntent = { ...intent, anchor: { kind: 'axis', fromCentre: 0 } };
+            if (placeOpening(centred, span).fits) intent = centred;
+          }
+          commit([...get().intents, ...withTwins([intent])], { selectedOpeningId: id });
           return id;
         },
 
@@ -279,12 +308,14 @@ export const useOpeningsStore = create<OpeningsState>()(
           return id;
         },
 
-        removeOpening: (id) => {
+        removeOpening: (id, opts = {}) => {
           const { intents, selectedOpeningId } = get();
-          commit(
-            intents.filter((o) => o.id !== id),
-            { selectedOpeningId: selectedOpeningId === id ? null : selectedOpeningId },
-          );
+          const twin = twinOf(intents, id);
+          const gone = new Set([id, ...(opts.withTwin && twin ? [twin.id] : [])]);
+          const kept = intents
+            .filter((o) => !gone.has(o.id))
+            .map((o) => (twin && o.id === twin.id ? { ...o, linkId: undefined } : o));
+          commit(kept, { selectedOpeningId: selectedOpeningId && gone.has(selectedOpeningId) ? null : selectedOpeningId });
         },
 
         updateOpening: (id, updates) => {
@@ -310,7 +341,7 @@ export const useOpeningsStore = create<OpeningsState>()(
               next = intentFromRect(base, rect, span, { free: intent.anchor.kind === 'wallStart' });
             }
           }
-          commit(intents.map((o) => (o.id === id ? next : o)));
+          commit(synced(intents.map((o) => (o.id === id ? next : o)), id));
         },
 
         moveOpening: (id, pos, opts = {}) => {
@@ -322,7 +353,7 @@ export const useOpeningsStore = create<OpeningsState>()(
           const rect = clampOpening({ ...placed, offsetX: pos.offsetX, sill: pos.sill }, span);
           const base = { id, type: intent.type, wallId: intent.wallId, linkId: intent.linkId };
           const next = intentFromRect(base, rect, span, { free: opts.free ?? false });
-          commit(intents.map((o) => (o.id === id ? next : o)));
+          commit(synced(intents.map((o) => (o.id === id ? next : o)), id));
         },
 
         centreOpening: (id, mode) => {
@@ -334,7 +365,7 @@ export const useOpeningsStore = create<OpeningsState>()(
           const anchor =
             mode === 'bay' ? centreInBayAnchor(placed, span, placed.wallId) : centreOnWallAnchor(placed, span, placed.wallId);
           if (!anchor) return false;
-          commit(intents.map((o) => (o.id === id ? { ...o, anchor } : o)));
+          commit(synced(intents.map((o) => (o.id === id ? { ...o, anchor } : o)), id));
           return true;
         },
 
@@ -348,7 +379,7 @@ export const useOpeningsStore = create<OpeningsState>()(
             const next = sanitizeSize({ ...o, ...updates, id });
             return anchorFitsWall(next.anchor, next.wallId) ? next : o;
           });
-          commit(intents);
+          commit(synced(intents, id));
         },
 
         autoPlaceOpening: (id) => {
@@ -411,7 +442,7 @@ export const useOpeningsStore = create<OpeningsState>()(
           if (!plan) return null;
           const move = plan.move;
           const { intents } = addNew(plan.add, (list) =>
-            move ? list.map((o) => (o.id === id ? { ...o, anchor: move } : o)) : list,
+            move ? synced(list.map((o) => (o.id === id ? { ...o, anchor: move } : o)), id) : list,
           );
           commit(intents);
           return { added: plan.add.length, skipped: plan.skipped };
@@ -420,6 +451,8 @@ export const useOpeningsStore = create<OpeningsState>()(
         showMessage,
 
         dismissMessage: () => set({ message: null }),
+
+        setSymmetry: (mode) => set({ symmetry: mode }),
 
         setActiveTool: (tool) => set({ activeTool: tool, selectedOpeningId: null, pasting: false }),
 
