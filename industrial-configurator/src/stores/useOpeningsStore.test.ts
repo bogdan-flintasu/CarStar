@@ -339,3 +339,195 @@ describe('T1c: moving with or without snapping, centre buttons', () => {
     expect(localStorage.getItem(mod.OPENINGS_STORAGE_KEY)).not.toContain('snapEnabled');
   });
 });
+
+describe('T1d copy, paste, duplicate, repeat', () => {
+  const hall = { width: 12, height: 4, length: 30 };
+  const spans = spansFromHallState(hall);
+
+  async function setup() {
+    const mod = await loadStore();
+    const history = await import('./useHistoryStore');
+    const config = await import('./useConfiguratorStore');
+    const c = config.useConfiguratorStore.getState();
+    c.setWidth(hall.width);
+    c.setHeight(hall.height);
+    c.setLength(hall.length);
+    mod.useOpeningsStore.getState().setWallSpans(spans);
+    const stop = history.startHistoryRecording();
+    history.useHistoryStore.getState().reset();
+    return { s: mod.useOpeningsStore.getState, h: history.useHistoryStore.getState, stop, mod };
+  }
+
+  it('duplicate goes to the next free bay, same size and sill, one undo step', async () => {
+    const { s, h, stop } = await setup();
+    const id = s().addIntent({ type: 'window', wallId: 'PereteDR', anchor: { kind: 'bay', bay: 0, offset: 'centre' }, sill: 1.3, width: 1.4, height: 0.9 });
+    const before = h().past.length;
+    const copy = s().duplicateOpening(id)!;
+    expect(h().past.length).toBe(before + 1);
+    expect(s().selectedOpeningId).toBe(copy);
+    expect(s().intents.find((o) => o.id === copy)).toMatchObject({ anchor: { kind: 'bay', bay: 1, offset: 'centre' }, sill: 1.3, width: 1.4, height: 0.9 });
+    h().undo();
+    expect(s().intents).toHaveLength(1);
+    stop();
+  });
+
+  it('a full wall: no copy, a message', async () => {
+    const { s, stop } = await setup();
+    const bays = (spans.PereteDR.bays ?? []).length;
+    let id = '';
+    for (let bay = 0; bay < bays; bay++) {
+      id = s().addIntent({ type: 'door', wallId: 'PereteDR', anchor: { kind: 'bay', bay, offset: 'centre' }, sill: 0, width: 1, height: 2.1 });
+    }
+    expect(s().duplicateOpening(id)).toBeNull();
+    expect(s().intents).toHaveLength(bays);
+    expect(s().message?.text).toBe('Nu mai este loc pe acest perete');
+    stop();
+  });
+
+  it('copy starts paste mode with the copied size; paste places the copied size; the tool off ends it', async () => {
+    const { s, stop } = await setup();
+    const id = s().addIntent({ type: 'window', wallId: 'PereteSTG', anchor: { kind: 'bay', bay: 2, offset: 'centre' }, sill: 1.5, width: 2, height: 0.8 });
+    expect(s().copyOpening(id)).toBe(true);
+    expect(s()).toMatchObject({ pasting: true, activeTool: 'window', selectedOpeningId: id });
+    expect(s().clipboard).toMatchObject({ width: 2, height: 0.8, sill: 1.5 });
+    const p1 = s().pasteOpening()!;
+    const p2 = s().pasteOpening()!;
+    const a = s().intents.find((o) => o.id === p1)!;
+    const b = s().intents.find((o) => o.id === p2)!;
+    expect(a).toMatchObject({ wallId: 'PereteSTG', width: 2, height: 0.8, sill: 1.5, anchor: { kind: 'bay', bay: 3 } });
+    expect(b.anchor).toMatchObject({ kind: 'bay', bay: 4 });
+    s().setActiveTool(null);
+    expect(s().pasting).toBe(false);
+    stop();
+  });
+
+  it('repeat in every bay is one undo step and reports skipped bays', async () => {
+    const { s, h, stop } = await setup();
+    const bays = (spans.PereteDR.bays ?? []).length;
+    s().addIntent({ type: 'door', wallId: 'PereteDR', anchor: { kind: 'bay', bay: 3, offset: 'centre' }, sill: 0, width: 1, height: 2.1 });
+    const id = s().addIntent({ type: 'door', wallId: 'PereteDR', anchor: { kind: 'bay', bay: 0, offset: 'centre' }, sill: 0, width: 1, height: 2.1 });
+    const before = h().past.length;
+    expect(s().repeatOpening(id, { kind: 'every' })).toEqual({ added: bays - 2, skipped: 1 });
+    expect(h().past.length).toBe(before + 1);
+    expect(s().intents).toHaveLength(bays);
+    h().undo();
+    expect(s().intents).toHaveLength(2);
+    stop();
+  });
+});
+
+describe('T1e symmetry', () => {
+  const hall = { width: 12, height: 4, length: 30 };
+
+  async function setup(roof?: { mono: true }) {
+    const mod = await loadStore();
+    const history = await import('./useHistoryStore');
+    const config = await import('./useConfiguratorStore');
+    const c = config.useConfiguratorStore.getState();
+    c.setWidth(hall.width);
+    c.setHeight(hall.height);
+    c.setLength(hall.length);
+    if (roof?.mono) c.setRoofType('mono');
+    mod.useOpeningsStore.getState().setWallSpans(spansFromHallState(config.useConfiguratorStore.getState()));
+    const stop = history.startHistoryRecording();
+    history.useHistoryStore.getState().reset();
+    return { s: mod.useOpeningsStore.getState, h: history.useHistoryStore.getState, stop };
+  }
+  const twinIdOf = (list: { id: string; linkId?: string }[], id: string) => {
+    const me = list.find((o) => o.id === id)!;
+    return list.find((o) => o.id !== id && o.linkId && o.linkId === me.linkId)?.id;
+  };
+
+  it('a placement gets a linked twin on the opposite wall in one undo step; off adds none', async () => {
+    const { s, h, stop } = await setup();
+    s().addIntent({ type: 'door', wallId: 'PereteDR', anchor: { kind: 'bay', bay: 0, offset: 'centre' }, sill: 0, width: 1, height: 2.1 });
+    expect(s().intents).toHaveLength(1);
+    s().setSymmetry('leftRight');
+    expect(s().intents).toHaveLength(1); // existing items get no twins
+    const before = h().past.length;
+    const id = s().addOpening({ type: 'window', wallId: 'PereteSTG', offsetX: 7, sill: 1.2, width: 1.5, height: 1 });
+    expect(h().past.length).toBe(before + 1);
+    const twin = s().intents.find((o) => o.id === twinIdOf(s().intents, id))!;
+    const me = s().intents.find((o) => o.id === id)!;
+    expect(twin).toMatchObject({ wallId: 'PereteDR', anchor: me.anchor, sill: 1.2, width: 1.5, height: 1 });
+    h().undo();
+    expect(s().intents).toHaveLength(1);
+    stop();
+  });
+
+  it('linked move and resize follow, mirrored, as one step each', async () => {
+    const { s, h, stop } = await setup();
+    s().setSymmetry('frontBack');
+    const id = s().addOpening({ type: 'window', wallId: 'PereteFata', offsetX: 1.5, sill: 1, width: 1.2, height: 1 });
+    const tid = twinIdOf(s().intents, id)!;
+    const L = s().wallSpans!.PereteFata.length;
+    const before = h().past.length;
+    s().moveOpening(id, { offsetX: 2.5, sill: 1 });
+    expect(h().past.length).toBe(before + 1);
+    const me = s().openings.find((o) => o.id === id)!;
+    const twin = s().openings.find((o) => o.id === tid)!;
+    expect(twin.offsetX).toBeCloseTo(L - me.offsetX - me.width, 2);
+    s().updateOpening(id, { width: 1.6 });
+    expect(s().intents.find((o) => o.id === tid)!.width).toBe(1.6);
+    stop();
+  });
+
+  it('delete one keeps the twin unlinked; delete both removes the pair in one step', async () => {
+    const { s, h, stop } = await setup();
+    s().setSymmetry('leftRight');
+    const a = s().addOpening({ type: 'window', wallId: 'PereteSTG', offsetX: 7, sill: 1.2, width: 1.5, height: 1 });
+    const b = twinIdOf(s().intents, a)!;
+    s().removeOpening(a);
+    expect(s().intents.map((o) => o.id)).toEqual([b]);
+    expect(s().intents[0].linkId).toBeUndefined();
+    const c = s().addOpening({ type: 'window', wallId: 'PereteSTG', offsetX: 13, sill: 1.2, width: 1.5, height: 1 });
+    const before = h().past.length;
+    s().removeOpening(c, { withTwin: true });
+    expect(h().past.length).toBe(before + 1);
+    expect(s().intents.map((o) => o.id)).toEqual([b]);
+    stop();
+  });
+
+  it('wall axis: a garage door snaps to the centre with no twin; an off-axis item gets a twin', async () => {
+    const { s, stop } = await setup();
+    s().setSymmetry('wallAxis');
+    const g = s().addOpening({ type: 'garageDoor', wallId: 'PereteFata', offsetX: 1, sill: 0, width: 3, height: 3 });
+    expect(s().intents.find((o) => o.id === g)!.anchor).toEqual({ kind: 'axis', fromCentre: 0 });
+    expect(s().intents).toHaveLength(1);
+    const w = s().addOpening({ type: 'window', wallId: 'PereteFata', offsetX: 0.8, sill: 1, width: 1, height: 1 });
+    const me = s().intents.find((o) => o.id === w)!;
+    const twin = s().intents.find((o) => o.id === twinIdOf(s().intents, w))!;
+    expect(me.anchor.kind).toBe('axis');
+    expect(twin.anchor).toEqual({ kind: 'axis', fromCentre: -(me.anchor as { fromCentre: number }).fromCentre });
+    stop();
+  });
+
+  it('mono-pitch: a twin that does not fit on the lower wall is kept, not shrunk, with fits: false', async () => {
+    const { s, stop } = await setup({ mono: true });
+    s().setSymmetry('leftRight');
+    const spans = s().wallSpans!;
+    const [high, low] = spans.PereteSTG.height > spans.PereteDR.height ? (['PereteSTG', 'PereteDR'] as const) : (['PereteDR', 'PereteSTG'] as const);
+    expect(spans[high].height).toBeGreaterThan(spans[low].height);
+    const height = Math.min(spans[high].height - 0.2, spans[low].height + 0.3);
+    const id = s().addOpening({ type: 'door', wallId: high, offsetX: 7, sill: 0, width: 1.2, height });
+    const tid = twinIdOf(s().intents, id)!;
+    expect(s().intents.find((o) => o.id === tid)!.height).toBe(s().intents.find((o) => o.id === id)!.height);
+    expect(s().placement[id].fits).toBe(true);
+    expect(s().placement[tid].fits).toBe(false);
+    stop();
+  });
+
+  it('repeat with symmetry fills both walls in one step', async () => {
+    const { s, h, stop } = await setup();
+    const bays = (s().wallSpans!.PereteDR.bays ?? []).length;
+    s().setSymmetry('leftRight');
+    const id = s().addOpening({ type: 'window', wallId: 'PereteSTG', offsetX: 2, sill: 1.2, width: 1.5, height: 1 });
+    const before = h().past.length;
+    expect(s().repeatOpening(id, { kind: 'every' })).toEqual({ added: bays - 1, skipped: 0 });
+    expect(h().past.length).toBe(before + 1);
+    expect(s().intents.filter((o) => o.wallId === 'PereteDR')).toHaveLength(bays);
+    expect(s().intents.filter((o) => o.wallId === 'PereteSTG')).toHaveLength(bays);
+    expect(s().conflicts).toEqual([]);
+    stop();
+  });
+});
