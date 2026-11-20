@@ -39,6 +39,7 @@ import { buildSite, disposeSite } from '@/components/3d/stage/site';
 import { buildProps, disposeProps, loadPropAssets } from '@/components/3d/stage/props';
 import { applyStaging } from '@/components/3d/stage/staging';
 import { GradePass } from '@/components/3d/stage/gradePass';
+import { quoteRenderState, type LayerNode } from './layers';
 
 /** Set on any object that exists only to help the user edit (handles, markers, dimension lines): never rendered. */
 export const RENDER_HIDDEN = 'renderHidden';
@@ -200,6 +201,10 @@ export function HallRenderProvider({ layout }: { layout: HallLayout }) {
 
       const stage = (view: RenderView) => {
         const restoreScene = prepareScene(scene);
+        // Every layer shown and the section cut off (T3d), whatever the live view shows.
+        const layerNodes: LayerNode[] = [];
+        scene.traverse((object) => layerNodes.push(object));
+        const restoreLayers = quoteRenderState(layerNodes, gl);
         const restoreStaging = applyStaging(scene, gl, {
           sky,
           sun: sunForView(cameras[view], layout),
@@ -211,6 +216,7 @@ export function HallRenderProvider({ layout }: { layout: HallLayout }) {
         });
         return () => {
           restoreStaging();
+          restoreLayers();
           restoreScene();
         };
       };

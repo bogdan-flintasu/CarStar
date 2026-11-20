@@ -14,7 +14,8 @@ import { placeKit, type KitPlacements } from './placements';
 import { estimateHallCost, type HallCost } from './qualityLod';
 import { useQualityStore } from './qualityStore';
 import { Roof, Slab } from './Roof';
-import { Bolts, Frames, Purlins, RAINWATER_PIECES, Rainwater } from './Steel';
+import { Bolts, Frames, GUTTER_PIECES, Purlins, RAINWATER_PIECES, ROOF_FLASHING_PIECES, Rainwater } from './Steel';
+import { ALL_LAYERS_VISIBLE, layerProps, type LayerVisibility } from './layers';
 import Trims from './Trims';
 import Walls, { type WallHole } from './Walls';
 import type { HallColorHexes } from '@/lib/colors';
@@ -31,6 +32,8 @@ export interface HallProps {
   texturedConcrete?: boolean;
   /** Colour per component; the catalogue defaults when omitted. */
   colors?: HallColorHexes;
+  /** T3d: which layers are drawn (layers.ts); all by default. Openings are drawn outside the hall (WallOpenings). */
+  layers?: LayerVisibility;
 }
 
 /** Bolts and rainwater goods never cast shadows (Steel.tsx, below). */
@@ -67,6 +70,7 @@ export default function Hall({
   onWallHover,
   texturedConcrete,
   colors,
+  layers = ALL_LAYERS_VISIBLE,
 }: HallProps) {
   const kit = useHallKit(detail);
   const materials = useHallMaterials(kit, { texturedConcrete, panels: layout.params.panels, colors });
@@ -90,24 +94,37 @@ export default function Hall({
 
   return (
     <group name="Hall">
-      <Frames {...steel} />
-      <Purlins {...steel} />
-      <Bolts {...steel} />
-
-      <group name="Cladding" visible={claddingVisible}>
-        <Walls
-          layout={layout}
-          material={materials.wall}
-          edgeMaterial={materials.wallEdge}
-          holes={holes}
-          onHover={claddingVisible ? onWallHover : undefined}
-        />
-        <Roof layout={layout} material={materials.roof} edgeMaterial={materials.trim} />
-        <Trims layout={layout} material={materials.trim} />
-        <Rainwater {...steel} material={materials.trim} castShadow={false} />
+      <group {...layerProps('steel', layers)}>
+        <Frames {...steel} />
+        <Purlins {...steel} />
+        <Bolts {...steel} />
       </group>
 
-      {layout.params.foundation && <Slab slab={layout.slab} material={materials.concrete} />}
+      <group name="Cladding" visible={claddingVisible}>
+        <group {...layerProps('walls', layers)}>
+          <Walls
+            layout={layout}
+            material={materials.wall}
+            edgeMaterial={materials.wallEdge}
+            holes={holes}
+            onHover={claddingVisible && layers.walls ? onWallHover : undefined}
+          />
+        </group>
+        <group {...layerProps('roof', layers)}>
+          <Roof layout={layout} material={materials.roof} edgeMaterial={materials.trim} />
+          <Rainwater {...steel} pieces={ROOF_FLASHING_PIECES} material={materials.trim} castShadow={false} />
+        </group>
+        <Trims layout={layout} material={materials.trim} corners={layers.walls} edges={layers.roof} />
+        <group {...layerProps('rainwater', layers)}>
+          <Rainwater {...steel} pieces={GUTTER_PIECES} material={materials.trim} castShadow={false} />
+        </group>
+      </group>
+
+      {layout.params.foundation && (
+        <group {...layerProps('foundation', layers)}>
+          <Slab slab={layout.slab} material={materials.concrete} />
+        </group>
+      )}
     </group>
   );
 }

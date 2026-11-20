@@ -42,6 +42,9 @@ function Piece({ name, kit, placements, material, castShadow }: SteelProps & { n
 const FRAME_PIECES = ['Column', 'BasePlate', 'EaveHaunch', 'EaveHaunchHigh', 'Rafter', 'RidgeJoint', 'GirtCleat'] as const;
 const PURLIN_PIECES = ['Purlin', 'PurlinCleat'] as const;
 export const RAINWATER_PIECES = ['Gutter', 'GutterOutlet', 'GutterEndCap', 'Downpipe', 'DownpipeShoe', 'DownpipeOutlet', 'RidgeCap'] as const;
+/** T3d layers: the rainwater goods proper ("Apă pluvială"), and the ridge flashing, which goes with the roof. */
+export const GUTTER_PIECES = RAINWATER_PIECES.filter((name) => name !== 'RidgeCap');
+export const ROOF_FLASHING_PIECES = ['RidgeCap'] as const;
 
 /** Portal frames: columns on base plates, rafters, the eave and ridge joints, and the cladding cleats. */
 export function Frames(props: SteelProps) {
@@ -54,8 +57,8 @@ export function Purlins(props: SteelProps) {
 }
 
 /** Gutters, downpipes and the ridge flashing: they hang on the cladding and are shown with it. */
-export function Rainwater(props: SteelProps) {
-  return <Pieces names={RAINWATER_PIECES} {...props} />;
+export function Rainwater({ pieces = RAINWATER_PIECES, ...props }: SteelProps & { pieces?: readonly KitPieceName[] }) {
+  return <Pieces names={pieces} {...props} />;
 }
 
 /**

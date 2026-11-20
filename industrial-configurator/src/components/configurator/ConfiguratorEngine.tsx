@@ -5,9 +5,9 @@
  * All geometry comes from one HallLayout; the canvas renders on demand, so the GPU is idle while nothing changes.
  */
 import { useEffect, useMemo } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, events as createPointerEvents } from '@react-three/fiber';
 import { Environment, Sky } from '@react-three/drei';
-import { PCFShadowMap } from 'three';
+import { type Intersection, PCFShadowMap } from 'three';
 import { useShallow } from 'zustand/react/shallow';
 import { useConfiguratorStore } from '@/stores/useConfiguratorStore';
 import { useOpeningsStore } from '@/stores/useOpeningsStore';
@@ -33,7 +33,16 @@ import DimensionLines from '@/components/3d/DimensionLines';
 import FlatViewDimensions from '@/components/3d/drawings/FlatViewDimensions';
 import { drawingForView } from '@/components/3d/drawings/flatView';
 import { useViewStore } from '@/stores/useViewStore';
+import SectionCut from '@/components/3d/hall/SectionCut';
+import { filterPickHits, sectionClipProps } from '@/components/3d/hall/sectionPick';
+import { layerProps } from '@/components/3d/hall/layers';
 import { useAccentColor, useUiTheme } from './UiThemeScope';
+
+/** Pointer events skip what the user cannot see: hidden layers and the parts the section cut removed (T3d). */
+const pointerEvents = (store: Parameters<typeof createPointerEvents>[0]) => ({
+  ...createPointerEvents(store),
+  filter: (hits: Intersection[]) => filterPickHits(hits),
+});
 
 /**
  * A reset or a loaded configuration replaces the hall wholesale (several dimensions in one store update):
@@ -100,6 +109,7 @@ export default function ConfiguratorEngine() {
   const accent = useAccentColor();
   // On an orthographic elevation or plan, the drawing's dimensions replace the 3D ones.
   const onFlatView = useViewStore((s) => drawingForView(s.view, s.projection) !== null);
+  const layers = useViewStore((s) => s.layers);
 
   return (
     <Canvas
@@ -109,6 +119,7 @@ export default function ConfiguratorEngine() {
       dpr={quality.dpr}
       style={{ background: 'var(--ui-viewport, #dddddd)', width: '100%', height: '100%' }}
       gl={{ powerPreference: 'high-performance', antialias: gfx.antialias }}
+      events={pointerEvents}
     >
       <Sun layout={layout} intensity={0.7} shadowMapSize={quality.shadowMapSize} />
       <ambientLight intensity={0.5} />
@@ -123,14 +134,17 @@ export default function ConfiguratorEngine() {
 
       <CameraRig layout={layout} enabled={!isDraggingOpening} frameKey={framingRequests} />
 
-      <Hall
-        layout={layout}
-        claddingVisible={claddingVisible}
-        detail={gfx.tier === 'low' ? 'light' : 'full'}
-        holes={openings}
-        colors={hexes}
-        onWallHover={placingOpening ? setHoveredWallId : undefined}
-      />
+      <group {...sectionClipProps}>
+        <Hall
+          layout={layout}
+          claddingVisible={claddingVisible}
+          detail={gfx.tier === 'low' ? 'light' : 'full'}
+          holes={openings}
+          colors={hexes}
+          onWallHover={placingOpening ? setHoveredWallId : undefined}
+          layers={layers}
+        />
+      </group>
 
       {/* Editing helpers: never in the quote renders. */}
       <group {...renderHiddenProps}>
@@ -140,8 +154,12 @@ export default function ConfiguratorEngine() {
         <PlacementPreview layout={layout} />
         <ComponentPicker layout={layout} claddingVisible={claddingVisible} />
         <ComponentHighlight layout={layout} />
+        <SectionCut layout={layout} holes={openings} claddingVisible={claddingVisible} layers={layers} color={accent} />
       </group>
-      <WallOpenings layout={layout} realHoles colors={hexes} />
+      {/* The "Goluri" layer, cut by the section like the hall. */}
+      <group {...layerProps('openings', layers)} userData={{ ...layerProps('openings').userData, ...sectionClipProps.userData }}>
+        <WallOpenings layout={layout} realHoles colors={hexes} />
+      </group>
 
       <SnapshotProvider />
       <HallRenderProvider layout={layout} />
