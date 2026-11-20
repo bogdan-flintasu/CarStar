@@ -65,7 +65,7 @@ const SVG_ATTRIBUTES = new Set([
 
 const SAFE_ENTITY = /&(?:amp|lt|gt|quot|apos);/g;
 /** CSS that could load or run something. `url(#id)` references inside the document are fine. */
-const UNSAFE_CSS = /@import|expression\s*\(|javascript:|vbscript:|behavior\s*:|-moz-binding|url\s*\(\s*(?!['"]?\s*#)/i;
+const UNSAFE_CSS = /\\|@import|expression\s*\(|javascript:|vbscript:|behavior\s*:|-moz-binding|url\s*\(\s*(?!['"]?\s*#)/i;
 const DATA_IMAGE = /^data:image\/(?:png|jpeg|gif|webp);base64,[A-Za-z0-9+/=\s]+$/i;
 
 const escapeAttr = (v: string) => v.replace(/&(?!(?:amp|lt|gt|quot|apos);)/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
@@ -131,7 +131,7 @@ export function sanitizeSvg(source: string): string | null {
     if (closing) {
       if (name === 'style' && styleOpen) {
         styleOpen = false;
-        if (!UNSAFE_CSS.test(styleText)) out.push(`<style>${styleText.replace(/</g, '')}</style>`);
+        if (!UNSAFE_CSS.test(styleText)) out.push(`${styleText.replace(/</g, '')}</style>`); // the opening tag is already in out
         else out.pop(); // the opening tag
         styleText = '';
         open.pop();

@@ -1,3 +1,4 @@
+import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 import { brandFormSchema, brandingSnapshotSchema, checkLogoUpload, MAX_LOGO_BYTES, sanitizeSvg, sniffLogoMime, svgSize } from './brand';
 
@@ -50,6 +51,25 @@ describe('sanitizeSvg', () => {
     expect(out).toContain('<linearGradient id="g">');
     expect(out).toContain('Hi &amp; bye');
     expect(out).toContain('viewBox="0 0 100 50"');
+  });
+
+  it('keeps a safe <style> element once and the result still decodes', async () => {
+    const out = sanitizeSvg(wrap('<style>.a{fill:red}</style><rect class="a" width="5" height="5"/>'))!;
+    expect(out.match(/<style>/g)).toHaveLength(1);
+    expect(out).toContain('<style>.a{fill:red}</style>');
+    const meta = await sharp(Buffer.from(out)).metadata();
+    expect(meta.width).toBeGreaterThan(0);
+  });
+
+  it('rejects CSS escapes in style text and style attributes', () => {
+    const text = sanitizeSvg(wrap('<style>.a{fill:u\\72l(http://evil/x)}</style><rect class="a" width="1" height="1"/>'))!;
+    expect(text).not.toContain('<style');
+    expect(text).not.toContain('evil');
+    const text2 = sanitizeSvg(wrap('<style>@\\69mport "http://evil/x";</style><rect width="1" height="1"/>'))!;
+    expect(text2).not.toContain('evil');
+    const attr = sanitizeSvg(wrap('<rect width="1" height="1" style="fill:u\\72l(http://evil/x)"/>'))!;
+    expect(attr).not.toContain('evil');
+    expect(attr).not.toContain('style=');
   });
 
   it('removes script elements with their content', () => {
