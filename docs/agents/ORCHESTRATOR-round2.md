@@ -133,3 +133,13 @@ Gate: `cd industrial-configurator && pnpm install && pnpm exec tsc --noEmit && p
   snap for garage doors, twins never shrunk. Not browser-checked by the worker. Merged r2-t1de -> c513981.
   Gate GREEN (tsc, lint 0/0, 809 tests, build) on the verify worktree. Handoffs to T1f: delete confirm only on the panel
   button; legend in ConfiguratorLayout unchanged.
+- T3d done (59d215b incl. inherited work, f741676 375 px fit). Own files only (15). Section cut: one shared local clipping
+  plane on materials of groups marked sectionClipProps (hall + openings), handle + slider, accent caps for wall panels/roof/
+  slab (steel not capped). Layers: 6 toggles + "Arată toate", hidden = not drawn, not pickable (Canvas events filter).
+  renders.tsx quoteRenderState resets layers + clipping for the quote pass. Merged r2-t3d. Orchestrator added the picker
+  handoff line (ComponentPicker filters isHitCutAway) -> 63564a4. Gate GREEN (tsc, lint 0/0, 839 tests, build).
+- Wave 3 browser check (orchestrator, verify worktree, port 3010): transversal cut + handle OK and kept across the step change;
+  symmetry Stânga↔Dreapta + "Duplică" -> 1 -> 3 windows (copy + twin on the left wall), price up; one undo -> back to 1 and
+  price restored; layer Acoperiș hides the roof only; 375 px: no horizontal scroll, Secțiune/Straturi buttons in the row.
+  Not checked: paste mode clicks, Repetă, delete-pair dialog, caps closely, quote render with a cut on -> T1f / QA.
+- T1f launched (sonnet, brief r2-t1f.md).
