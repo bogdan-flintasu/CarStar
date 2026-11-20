@@ -125,3 +125,5 @@ Gate: `cd industrial-configurator && pnpm install && pnpm exec tsc --noEmit && p
   in parallel. Then T1f (sonnet, resize polish + full-flow browser test) after both merge, then QA (sonnet), fixes, final gate,
   SUMMARY-round2.md. T3d may make small additive layer edits in hall/** (T4 and T5b are done; contracts must hold).
   Ports: T1 3014, T3 3015. Briefs r2-t1de.md, r2-t3d.md (b78107f). Both launched.
+- 2026-11-20 11:05 Both wave 3 workers had stopped (last edit 07:56, no commits; uncommitted work left in their worktrees,
+  branches still at b78107f). Relaunched both (opus) in the same worktrees to continue from that work.
