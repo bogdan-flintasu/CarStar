@@ -517,6 +517,34 @@ describe('T1e symmetry', () => {
     stop();
   });
 
+  it('T1f: "Reașază automat" on a twin keeps the pair consistent (mirrored and fitting) or unlinks it, in one undo step', async () => {
+    const { s, h, stop } = await setup({ mono: true });
+    s().setSymmetry('leftRight');
+    const spans = s().wallSpans!;
+    const [high, low] = spans.PereteSTG.height > spans.PereteDR.height ? (['PereteSTG', 'PereteDR'] as const) : (['PereteDR', 'PereteSTG'] as const);
+    const height = Math.min(spans[high].height - 0.2, spans[low].height + 0.3);
+    const id = s().addOpening({ type: 'door', wallId: high, offsetX: 7, sill: 0, width: 1.2, height });
+    const tid = twinIdOf(s().intents, id)!;
+    expect(s().placement[tid].fits).toBe(false);
+    const before = h().past.length;
+    expect(s().autoPlaceOpening(tid)).toBe(true);
+    expect(h().past.length).toBe(before + 1);
+    expect(s().placement[tid].fits).toBe(true);
+    expect(s().placement[id].fits).toBe(true);
+    const me = s().intents.find((o) => o.id === id)!;
+    const twin = s().intents.find((o) => o.id === tid)!;
+    if (twin.linkId) {
+      expect(twin.linkId).toBe(me.linkId);
+      expect(twin.width).toBe(me.width);
+      expect(twin.height).toBe(me.height);
+    } else {
+      expect(me.linkId).toBeUndefined();
+    }
+    h().undo();
+    expect(s().placement[tid].fits).toBe(false);
+    stop();
+  });
+
   it('repeat with symmetry fills both walls in one step', async () => {
     const { s, h, stop } = await setup();
     const bays = (s().wallSpans!.PereteDR.bays ?? []).length;

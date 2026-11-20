@@ -33,7 +33,7 @@ export default function MovedOpeningsToast() {
     <div
       role="status"
       aria-live="polite"
-      className="absolute bottom-[112px] md:bottom-6 left-1/2 -translate-x-1/2 z-30 max-w-[calc(100%-24px)] flex items-center gap-3 bg-gray-950/90 backdrop-blur-md text-white text-xs font-semibold rounded-xl shadow-lg pl-4 pr-1.5 py-1.5"
+      className="absolute bottom-[112px] md:bottom-6 inset-x-3 mx-auto w-fit z-30 max-w-full flex items-center gap-3 bg-gray-950/90 backdrop-blur-md text-white text-xs font-semibold rounded-xl shadow-lg pl-4 pr-1.5 py-1.5"
     >
       <span className="min-w-0">{relayoutMessage(notice.moved, notice.unfit)}</span>
       <button

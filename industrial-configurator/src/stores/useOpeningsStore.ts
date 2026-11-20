@@ -223,6 +223,12 @@ export const selectHasOpeningConflicts = (s: { conflicts: OpeningConflict[] }) =
 
 const newId = () => nanoid();
 
+/** `list` with `id` and its twin no longer linked (they keep their own positions). */
+function unlinkPair(list: OpeningIntent[], id: string): OpeningIntent[] {
+  const twin = twinOf(list, id);
+  return list.map((o) => (o.id === id || o.id === twin?.id ? { ...o, linkId: undefined } : o));
+}
+
 /** Placed openings, placement status and conflicts of `intents` on `spans`. */
 function derive(intents: readonly OpeningIntent[], spans: WallSpans) {
   const { openings, status } = placeAll(intents, spans);
@@ -388,7 +394,13 @@ export const useOpeningsStore = create<OpeningsState>()(
           if (!intent) return false;
           const next = autoPlace(intent, intents, spansNow());
           if (!next) return false;
-          commit(intents.map((o) => (o.id === id ? next : o)));
+          const placed = intents.map((o) => (o.id === id ? next : o));
+          // T1f: a linked pair stays consistent: the twin follows the repositioned item (mirrored) when that spot fits
+          // on its wall; otherwise the two diverge for good (mono-pitch gables are not symmetric) and lose the link.
+          const synced = syncTwin(placed, id, spansNow());
+          const twin = twinOf(synced, id);
+          const mirrorFits = !twin || placeOpening(twin, spansNow()[twin.wallId]).fits;
+          commit(mirrorFits ? synced : unlinkPair(placed, id));
           return true;
         },
 
