@@ -127,3 +127,9 @@ Gate: `cd industrial-configurator && pnpm install && pnpm exec tsc --noEmit && p
   Ports: T1 3014, T3 3015. Briefs r2-t1de.md, r2-t3d.md (b78107f). Both launched.
 - 2026-11-20 11:05 Both wave 3 workers had stopped (last edit 07:56, no commits; uncommitted work left in their worktrees,
   branches still at b78107f). Relaunched both (opus) in the same worktrees to continue from that work.
+- T1d+e done (14fe525 T1d = inherited work, committed unchanged; 0e281c1 T1e). Own files only (14). Copy/paste/duplicate
+  (⌘/Ctrl C/V/D, "Duplică"/"Copiază"), paste mode, "Repetă" (every / every 2nd / N even, "X nu au încăput"); symmetry selector
+  (per session), twins share linkId (pair derived from the two walls), linked move/resize, "Ștergi și perechea?", wallAxis
+  snap for garage doors, twins never shrunk. Not browser-checked by the worker. Merged r2-t1de -> c513981.
+  Gate GREEN (tsc, lint 0/0, 809 tests, build) on the verify worktree. Handoffs to T1f: delete confirm only on the panel
+  button; legend in ConfiguratorLayout unchanged.
