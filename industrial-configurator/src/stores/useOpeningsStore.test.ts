@@ -545,6 +545,24 @@ describe('T1e symmetry', () => {
     stop();
   });
 
+  it('autoPlaceOpening unlinks the pair with a message when the mirrored spot does not fit', async () => {
+    const { s, stop } = await setup({ mono: true });
+    s().setSymmetry('leftRight');
+    const spans = s().wallSpans!;
+    const [high, low] = spans.PereteSTG.height > spans.PereteDR.height ? (['PereteSTG', 'PereteDR'] as const) : (['PereteDR', 'PereteSTG'] as const);
+    const height = Math.min(spans[high].height - 0.2, spans[low].height + 0.3);
+    const id = s().addOpening({ type: 'door', wallId: high, offsetX: 7, sill: 0, width: 1.2, height });
+    const tid = twinIdOf(s().intents, id)!;
+    expect(s().intents.find((o) => o.id === id)!.linkId).toBeTruthy();
+    expect(s().placement[tid].fits).toBe(false);
+    expect(s().message).toBeNull();
+    expect(s().autoPlaceOpening(id)).toBe(true);
+    expect(s().intents.find((o) => o.id === id)!.linkId).toBeUndefined();
+    expect(s().intents.find((o) => o.id === tid)!.linkId).toBeUndefined();
+    expect(s().message?.text).toBe('Perechea a fost desfăcută: poziția oglindită nu încape');
+    stop();
+  });
+
   it('repeat with symmetry fills both walls in one step', async () => {
     const { s, h, stop } = await setup();
     const bays = (s().wallSpans!.PereteDR.bays ?? []).length;

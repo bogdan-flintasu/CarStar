@@ -403,6 +403,7 @@ export const useOpeningsStore = create<OpeningsState>()(
           const twin = twinOf(synced, id);
           const mirrorFits = !twin || placeOpening(twin, spansNow()[twin.wallId]).fits;
           commit(mirrorFits ? synced : unlinkPair(placed, id));
+          if (!mirrorFits) showMessage('Perechea a fost desfăcută: poziția oglindită nu încape');
           return true;
         },
 
