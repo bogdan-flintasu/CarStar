@@ -407,7 +407,7 @@ describe('T1d copy, paste, duplicate, repeat', () => {
     s().addIntent({ type: 'door', wallId: 'PereteDR', anchor: { kind: 'bay', bay: 3, offset: 'centre' }, sill: 0, width: 1, height: 2.1 });
     const id = s().addIntent({ type: 'door', wallId: 'PereteDR', anchor: { kind: 'bay', bay: 0, offset: 'centre' }, sill: 0, width: 1, height: 2.1 });
     const before = h().past.length;
-    expect(s().repeatOpening(id, { kind: 'every' })).toEqual({ added: bays - 2, skipped: 1 });
+    expect(s().repeatOpening(id, { kind: 'every' })).toEqual({ added: bays - 2, twins: 0, skipped: 1 });
     expect(h().past.length).toBe(before + 1);
     expect(s().intents).toHaveLength(bays);
     h().undo();
@@ -551,7 +551,7 @@ describe('T1e symmetry', () => {
     s().setSymmetry('leftRight');
     const id = s().addOpening({ type: 'window', wallId: 'PereteSTG', offsetX: 2, sill: 1.2, width: 1.5, height: 1 });
     const before = h().past.length;
-    expect(s().repeatOpening(id, { kind: 'every' })).toEqual({ added: bays - 1, skipped: 0 });
+    expect(s().repeatOpening(id, { kind: 'every' })).toEqual({ added: bays - 1, twins: bays - 1, skipped: 0 });
     expect(h().past.length).toBe(before + 1);
     expect(s().intents.filter((o) => o.wallId === 'PereteDR')).toHaveLength(bays);
     expect(s().intents.filter((o) => o.wallId === 'PereteSTG')).toHaveLength(bays);

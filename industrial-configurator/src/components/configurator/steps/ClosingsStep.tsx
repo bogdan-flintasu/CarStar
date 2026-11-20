@@ -106,6 +106,7 @@ export default function ClosingsStep() {
   const [repeatKind, setRepeatKind] = useState<RepeatPattern['kind']>('every');
   const [repeatCount, setRepeatCount] = useState(4);
   const [repeatReport, setRepeatReport] = useState<string | null>(null);
+  useEffect(() => setRepeatReport(null), [selectedOpeningId]);
   const intents = useOpeningsStore((s) => s.intents);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [autoPlaceFailed, setAutoPlaceFailed] = useState<string | null>(null);
@@ -453,7 +454,8 @@ export default function ClosingsStep() {
                     const pattern: RepeatPattern = repeatKind === 'count' ? { kind: 'count', n: repeatCount } : { kind: repeatKind };
                     const r = repeatOpening(selectedOpening.id, pattern);
                     if (!r) return;
-                    const parts = [r.added === 1 ? '1 copie adăugată' : `${r.added} copii adăugate`];
+                    const copies = r.added === 1 ? '1 copie' : `${r.added} copii`;
+                    const parts = [r.twins > 0 ? `${copies} + ${r.twins === 1 ? '1 pereche adăugată' : `${r.twins} perechi adăugate`}` : `${copies} ${r.added === 1 ? 'adăugată' : 'adăugate'}`];
                     if (r.skipped > 0) parts.push(`${r.skipped} nu au încăput`);
                     setRepeatReport(parts.join(' · '));
                   }}
