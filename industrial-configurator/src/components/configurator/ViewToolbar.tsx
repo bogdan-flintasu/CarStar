@@ -237,7 +237,7 @@ function LayersPanel() {
   return (
     <div className="flex flex-col gap-1">
       {HALL_LAYERS.map((id) => (
-        <label key={id} className="flex items-center gap-2 font-semibold cursor-pointer py-0.5">
+        <label key={id} className="flex items-center gap-2 font-semibold cursor-pointer md:py-0.5">
           <input type="checkbox" checked={layers[id]} onChange={() => toggleLayer(id)} className="accent-[var(--color-primary)]" />
           {LAYER_LABELS[id]}
         </label>
@@ -297,12 +297,12 @@ export default function ViewToolbar() {
   }, [goToView]);
 
   const button = (active: boolean) =>
-    `flex items-center justify-between gap-2 w-full px-2 py-1 rounded-md text-[11px] font-bold transition-colors cursor-pointer ${
+    `flex items-center justify-between gap-2 w-full px-[5px] md:px-2 py-1 rounded-md text-[10px] md:text-[11px] font-bold transition-colors cursor-pointer ${
       active ? 'bg-[var(--color-primary)] text-[var(--ui-accent-text)]' : 'text-gray-700 hover:bg-gray-100'
     }`;
 
   return (
-    <div className="absolute bottom-3 left-3 right-3 md:left-auto md:bottom-auto md:top-3 z-20 flex flex-col items-center md:items-end gap-2 pointer-events-none">
+    <div className={`absolute bottom-3 left-3 right-3 md:left-auto md:bottom-auto md:top-3 ${popover ? 'z-30' : 'z-20'} flex flex-col items-center md:items-end gap-2 pointer-events-none`}>
       <div className="pointer-events-auto hidden md:block rounded-full shadow-sm backdrop-blur-md">
         <AxisGizmo />
       </div>
@@ -310,7 +310,7 @@ export default function ViewToolbar() {
         ref={toolbar}
         role="toolbar"
         aria-label="Vederi fixe"
-        className="relative pointer-events-auto bg-white/90 backdrop-blur-md border border-gray-200 rounded-xl shadow-sm p-1 flex md:flex-col gap-0.5 md:w-[104px]"
+        className="relative pointer-events-auto bg-white/90 backdrop-blur-md border border-gray-200 rounded-xl shadow-sm p-1 flex md:flex-col md:gap-0.5 md:w-[104px] max-w-full"
       >
         {CAMERA_VIEWS.map((v) => (
           <button
@@ -326,7 +326,7 @@ export default function ViewToolbar() {
           </button>
         ))}
         <span className="hidden md:block h-px bg-gray-200 my-0.5" />
-        <span className="md:hidden w-px bg-gray-200 mx-0.5" />
+        <span className="md:hidden w-px bg-gray-200 mx-px" />
         <button
           type="button"
           title="Proiecție perspectivă / ortogonală · tasta P"
@@ -338,7 +338,7 @@ export default function ViewToolbar() {
           <span className="hidden md:inline text-[9px] font-semibold opacity-60">P</span>
         </button>
         <span className="hidden md:block h-px bg-gray-200 my-0.5" />
-        <span className="md:hidden w-px bg-gray-200 mx-0.5" />
+        <span className="md:hidden w-px bg-gray-200 mx-px" />
         <PopoverButton
           id="section"
           open={popover === 'section'}
