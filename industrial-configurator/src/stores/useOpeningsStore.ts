@@ -82,6 +82,8 @@ export interface OpeningsMessage {
 /** What "Repetă" did: copies added and slots skipped because a copy did not fit there. */
 export interface RepeatResult {
   added: number;
+  /** Linked twins added next to the copies (symmetry on). */
+  twins: number;
   skipped: number;
 }
 
@@ -401,6 +403,7 @@ export const useOpeningsStore = create<OpeningsState>()(
           const twin = twinOf(synced, id);
           const mirrorFits = !twin || placeOpening(twin, spansNow()[twin.wallId]).fits;
           commit(mirrorFits ? synced : unlinkPair(placed, id));
+          if (!mirrorFits) showMessage('Perechea a fost desfăcută: poziția oglindită nu încape');
           return true;
         },
 
@@ -456,8 +459,9 @@ export const useOpeningsStore = create<OpeningsState>()(
           const { intents } = addNew(plan.add, (list) =>
             move ? synced(list.map((o) => (o.id === id ? { ...o, anchor: move } : o)), id) : list,
           );
+          const twins = Math.max(0, intents.length - all.length - plan.add.length);
           commit(intents);
-          return { added: plan.add.length, skipped: plan.skipped };
+          return { added: plan.add.length, twins, skipped: plan.skipped };
         },
 
         showMessage,

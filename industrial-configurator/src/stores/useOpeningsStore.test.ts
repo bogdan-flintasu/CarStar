@@ -407,7 +407,7 @@ describe('T1d copy, paste, duplicate, repeat', () => {
     s().addIntent({ type: 'door', wallId: 'PereteDR', anchor: { kind: 'bay', bay: 3, offset: 'centre' }, sill: 0, width: 1, height: 2.1 });
     const id = s().addIntent({ type: 'door', wallId: 'PereteDR', anchor: { kind: 'bay', bay: 0, offset: 'centre' }, sill: 0, width: 1, height: 2.1 });
     const before = h().past.length;
-    expect(s().repeatOpening(id, { kind: 'every' })).toEqual({ added: bays - 2, skipped: 1 });
+    expect(s().repeatOpening(id, { kind: 'every' })).toEqual({ added: bays - 2, twins: 0, skipped: 1 });
     expect(h().past.length).toBe(before + 1);
     expect(s().intents).toHaveLength(bays);
     h().undo();
@@ -545,13 +545,31 @@ describe('T1e symmetry', () => {
     stop();
   });
 
+  it('autoPlaceOpening unlinks the pair with a message when the mirrored spot does not fit', async () => {
+    const { s, stop } = await setup({ mono: true });
+    s().setSymmetry('leftRight');
+    const spans = s().wallSpans!;
+    const [high, low] = spans.PereteSTG.height > spans.PereteDR.height ? (['PereteSTG', 'PereteDR'] as const) : (['PereteDR', 'PereteSTG'] as const);
+    const height = Math.min(spans[high].height - 0.2, spans[low].height + 0.3);
+    const id = s().addOpening({ type: 'door', wallId: high, offsetX: 7, sill: 0, width: 1.2, height });
+    const tid = twinIdOf(s().intents, id)!;
+    expect(s().intents.find((o) => o.id === id)!.linkId).toBeTruthy();
+    expect(s().placement[tid].fits).toBe(false);
+    expect(s().message).toBeNull();
+    expect(s().autoPlaceOpening(id)).toBe(true);
+    expect(s().intents.find((o) => o.id === id)!.linkId).toBeUndefined();
+    expect(s().intents.find((o) => o.id === tid)!.linkId).toBeUndefined();
+    expect(s().message?.text).toBe('Perechea a fost desfăcută: poziția oglindită nu încape');
+    stop();
+  });
+
   it('repeat with symmetry fills both walls in one step', async () => {
     const { s, h, stop } = await setup();
     const bays = (s().wallSpans!.PereteDR.bays ?? []).length;
     s().setSymmetry('leftRight');
     const id = s().addOpening({ type: 'window', wallId: 'PereteSTG', offsetX: 2, sill: 1.2, width: 1.5, height: 1 });
     const before = h().past.length;
-    expect(s().repeatOpening(id, { kind: 'every' })).toEqual({ added: bays - 1, skipped: 0 });
+    expect(s().repeatOpening(id, { kind: 'every' })).toEqual({ added: bays - 1, twins: bays - 1, skipped: 0 });
     expect(h().past.length).toBe(before + 1);
     expect(s().intents.filter((o) => o.wallId === 'PereteDR')).toHaveLength(bays);
     expect(s().intents.filter((o) => o.wallId === 'PereteSTG')).toHaveLength(bays);

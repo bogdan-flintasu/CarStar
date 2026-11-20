@@ -38,7 +38,7 @@ export default function ConfigFooter({ length, width, height, estimatedPrice }: 
         {/* Summary text */}
         <div className="text-[10px] md:text-sm text-gray-400 md:text-gray-300 truncate w-full md:w-auto overflow-hidden">
           {hasConflicts && currentStep < 4 ? (
-            <span role="alert" className="text-red-400 font-bold">Golurile se suprapun: mutați-le pentru a continua.</span>
+            <span role="alert" className="text-red-400 font-bold">Unele goluri nu sunt valide (se suprapun sau nu încap): corectați-le pentru a continua.</span>
           ) : (
             summary
           )}
@@ -50,7 +50,7 @@ export default function ConfigFooter({ length, width, height, estimatedPrice }: 
         <button 
           onClick={nextStep}
           disabled={hasConflicts}
-          title={hasConflicts ? 'Rezolvați suprapunerile dintre goluri pentru a continua.' : undefined}
+          title={hasConflicts ? 'Corectați golurile care se suprapun sau nu încap pentru a continua.' : undefined}
           className="disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:brightness-100 h-full px-5 md:px-12 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-hover)] text-[var(--ui-accent-text)] font-bold text-sm md:text-lg hover:brightness-110 transition-all flex items-center justify-center gap-1.5 self-stretch cursor-pointer shrink-0"
         >
           <span className="hidden sm:inline">CONTINUĂ</span>

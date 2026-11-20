@@ -105,7 +105,9 @@ export default function ClosingsStep() {
   const [repeatOpen, setRepeatOpen] = useState(false);
   const [repeatKind, setRepeatKind] = useState<RepeatPattern['kind']>('every');
   const [repeatCount, setRepeatCount] = useState(4);
-  const [repeatReport, setRepeatReport] = useState<string | null>(null);
+  // The result belongs to the opening it was made for: it is not shown once another one is selected.
+  const [repeatResult, setRepeatResult] = useState<{ id: string; text: string } | null>(null);
+  const repeatReport = repeatResult && repeatResult.id === selectedOpeningId ? repeatResult.text : null;
   const intents = useOpeningsStore((s) => s.intents);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [autoPlaceFailed, setAutoPlaceFailed] = useState<string | null>(null);
@@ -187,7 +189,7 @@ export default function ClosingsStep() {
                 title="Click și apoi click pe perete, sau trage pe un perete"
                 className={`flex-1 flex flex-col items-center gap-2 py-3.5 px-2 rounded-xl border-2 transition-all duration-200 cursor-pointer
                   ${activeTool === tool.type
-                    ? 'bg-orange-50 border-[var(--color-primary)] text-[var(--color-primary)] shadow-md'
+                    ? 'bg-[var(--color-primary)]/10 border-[var(--color-primary)] text-[var(--color-primary)] shadow-md'
                     : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700'
                   }`}
               >
@@ -398,7 +400,7 @@ export default function ClosingsStep() {
                   aria-expanded={repeatOpen}
                   onClick={() => {
                     setRepeatOpen(!repeatOpen);
-                    setRepeatReport(null);
+                    setRepeatResult(null);
                   }}
                   className={`flex-1 px-2 py-1.5 rounded-md border text-xs font-bold cursor-pointer transition-colors ${
                     repeatOpen ? 'border-[var(--color-primary)] text-black' : 'border-gray-300 text-gray-700 hover:border-[var(--color-primary)] hover:text-black'
@@ -453,9 +455,10 @@ export default function ClosingsStep() {
                     const pattern: RepeatPattern = repeatKind === 'count' ? { kind: 'count', n: repeatCount } : { kind: repeatKind };
                     const r = repeatOpening(selectedOpening.id, pattern);
                     if (!r) return;
-                    const parts = [r.added === 1 ? '1 copie adăugată' : `${r.added} copii adăugate`];
+                    const copies = r.added === 1 ? '1 copie' : `${r.added} copii`;
+                    const parts = [r.twins > 0 ? `${copies} + ${r.twins === 1 ? '1 pereche adăugată' : `${r.twins} perechi adăugate`}` : `${copies} ${r.added === 1 ? 'adăugată' : 'adăugate'}`];
                     if (r.skipped > 0) parts.push(`${r.skipped} nu au încăput`);
-                    setRepeatReport(parts.join(' · '));
+                    setRepeatResult({ id: selectedOpening.id, text: parts.join(' · ') });
                   }}
                   className="w-full px-2 py-1.5 rounded-md bg-[var(--color-primary)] text-[var(--ui-accent-text)] text-xs font-bold cursor-pointer"
                 >
@@ -506,7 +509,7 @@ export default function ClosingsStep() {
                     conflictKinds.has(o.id)
                       ? 'bg-red-50 border-2 border-red-500 text-red-700'
                       : selectedOpeningId === o.id
-                      ? 'bg-orange-50 border-2 border-[var(--color-primary)] text-black'
+                      ? 'bg-[var(--color-primary)]/10 border-2 border-[var(--color-primary)] text-black'
                       : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
                   } ${unfit ? 'pr-1.5' : ''}`}
                 >

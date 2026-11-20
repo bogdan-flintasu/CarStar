@@ -251,9 +251,9 @@ export function describe(ref: ComponentRef, layout: HallLayout): PickedComponent
         height: w.apexV,
         area: w.area,
         details: [
-          { label: 'Lățime', value: formatMetres(w.spanH) },
-          { label: 'Înălțime la streașină', value: formatMetres(w.spanV) },
-          ...(w.apexV > w.spanV + 1e-6 ? [{ label: 'Înălțime maximă', value: formatMetres(w.apexV) }] : []),
+          { label: 'Lățime (exterior)', value: formatMetres(w.spanH) },
+          { label: 'Înălțime la streașină (exterior)', value: formatMetres(w.spanV) },
+          ...(w.apexV > w.spanV + 1e-6 ? [{ label: 'Înălțime maximă (exterior)', value: formatMetres(w.apexV) }] : []),
           { label: 'Suprafață (fără goluri)', value: formatArea(w.area) },
         ],
       };

@@ -16,7 +16,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { OrthographicCamera, PerspectiveCamera, Vector3, type Camera } from 'three';
 import type { HallLayout } from '@/lib/hall';
-import { CONFIGURATOR_FOV, cameraViewPose, distanceForZoom, hallRadius, zoomForDistance, type CameraPose } from '@/lib/hall/cameraViews';
+import { CONFIGURATOR_FOV, VIEW_FILL, cameraViewPose, distanceForZoom, hallRadius, zoomForDistance, type CameraPose } from '@/lib/hall/cameraViews';
 import { useViewStore, type AxisScreen } from '@/stores/useViewStore';
 
 interface CameraRigProps {
@@ -31,6 +31,9 @@ interface CameraRigProps {
 const FOLLOW_RATE = 6;
 const ARRIVED = 1e-3;
 const MAX_FRAME_TIME = 1 / 30;
+/** Share of the viewport the outline fills on an orthographic view (dimension chains and the toolbar need the rest). */
+const ORTHO_FILL = 0.56;
+
 /** Seconds to glide to a requested view, and to re-fit the current one after the hall changed. */
 const VIEW_GLIDE = 0.65;
 const REFIT_GLIDE = 0.3;
@@ -232,7 +235,8 @@ export default function CameraRig({ layout, enabled = true, frameKey }: CameraRi
       poseDue.current = null;
       const view = useViewStore.getState().view ?? 'iso';
       const fov = camera instanceof PerspectiveCamera ? camera.fov : FALLBACK_FOV;
-      const pose = cameraViewPose(layout, view, isOrtho ? 'orthographic' : 'perspective', { width: size.width, height: size.height, fov });
+      // Flat views also show dimension chains outside the hall's outline: leave room for them and the view toolbar.
+      const pose = cameraViewPose(layout, view, isOrtho ? 'orthographic' : 'perspective', { width: size.width, height: size.height, fov }, isOrtho ? ORTHO_FILL : VIEW_FILL);
       followed.current.copy(centre);
       if (duration <= 0) {
         glide.current = null;
