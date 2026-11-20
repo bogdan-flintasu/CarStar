@@ -143,3 +143,9 @@ Gate: `cd industrial-configurator && pnpm install && pnpm exec tsc --noEmit && p
   price restored; layer Acoperiș hides the roof only; 375 px: no horizontal scroll, Secțiune/Straturi buttons in the row.
   Not checked: paste mode clicks, Repetă, delete-pair dialog, caps closely, quote render with a cut on -> T1f / QA.
 - T1f launched (sonnet, brief r2-t1f.md).
+- T1f done (e620827 autoPlace on a twin re-mirrors the other or unlinks the pair; 951b868 toast full width on phones).
+  Browser flow by the worker: place, copy/paste, Repetă every, Stânga↔Dreapta, Pe axa (garage door snaps), resize 30->12->30,
+  undo/redo through all, delete pair "Ambele" PASS; not tested: N-even, "Doar acesta", mono roof applied, card drag.
+  Only delete path is the panel button (no keyboard / 3D delete). Merged r2-t1f. Gate GREEN (tsc, lint 0/0, 840 tests, build).
+  Notes for QA: "Repetă" with symmetry reports copies without twins; unlinking after autoPlace is silent.
+- QA launched (sonnet, brief r2-qa.md).
