@@ -153,3 +153,6 @@ Gate: `cd industrial-configurator && pnpm install && pnpm exec tsc --noEmit && p
   2-5 not viewed). 0 blocker, 1 major (sanitizeSvg doubles <style> -> SVG logos with <style> fail upload), 9 minor, 3 nit.
   Quote render with cut + hidden layer shows the whole hall; 102 m hall 75 fps at L0. One combined fix round launched:
   sonnet, r2-fix (findings 1-5, 7-11, 13). Not fixed: 6 (manual admin/logo pass for the user), 12 (buildDrawings kept for DXF).
+- Fix round done (r2-fix, 11 commits, sonnet): findings 1-5, 7-11, 13 fixed; 843 tests. Worker browser-checked 8 and 9;
+  3, 4, 7 by tests/code only. Merged r2-fix -> 8ff71d3. FINAL GATE GREEN (install, prisma generate, tsc, lint 0/0,
+  843 tests, build; old Turbopack NFT warning only). SUMMARY-round2.md written. Round 2 complete. Nothing pushed.
