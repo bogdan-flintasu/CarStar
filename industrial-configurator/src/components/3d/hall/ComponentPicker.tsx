@@ -22,6 +22,7 @@ import { useOpeningsStore } from '@/stores/useOpeningsStore';
 import { useComponentSelection } from '@/stores/useComponentSelection';
 import { RENDER_HIDDEN, RENDER_PLAIN } from './renders';
 import { isCladdingKind, isClickGesture, pickFromHits, resolveKey, type SceneHit } from './ComponentPicker.map';
+import { isHitCutAway } from './sectionPick';
 
 interface ComponentPickerProps {
   layout: HallLayout;
@@ -104,7 +105,7 @@ export default function ComponentPicker({ layout, claddingVisible }: ComponentPi
       raycaster.setFromCamera(ndc, camera);
       const hits = raycaster
         .intersectObjects(scene.children, true)
-        .filter((hit) => isShown(hit.object))
+        .filter((hit) => isShown(hit.object) && !isHitCutAway(hit))
         .map(toSceneHit);
       const outcome = pickFromHits(hits, layout);
       const selection = useComponentSelection.getState();
