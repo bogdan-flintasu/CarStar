@@ -70,7 +70,18 @@ function EdgeFlashing({ name, layout, plane, edge: [edgeX, undersideY], rise, bo
   );
 }
 
-export default function Trims({ layout, material }: { layout: HallLayout; material: Material }) {
+/** `corners` (the wall layer) and `edges` (the roof layer) can be hidden separately (T3d layers). */
+export default function Trims({
+  layout,
+  material,
+  corners: showCorners = true,
+  edges: showEdges = true,
+}: {
+  layout: HallLayout;
+  material: Material;
+  corners?: boolean;
+  edges?: boolean;
+}) {
   const { front, back, left, right } = layout.walls;
   const outer = layout.halfWidths.wallOuter;
   const leg = layout.panelThickness + LEG_CLEAR;
@@ -89,6 +100,7 @@ export default function Trims({ layout, material }: { layout: HallLayout; materi
 
   return (
     <group name="Trims">
+      <group name="CornerTrims" visible={showCorners}>
       {corners.map(({ key, sx, sz, x, z, height }) => (
         <group key={key}>
           {/* Leg on the end wall face. */}
@@ -97,6 +109,8 @@ export default function Trims({ layout, material }: { layout: HallLayout; materi
           <Plate material={material} position={[x + sx * (t / 2), height / 2, z - sz * (leg / 2 - t / 2)]} size={[t, height, leg + t]} />
         </group>
       ))}
+      </group>
+      <group name="EdgeFlashings" visible={showEdges}>
       {layout.roofType === 'mono' && (
         <EdgeFlashing
           name="HighEdgeFlashing"
@@ -123,6 +137,7 @@ export default function Trims({ layout, material }: { layout: HallLayout; materi
           />
         );
       })}
+      </group>
     </group>
   );
 }

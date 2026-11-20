@@ -4,8 +4,10 @@
  * Fixed views of the 3D hall, over the canvas: an X / Y / Z axis gizmo that turns with the camera (click an axis to look
  * along it), buttons for the 3D view, the four elevations and the plan, and the projection switch.
  * Keyboard: 0 = 3D, 1 = front, 2 = back, 3 = left, 4 = right, 5 = plan, P = perspective / orthographic.
+ * Two popovers (T3d): "Secțiune" (section cut: off / transversal / longitudinal, its position, caps) and "Straturi"
+ * (which layers of the hall are drawn).
  */
-import { useEffect } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   CAMERA_VIEWS,
   CAMERA_VIEW_AXES,
@@ -14,6 +16,8 @@ import {
   type CameraView,
 } from '@/lib/hall/cameraViews';
 import { useViewStore } from '@/stores/useViewStore';
+import { SECTION_LABELS, SECTION_MODES, sectionAxis, sectionCoordinate } from '@/components/3d/hall/section';
+import { allLayersVisible, HALL_LAYERS, LAYER_LABELS } from '@/components/3d/hall/layers';
 
 /** The gizmo's axes: colour and the view that looks along each end (the camera stands on that side). */
 const AXES = [
@@ -100,11 +104,180 @@ function AxisGizmo() {
   );
 }
 
+type PopoverId = 'section' | 'layers';
+
+const metres = (m: number) => `${m.toLocaleString('ro-RO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m`;
+
+/** A toolbar button that opens a panel next to the toolbar (above it on phones), closed by Escape or a click outside. */
+function PopoverButton({
+  id,
+  open,
+  onOpen,
+  label,
+  icon,
+  active,
+  className,
+  children,
+}: {
+  id: PopoverId;
+  open: boolean;
+  onOpen: (id: PopoverId | null) => void;
+  label: string;
+  icon: ReactNode;
+  active: boolean;
+  className: string;
+  children: ReactNode;
+}) {
+  return (
+    <>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={`view-popover-${id}`}
+        aria-label={label}
+        title={label}
+        data-popover-toggle={id}
+        onClick={() => onOpen(open ? null : id)}
+        className={`${className} ${open && !active ? 'bg-gray-100' : ''}`}
+      >
+        <span className="md:hidden">{icon}</span>
+        <span className="hidden md:inline">{label}</span>
+        <span className="hidden md:inline opacity-70">{icon}</span>
+      </button>
+      {open && (
+        <div
+          id={`view-popover-${id}`}
+          role="dialog"
+          aria-label={label}
+          className="absolute bottom-full mb-2 right-0 md:bottom-auto md:mb-0 md:top-0 md:right-full md:mr-2 w-[232px] max-w-[calc(100vw-24px)] bg-white/95 backdrop-blur-md border border-gray-200 rounded-xl shadow-md p-2.5 text-[11px] text-gray-700"
+        >
+          {children}
+        </div>
+      )}
+    </>
+  );
+}
+
+const SectionIcon = (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+    <path d="M2 6 8 2l6 4v8H2z" strokeLinejoin="round" />
+    <path d="M8 1v14" strokeDasharray="2 1.5" />
+  </svg>
+);
+const LayersIcon = (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+    <path d="m8 2 6 3-6 3-6-3z" strokeLinejoin="round" />
+    <path d="m2 8 6 3 6-3M2 11l6 3 6-3" strokeLinejoin="round" />
+  </svg>
+);
+
+function SectionPanel() {
+  const mode = useViewStore((s) => s.sectionMode);
+  const fraction = useViewStore((s) => s.sectionFraction);
+  const caps = useViewStore((s) => s.sectionCaps);
+  const extents = useViewStore((s) => s.sectionExtents);
+  const { setSectionMode, setSectionFraction, setSectionCaps } = useViewStore.getState();
+  const axis = mode === 'off' ? null : sectionAxis(mode);
+  const distance = axis && extents ? sectionCoordinate(axis, fraction, extents) - extents[axis][0] : null;
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div role="radiogroup" aria-label="Secțiune" className="grid grid-cols-3 gap-0.5 bg-gray-100 rounded-lg p-0.5">
+        {SECTION_MODES.map((m) => (
+          <button
+            key={m}
+            type="button"
+            role="radio"
+            aria-checked={mode === m}
+            onClick={() => setSectionMode(m)}
+            className={`px-1 py-1 rounded-md font-bold truncate cursor-pointer ${
+              mode === m ? 'bg-[var(--color-primary)] text-[var(--ui-accent-text)]' : 'hover:bg-white'
+            }`}
+            title={m === 'transversal' ? 'Taie de-a curmezișul: arată cadrul portal' : m === 'longitudinal' ? 'Taie pe lungime' : 'Fără secțiune'}
+          >
+            {m === 'off' ? SECTION_LABELS.off : m === 'transversal' ? 'Transv.' : 'Longit.'}
+          </button>
+        ))}
+      </div>
+      <label className={`flex flex-col gap-1 ${axis ? '' : 'opacity-50'}`}>
+        <span className="flex justify-between font-semibold">
+          <span>Poziție</span>
+          <span className="tabular-nums">{distance !== null ? metres(distance) : '—'}</span>
+        </span>
+        <input
+          type="range"
+          min={0}
+          max={1}
+          step={0.001}
+          value={fraction}
+          disabled={!axis}
+          onChange={(e) => setSectionFraction(Number(e.target.value))}
+          aria-label="Poziția secțiunii"
+          className="w-full accent-[var(--color-primary)] cursor-pointer disabled:cursor-default"
+        />
+      </label>
+      <label className={`flex items-center gap-2 font-semibold cursor-pointer ${axis ? '' : 'opacity-50'}`}>
+        <input
+          type="checkbox"
+          checked={caps}
+          disabled={!axis}
+          onChange={(e) => setSectionCaps(e.target.checked)}
+          className="accent-[var(--color-primary)]"
+        />
+        Capace (umple fețele tăiate)
+      </label>
+      {axis && <p className="text-[10px] text-gray-500 leading-snug">Trageți bara colorată de deasupra halei sau folosiți cursorul.</p>}
+    </div>
+  );
+}
+
+function LayersPanel() {
+  const layers = useViewStore((s) => s.layers);
+  const { toggleLayer, showAllLayers } = useViewStore.getState();
+  return (
+    <div className="flex flex-col gap-1">
+      {HALL_LAYERS.map((id) => (
+        <label key={id} className="flex items-center gap-2 font-semibold cursor-pointer py-0.5">
+          <input type="checkbox" checked={layers[id]} onChange={() => toggleLayer(id)} className="accent-[var(--color-primary)]" />
+          {LAYER_LABELS[id]}
+        </label>
+      ))}
+      <button
+        type="button"
+        disabled={allLayersVisible(layers)}
+        onClick={showAllLayers}
+        className="mt-1 self-start px-2 py-1 rounded-md font-bold text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-default cursor-pointer"
+      >
+        Arată toate
+      </button>
+    </div>
+  );
+}
+
 export default function ViewToolbar() {
   const view = useViewStore((s) => s.view);
   const projection = useViewStore((s) => s.projection);
   const goToView = useViewStore((s) => s.goToView);
   const setProjection = useViewStore((s) => s.setProjection);
+  const sectionOn = useViewStore((s) => s.sectionMode !== 'off');
+  const layersFiltered = useViewStore((s) => !allLayersVisible(s.layers));
+  const [popover, setPopover] = useState<PopoverId | null>(null);
+  const toolbar = useRef<HTMLDivElement>(null);
+
+  // Escape or a click outside the toolbar closes the open panel.
+  useEffect(() => {
+    if (!popover) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setPopover(null);
+    const onDown = (e: PointerEvent) => {
+      if (!toolbar.current?.contains(e.target as Node)) setPopover(null);
+    };
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('pointerdown', onDown);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('pointerdown', onDown);
+    };
+  }, [popover]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -134,9 +307,10 @@ export default function ViewToolbar() {
         <AxisGizmo />
       </div>
       <div
+        ref={toolbar}
         role="toolbar"
         aria-label="Vederi fixe"
-        className="pointer-events-auto bg-white/90 backdrop-blur-md border border-gray-200 rounded-xl shadow-sm p-1 flex md:flex-col gap-0.5 md:w-[104px]"
+        className="relative pointer-events-auto bg-white/90 backdrop-blur-md border border-gray-200 rounded-xl shadow-sm p-1 flex md:flex-col gap-0.5 md:w-[104px]"
       >
         {CAMERA_VIEWS.map((v) => (
           <button
@@ -163,6 +337,30 @@ export default function ViewToolbar() {
           <span>{projection === 'perspective' ? 'Persp.' : 'Orto'}</span>
           <span className="hidden md:inline text-[9px] font-semibold opacity-60">P</span>
         </button>
+        <span className="hidden md:block h-px bg-gray-200 my-0.5" />
+        <span className="md:hidden w-px bg-gray-200 mx-0.5" />
+        <PopoverButton
+          id="section"
+          open={popover === 'section'}
+          onOpen={setPopover}
+          label="Secțiune"
+          icon={SectionIcon}
+          active={sectionOn}
+          className={button(sectionOn)}
+        >
+          <SectionPanel />
+        </PopoverButton>
+        <PopoverButton
+          id="layers"
+          open={popover === 'layers'}
+          onOpen={setPopover}
+          label="Straturi"
+          icon={LayersIcon}
+          active={layersFiltered}
+          className={button(layersFiltered)}
+        >
+          <LayersPanel />
+        </PopoverButton>
       </div>
     </div>
   );
