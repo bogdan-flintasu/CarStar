@@ -8,19 +8,13 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import { useOpeningsStore } from '@/stores/useOpeningsStore';
 import type { OpeningType } from '@/stores/useOpeningsStore';
+import { isTypingTarget } from '@/components/3d/openings/shortcuts';
 
 export const PLACING_LABEL: Record<OpeningType, string> = {
   window: 'Fereastră',
   door: 'Ușă',
   garageDoor: 'Ușă industrială',
 };
-
-/** Same rule as the view keys (ViewToolbar): shortcuts never fire while the user types in a field. */
-function isTyping(target: EventTarget | null): boolean {
-  const el = target as HTMLElement | null;
-  if (!el) return false;
-  return el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName);
-}
 
 const TOUCH_QUERY = '(pointer: coarse), (max-width: 767px)';
 
@@ -52,7 +46,7 @@ function usePlacementEscape(active: boolean) {
   useEffect(() => {
     if (!active) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || isTyping(e.target)) return;
+      if (e.key !== 'Escape' || isTypingTarget(e.target)) return;
       useOpeningsStore.getState().setActiveTool(null);
     };
     window.addEventListener('keydown', onKey);

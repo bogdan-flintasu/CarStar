@@ -2,13 +2,7 @@
 
 import { useEffect, useSyncExternalStore } from 'react';
 import { startHistoryRecording, useHistoryStore } from '@/stores/useHistoryStore';
-
-/** Same rule as the view keys (ViewToolbar): shortcuts never fire while the user types in a field. */
-function isTyping(target: EventTarget | null): boolean {
-  const el = target as HTMLElement | null;
-  if (!el) return false;
-  return el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName);
-}
+import { isTypingTarget } from '@/components/3d/openings/shortcuts';
 
 const isMac = () => /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 const noSubscribe = () => () => {};
@@ -19,7 +13,7 @@ export function useHistoryShortcuts() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (!(e.ctrlKey || e.metaKey) || e.altKey || isTyping(e.target)) return;
+      if (!(e.ctrlKey || e.metaKey) || e.altKey || isTypingTarget(e.target)) return;
       const key = e.key.toLowerCase();
       const { undo, redo } = useHistoryStore.getState();
       if (key === 'z' && !e.shiftKey) {

@@ -18,6 +18,7 @@ import {
 import { useViewStore } from '@/stores/useViewStore';
 import { SECTION_LABELS, SECTION_MODES, sectionAxis, sectionCoordinate } from '@/components/3d/hall/section';
 import { allLayersVisible, HALL_LAYERS, LAYER_LABELS } from '@/components/3d/hall/layers';
+import { isTypingTarget } from '@/components/3d/openings/shortcuts';
 
 /** The gizmo's axes: colour and the view that looks along each end (the camera stands on that side). */
 const AXES = [
@@ -28,12 +29,6 @@ const AXES = [
 
 const GIZMO = 76;
 const ARM = 25;
-
-function isTyping(target: EventTarget | null): boolean {
-  const el = target as HTMLElement | null;
-  if (!el) return false;
-  return el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName);
-}
 
 function AxisGizmo() {
   const axes = useViewStore((s) => s.axes);
@@ -281,7 +276,7 @@ export default function ViewToolbar() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.metaKey || e.altKey || isTyping(e.target)) return;
+      if (e.ctrlKey || e.metaKey || e.altKey || isTypingTarget(e.target)) return;
       const match = CAMERA_VIEWS.find((v) => CAMERA_VIEW_KEYS[v] === e.key);
       if (match) {
         e.preventDefault();

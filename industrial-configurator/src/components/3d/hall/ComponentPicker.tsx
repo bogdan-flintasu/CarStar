@@ -23,17 +23,12 @@ import { useComponentSelection } from '@/stores/useComponentSelection';
 import { RENDER_HIDDEN, RENDER_PLAIN } from './renders';
 import { isCladdingKind, isClickGesture, pickFromHits, resolveKey, type SceneHit } from './ComponentPicker.map';
 import { isHitCutAway } from './sectionPick';
+import { isTypingTarget } from '@/components/3d/openings/shortcuts';
 
 interface ComponentPickerProps {
   layout: HallLayout;
   /** Walls, roof and rainwater shown: when hidden, a selected wall/roof/gutter/downpipe is cleared. */
   claddingVisible: boolean;
-}
-
-function isTyping(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false;
-  const el = target;
-  return el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName);
 }
 
 /** Drawn: the object and all its ancestors are visible (three's Raycaster does not check this). */
@@ -128,7 +123,7 @@ export default function ComponentPicker({ layout, claddingVisible }: ComponentPi
   // Esc clears.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || isTyping(e.target)) return;
+      if (e.key !== 'Escape' || isTypingTarget(e.target)) return;
       if (useComponentSelection.getState().selected) useComponentSelection.getState().clear();
     };
     window.addEventListener('keydown', onKey);
