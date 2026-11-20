@@ -149,3 +149,7 @@ Gate: `cd industrial-configurator && pnpm install && pnpm exec tsc --noEmit && p
   Only delete path is the panel button (no keyboard / 3D delete). Merged r2-t1f. Gate GREEN (tsc, lint 0/0, 840 tests, build).
   Notes for QA: "Repetă" with symmetry reports copies without twins; unlinking after autoPlace is silent.
 - QA launched (sonnet, brief r2-qa.md).
+- QA done (abb92da, QA_REPORT-round2.md). Merged r2-qa. Gate green (840 tests). All items PASS except T3c PARTIAL (PDF pages
+  2-5 not viewed). 0 blocker, 1 major (sanitizeSvg doubles <style> -> SVG logos with <style> fail upload), 9 minor, 3 nit.
+  Quote render with cut + hidden layer shows the whole hall; 102 m hall 75 fps at L0. One combined fix round launched:
+  sonnet, r2-fix (findings 1-5, 7-11, 13). Not fixed: 6 (manual admin/logo pass for the user), 12 (buildDrawings kept for DXF).
