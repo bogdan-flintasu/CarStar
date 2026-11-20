@@ -60,7 +60,9 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
 
   // Desktop recommendation banner (dismissible, per-session)
   const [bannerDismissed, setBannerDismissed] = useState(false);
-  const showDesktopBanner = isMounted && !bannerDismissed && getGraphicsSettings().isMobile && !readDismissed();
+  // Hidden while a placement tool is active: the 3D view needs the room.
+  const placing = useOpeningsStore((s) => s.activeTool !== null);
+  const showDesktopBanner = isMounted && !bannerDismissed && !placing && getGraphicsSettings().isMobile && !readDismissed();
 
   // Persisted state is rehydrated on the client only (skipHydration), so the shell renders on the server.
   useEffect(() => {
