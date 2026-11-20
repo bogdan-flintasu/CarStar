@@ -116,6 +116,8 @@ export interface PreviewInput {
   free?: boolean;
   /** Size of the item; the type's default size when omitted. */
   size?: { width: number; height: number };
+  /** Windows: a fixed sill (paste mode keeps the copied one) instead of following the pointer. */
+  sill?: number;
 }
 
 /** The rectangle the pointer asks for (centred and snapped), before checking whether it fits. */
@@ -123,7 +125,7 @@ export function previewRect(input: PreviewInput): { rect: OpeningRect; guides: S
   const { type, wallId, h, v, span, free } = input;
   const { width, height } = input.size ?? DEFAULT_DIMENSIONS[type];
   let left = grid(h - width / 2);
-  const sill = isFloorStanding(type) ? 0 : grid(v - height / 2);
+  const sill = isFloorStanding(type) ? 0 : (input.sill ?? grid(v - height / 2));
   if (!free) {
     if (wallKindOf(wallId) === 'side') {
       const { band } = bandAt(h, span, wallId);

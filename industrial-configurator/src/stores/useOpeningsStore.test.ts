@@ -339,3 +339,79 @@ describe('T1c: moving with or without snapping, centre buttons', () => {
     expect(localStorage.getItem(mod.OPENINGS_STORAGE_KEY)).not.toContain('snapEnabled');
   });
 });
+
+describe('T1d copy, paste, duplicate, repeat', () => {
+  const hall = { width: 12, height: 4, length: 30 };
+  const spans = spansFromHallState(hall);
+
+  async function setup() {
+    const mod = await loadStore();
+    const history = await import('./useHistoryStore');
+    const config = await import('./useConfiguratorStore');
+    const c = config.useConfiguratorStore.getState();
+    c.setWidth(hall.width);
+    c.setHeight(hall.height);
+    c.setLength(hall.length);
+    mod.useOpeningsStore.getState().setWallSpans(spans);
+    const stop = history.startHistoryRecording();
+    history.useHistoryStore.getState().reset();
+    return { s: mod.useOpeningsStore.getState, h: history.useHistoryStore.getState, stop, mod };
+  }
+
+  it('duplicate goes to the next free bay, same size and sill, one undo step', async () => {
+    const { s, h, stop } = await setup();
+    const id = s().addIntent({ type: 'window', wallId: 'PereteDR', anchor: { kind: 'bay', bay: 0, offset: 'centre' }, sill: 1.3, width: 1.4, height: 0.9 });
+    const before = h().past.length;
+    const copy = s().duplicateOpening(id)!;
+    expect(h().past.length).toBe(before + 1);
+    expect(s().selectedOpeningId).toBe(copy);
+    expect(s().intents.find((o) => o.id === copy)).toMatchObject({ anchor: { kind: 'bay', bay: 1, offset: 'centre' }, sill: 1.3, width: 1.4, height: 0.9 });
+    h().undo();
+    expect(s().intents).toHaveLength(1);
+    stop();
+  });
+
+  it('a full wall: no copy, a message', async () => {
+    const { s, stop } = await setup();
+    const bays = (spans.PereteDR.bays ?? []).length;
+    let id = '';
+    for (let bay = 0; bay < bays; bay++) {
+      id = s().addIntent({ type: 'door', wallId: 'PereteDR', anchor: { kind: 'bay', bay, offset: 'centre' }, sill: 0, width: 1, height: 2.1 });
+    }
+    expect(s().duplicateOpening(id)).toBeNull();
+    expect(s().intents).toHaveLength(bays);
+    expect(s().message?.text).toBe('Nu mai este loc pe acest perete');
+    stop();
+  });
+
+  it('copy starts paste mode with the copied size; paste places the copied size; the tool off ends it', async () => {
+    const { s, stop } = await setup();
+    const id = s().addIntent({ type: 'window', wallId: 'PereteSTG', anchor: { kind: 'bay', bay: 2, offset: 'centre' }, sill: 1.5, width: 2, height: 0.8 });
+    expect(s().copyOpening(id)).toBe(true);
+    expect(s()).toMatchObject({ pasting: true, activeTool: 'window', selectedOpeningId: id });
+    expect(s().clipboard).toMatchObject({ width: 2, height: 0.8, sill: 1.5 });
+    const p1 = s().pasteOpening()!;
+    const p2 = s().pasteOpening()!;
+    const a = s().intents.find((o) => o.id === p1)!;
+    const b = s().intents.find((o) => o.id === p2)!;
+    expect(a).toMatchObject({ wallId: 'PereteSTG', width: 2, height: 0.8, sill: 1.5, anchor: { kind: 'bay', bay: 3 } });
+    expect(b.anchor).toMatchObject({ kind: 'bay', bay: 4 });
+    s().setActiveTool(null);
+    expect(s().pasting).toBe(false);
+    stop();
+  });
+
+  it('repeat in every bay is one undo step and reports skipped bays', async () => {
+    const { s, h, stop } = await setup();
+    const bays = (spans.PereteDR.bays ?? []).length;
+    s().addIntent({ type: 'door', wallId: 'PereteDR', anchor: { kind: 'bay', bay: 3, offset: 'centre' }, sill: 0, width: 1, height: 2.1 });
+    const id = s().addIntent({ type: 'door', wallId: 'PereteDR', anchor: { kind: 'bay', bay: 0, offset: 'centre' }, sill: 0, width: 1, height: 2.1 });
+    const before = h().past.length;
+    expect(s().repeatOpening(id, { kind: 'every' })).toEqual({ added: bays - 2, skipped: 1 });
+    expect(h().past.length).toBe(before + 1);
+    expect(s().intents).toHaveLength(bays);
+    h().undo();
+    expect(s().intents).toHaveLength(2);
+    stop();
+  });
+});

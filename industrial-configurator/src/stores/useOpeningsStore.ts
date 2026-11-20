@@ -26,6 +26,8 @@ import { spansFromHallState, type HallState } from '@/components/3d/openings/wal
 import { validateOpenings } from '@/components/3d/openings/validateOpenings';
 import { centreInBayAnchor, centreOnWallAnchor, type SnapGuide } from '@/components/3d/openings/snapping';
 import type { OpeningConflict } from '@/components/3d/openings/validateOpenings';
+import { clipboardOf, nextFreeSpot, type NewIntent, type OpeningClipboard } from '@/components/3d/openings/copyPaste';
+import { planRepeat, type RepeatPattern } from '@/components/3d/openings/repeat';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type {
@@ -43,6 +45,8 @@ export type {
 export type { OpeningConflict, ConflictKind } from '@/components/3d/openings/validateOpenings';
 export type { PlacementStatus } from '@/components/3d/openings/anchors';
 export type { SnapGuide } from '@/components/3d/openings/snapping';
+export type { OpeningClipboard, NewIntent } from '@/components/3d/openings/copyPaste';
+export type { RepeatPattern } from '@/components/3d/openings/repeat';
 export {
   clampOpening,
   resizeOpening,
@@ -66,6 +70,20 @@ export interface RelayoutNotice {
   /** Bumped on every new notice, so the toast restarts its timer. */
   seq: number;
 }
+
+/** A short message about the openings (e.g. "Nu mai este loc pe acest perete"); `seq` restarts its timer. */
+export interface OpeningsMessage {
+  text: string;
+  seq: number;
+}
+
+/** What "Repetă" did: copies added and slots skipped because a copy did not fit there. */
+export interface RepeatResult {
+  added: number;
+  skipped: number;
+}
+
+export const NO_ROOM_MESSAGE = 'Nu mai este loc pe acest perete';
 
 /** A new opening: a rectangle (its anchor is derived on the wall), or a rectangle with an explicit anchor. */
 export type NewOpening = Omit<Opening, 'id'>;
@@ -94,6 +112,12 @@ interface OpeningsState {
   snapEnabled: boolean;
   /** T1c: guides of the snaps holding during the running drag (drawn by `WallOpenings`). Not persisted. */
   snapGuides: { wallId: WallId; guides: SnapGuide[] } | null;
+  /** T1d: the copied opening (Ctrl/⌘+C). Not persisted. */
+  clipboard: OpeningClipboard | null;
+  /** T1d: paste mode: the active tool places copies of `clipboard` (its size and sill). Ended with the tool. */
+  pasting: boolean;
+  /** T1d: a short message for the user (no room for a copy, …). Not persisted. */
+  message: OpeningsMessage | null;
 
   // Actions
   /**
@@ -128,6 +152,19 @@ interface OpeningsState {
   updateIntent: (id: string, updates: Partial<Omit<OpeningIntent, 'id'>>) => void;
   /** "Reașază automat": moves (and, as a last resort, shrinks) the opening to the nearest valid spot. */
   autoPlaceOpening: (id: string) => boolean;
+  /** T1d: copies the opening and starts paste mode (each click on a bay places a copy). False when it is unknown. */
+  copyOpening: (id: string) => boolean;
+  /**
+   * T1d: Ctrl/⌘+V: a copy of `clipboard` in the next free spot after the selected opening (on its wall), or after the
+   * copied one when nothing is selected. Selects and returns the new id; null (and `message`) when the wall is full.
+   */
+  pasteOpening: () => string | null;
+  /** T1d: Ctrl/⌘+D / "Duplică": a copy in the next free spot of the same wall. Null (and `message`) when it is full. */
+  duplicateOpening: (id: string) => string | null;
+  /** T1d: "Repetă" along a side wall (one undo step). Null on end walls or for an unknown id. */
+  repeatOpening: (id: string, pattern: RepeatPattern) => RepeatResult | null;
+  showMessage: (text: string) => void;
+  dismissMessage: () => void;
   setActiveTool: (tool: OpeningType | null) => void;
   selectOpening: (id: string | null) => void;
   setIsDragging: (v: boolean) => void;
@@ -203,6 +240,13 @@ export const useOpeningsStore = create<OpeningsState>()(
       /** Replace the intents and re-derive everything from them. */
       const commit = (intents: OpeningIntent[], extra: Partial<OpeningsState> = {}) =>
         set({ intents, ...derive(intents, spansNow()), ...extra });
+      /** Adds new intents in one commit (one undo step); returns their ids. */
+      const addNew = (news: readonly NewIntent[], extraIntents: (list: OpeningIntent[]) => OpeningIntent[] = (l) => l) => {
+        const added = news.map((n) => sanitizeSize({ ...n, id: newId() }));
+        const intents = extraIntents([...get().intents, ...added]);
+        return { intents, ids: added.map((a) => a.id) };
+      };
+      const showMessage = (text: string) => set({ message: { text, seq: (get().message?.seq ?? 0) + 1 } });
 
       return {
         intents: [],
@@ -215,6 +259,9 @@ export const useOpeningsStore = create<OpeningsState>()(
         relayoutNotice: null,
         snapEnabled: true,
         snapGuides: null,
+        clipboard: null,
+        pasting: false,
+        message: null,
 
         addOpening: (opening, opts = {}) => {
           const id = newId();
@@ -314,7 +361,67 @@ export const useOpeningsStore = create<OpeningsState>()(
           return true;
         },
 
-        setActiveTool: (tool) => set({ activeTool: tool, selectedOpeningId: null }),
+        copyOpening: (id) => {
+          const intent = get().intents.find((o) => o.id === id);
+          if (!intent) return false;
+          // Paste mode keeps the selection: Ctrl/⌘+V pastes after it.
+          set({ clipboard: clipboardOf(intent), pasting: true, activeTool: intent.type });
+          return true;
+        },
+
+        pasteOpening: () => {
+          const { clipboard, openings, selectedOpeningId } = get();
+          if (!clipboard) return null;
+          const spans = spansNow();
+          const selected = openings.find((o) => o.id === selectedOpeningId);
+          const wallId = selected?.wallId ?? clipboard.wallId;
+          const ref = selected ?? { ...placeOpening(clipboard, spans[clipboard.wallId]).rect, anchor: clipboard.anchor };
+          const spot = nextFreeSpot(clipboard, wallId, ref, openings, spans[wallId]);
+          if (!spot) {
+            showMessage(NO_ROOM_MESSAGE);
+            return null;
+          }
+          const { intents, ids } = addNew([spot]);
+          commit(intents, { selectedOpeningId: ids[0] });
+          return ids[0];
+        },
+
+        duplicateOpening: (id) => {
+          const { intents: all, openings } = get();
+          const intent = all.find((o) => o.id === id);
+          const placed = openings.find((o) => o.id === id);
+          if (!intent || !placed) return null;
+          const span = spansNow()[intent.wallId];
+          const spot = nextFreeSpot(clipboardOf(intent), intent.wallId, placed, openings, span);
+          if (!spot) {
+            showMessage(NO_ROOM_MESSAGE);
+            return null;
+          }
+          const { intents, ids } = addNew([spot]);
+          commit(intents, { selectedOpeningId: ids[0] });
+          return ids[0];
+        },
+
+        repeatOpening: (id, pattern) => {
+          const { intents: all, openings } = get();
+          const intent = all.find((o) => o.id === id);
+          const placed = openings.find((o) => o.id === id);
+          if (!intent || !placed) return null;
+          const plan = planRepeat(intent, placed, pattern, openings, spansNow()[intent.wallId]);
+          if (!plan) return null;
+          const move = plan.move;
+          const { intents } = addNew(plan.add, (list) =>
+            move ? list.map((o) => (o.id === id ? { ...o, anchor: move } : o)) : list,
+          );
+          commit(intents);
+          return { added: plan.add.length, skipped: plan.skipped };
+        },
+
+        showMessage,
+
+        dismissMessage: () => set({ message: null }),
+
+        setActiveTool: (tool) => set({ activeTool: tool, selectedOpeningId: null, pasting: false }),
 
         selectOpening: (id) => set({ selectedOpeningId: id }),
 
@@ -387,9 +494,11 @@ export const useOpeningsStore = create<OpeningsState>()(
             activeTool: null,
             selectedOpeningId: null,
             isDragging: false,
-                hoveredWallId: null,
+            hoveredWallId: null,
             relayoutNotice: null,
             snapGuides: null,
+            pasting: false,
+            message: null,
           }),
       };
     },

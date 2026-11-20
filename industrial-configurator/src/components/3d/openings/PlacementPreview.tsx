@@ -65,6 +65,11 @@ function useAltKey(active: boolean): boolean {
   return alt;
 }
 
+/** Size and sill of the copied opening in paste mode (T1d); nothing otherwise (the type's default size). */
+function pastedInput(c: { width: number; height: number; sill: number } | null) {
+  return c ? { size: { width: c.width, height: c.height }, sill: c.sill } : {};
+}
+
 /** World point on a wall -> (h, v) on its face. */
 function wallCoords(wall: WallDescriptor, p: THREE.Vector3): { h: number; v: number } {
   const o = wall.origin;
@@ -100,14 +105,31 @@ export default function PlacementPreview({ layout: layoutProp, visible }: Placem
   const free = altHeld || !snapEnabled;
   const [flash, setFlash] = useState<Preview | null>(null);
 
+  // T1d paste mode: the preview has the copied size and sill.
+  const pasting = useOpeningsStore((s) => s.pasting);
+  const clipboard = useOpeningsStore((s) => s.clipboard);
+  const pasteSize = pasting && clipboard && clipboard.type === activeTool ? clipboard : null;
+
   const preview = useMemo<Preview | null>(() => {
     if (!pointer || pointer.tool !== activeTool) return null;
-    return previewAt({ type: pointer.tool, wallId: pointer.wallId, h: pointer.h, v: pointer.v, span: spans[pointer.wallId], others: openings, free });
-  }, [pointer, activeTool, spans, openings, free]);
+    return previewAt({
+      ...pastedInput(pasteSize),
+      type: pointer.tool,
+      wallId: pointer.wallId,
+      h: pointer.h,
+      v: pointer.v,
+      span: spans[pointer.wallId],
+      others: openings,
+      free,
+    });
+  }, [pointer, activeTool, spans, openings, free, pasteSize]);
 
   const previewFor = useCallback(
-    (tool: OpeningType, wallId: WallId, h: number, v: number, free: boolean) =>
-      previewAt({ type: tool, wallId, h, v, span: spans[wallId], others: useOpeningsStore.getState().openings, free }),
+    (tool: OpeningType, wallId: WallId, h: number, v: number, free: boolean) => {
+      const { openings: others, pasting: p, clipboard: c } = useOpeningsStore.getState();
+      const paste = p && c && c.type === tool ? c : null;
+      return previewAt({ ...pastedInput(paste), type: tool, wallId, h, v, span: spans[wallId], others, free });
+    },
     [spans],
   );
 

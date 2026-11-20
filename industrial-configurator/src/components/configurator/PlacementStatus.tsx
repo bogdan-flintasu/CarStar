@@ -60,14 +60,47 @@ function usePlacementEscape(active: boolean) {
   }, [active]);
 }
 
+/** How long a message (e.g. "Nu mai este loc pe acest perete") stays, ms. */
+const MESSAGE_MS = 2600;
+
+/** T1d: a short message under the status line; fades on its own. */
+function OpeningsMessageLine({ below }: { below: boolean }) {
+  const message = useOpeningsStore((s) => s.message);
+  const dismiss = useOpeningsStore((s) => s.dismissMessage);
+  useEffect(() => {
+    if (!message) return;
+    const t = setTimeout(dismiss, MESSAGE_MS);
+    return () => clearTimeout(t);
+  }, [message, dismiss]);
+  if (!message) return null;
+  return (
+    <div
+      role="alert"
+      className={`absolute ${below ? 'top-16' : 'top-3'} left-1/2 -translate-x-1/2 z-20 max-w-[calc(100%-24px)] whitespace-nowrap overflow-hidden text-ellipsis bg-red-600 text-white rounded-xl shadow-lg px-4 py-2 text-xs font-bold pointer-events-none`}
+    >
+      {message.text}
+    </div>
+  );
+}
+
 export default function PlacementStatus() {
   const activeTool = useOpeningsStore((s) => s.activeTool);
+  const pasting = useOpeningsStore((s) => s.pasting);
   const setActiveTool = useOpeningsStore((s) => s.setActiveTool);
   const touch = useTouchLayout();
   usePlacementEscape(activeTool !== null);
 
-  if (!activeTool) return null;
-  const label = PLACING_LABEL[activeTool];
+  return (
+    <>
+      <OpeningsMessageLine below={activeTool !== null} />
+      {activeTool && <StatusLine tool={activeTool} pasting={pasting} touch={touch} onDone={() => setActiveTool(null)} />}
+    </>
+  );
+}
+
+function StatusLine({ tool, pasting, touch, onDone }: { tool: OpeningType; pasting: boolean; touch: boolean; onDone: () => void }) {
+  const label = PLACING_LABEL[tool];
+  const verb = pasting ? 'Lipești' : 'Plasezi';
 
   if (touch) {
     return (
@@ -76,11 +109,11 @@ export default function PlacementStatus() {
         className="absolute top-3 left-3 right-3 z-20 flex items-center justify-between gap-3 bg-gray-950/90 backdrop-blur-md text-white rounded-xl shadow-lg pl-4 pr-1.5 py-1.5 text-xs font-semibold"
       >
         <span className="min-w-0 truncate">
-          Plasezi: {label} · atinge o travee
+          {verb}: {label} · atinge o travee
         </span>
         <button
           type="button"
-          onClick={() => setActiveTool(null)}
+          onClick={onDone}
           className="shrink-0 rounded-lg bg-[var(--color-primary)] text-[var(--ui-accent-text)] px-4 py-2 font-bold cursor-pointer"
         >
           Gata
@@ -94,7 +127,7 @@ export default function PlacementStatus() {
       role="status"
       className="absolute top-3 left-1/2 -translate-x-1/2 z-20 max-w-[calc(100%-24px)] whitespace-nowrap overflow-hidden text-ellipsis bg-gray-950/90 backdrop-blur-md text-white rounded-xl shadow-lg px-4 py-2 text-xs font-semibold pointer-events-none"
     >
-      Plasezi: {label} · click pe perete · <kbd className="font-sans font-bold">Esc</kbd> pentru a termina
+      {verb}: {label} · click pe perete · <kbd className="font-sans font-bold">Esc</kbd> pentru a termina
     </div>
   );
 }

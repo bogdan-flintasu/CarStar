@@ -11,6 +11,9 @@ import { OPENING_DRAG_TYPE } from '@/components/3d/openings/placement';
 import { isPlacementHintSeen, subscribePlacementHint } from '@/components/3d/openings/placementHint';
 import { wallKindOf } from '@/components/3d/openings/anchors';
 import { useTouchLayout } from '../PlacementStatus';
+import OpeningsShortcuts from '../OpeningsShortcuts';
+import type { RepeatPattern } from '@/stores/useOpeningsStore';
+import { REPEAT_MAX_COUNT } from '@/components/3d/openings/repeat';
 
 /** Hidden on the server and during hydration; the browser's flag afterwards. */
 const usePlacementHintSeen = () => useSyncExternalStore(subscribePlacementHint, () => isPlacementHintSeen(), () => true);
@@ -92,7 +95,15 @@ export default function ClosingsStep() {
   const centreOpening = useOpeningsStore((s) => s.centreOpening);
   const snapEnabled = useOpeningsStore((s) => s.snapEnabled);
   const setSnapEnabled = useOpeningsStore((s) => s.setSnapEnabled);
+  const duplicateOpening = useOpeningsStore((s) => s.duplicateOpening);
+  const copyOpening = useOpeningsStore((s) => s.copyOpening);
+  const repeatOpening = useOpeningsStore((s) => s.repeatOpening);
+  const message = useOpeningsStore((s) => s.message);
   const touch = useTouchLayout();
+  const [repeatOpen, setRepeatOpen] = useState(false);
+  const [repeatKind, setRepeatKind] = useState<RepeatPattern['kind']>('every');
+  const [repeatCount, setRepeatCount] = useState(4);
+  const [repeatReport, setRepeatReport] = useState<string | null>(null);
   const [autoPlaceFailed, setAutoPlaceFailed] = useState<string | null>(null);
   const conflictKinds = new Map<string, Set<string>>();
   for (const c of conflicts) conflictKinds.set(c.openingId, (conflictKinds.get(c.openingId) ?? new Set()).add(c.kind));
@@ -145,6 +156,7 @@ export default function ClosingsStep() {
       transition={{ duration: 0.3 }}
       className="flex flex-col"
     >
+      <OpeningsShortcuts />
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-sm font-bold text-black uppercase mb-1">Ferestre și Uși</h3>
@@ -316,6 +328,97 @@ export default function ClosingsStep() {
                 Centrează pe perete
               </button>
             </div>
+
+            {/* T1d: duplicate / copy / repeat. */}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => duplicateOpening(selectedOpening.id)}
+                title="Ctrl/⌘ + D"
+                className="flex-1 px-2 py-1.5 rounded-md border border-gray-300 text-xs font-bold text-gray-700 hover:border-[var(--color-primary)] hover:text-black cursor-pointer transition-colors"
+              >
+                Duplică
+              </button>
+              <button
+                type="button"
+                onClick={() => copyOpening(selectedOpening.id)}
+                title="Ctrl/⌘ + C, apoi click pe perete sau Ctrl/⌘ + V"
+                className="flex-1 px-2 py-1.5 rounded-md border border-gray-300 text-xs font-bold text-gray-700 hover:border-[var(--color-primary)] hover:text-black cursor-pointer transition-colors"
+              >
+                Copiază
+              </button>
+              {wallKindOf(selectedOpening.wallId) === 'side' && (
+                <button
+                  type="button"
+                  aria-expanded={repeatOpen}
+                  onClick={() => {
+                    setRepeatOpen(!repeatOpen);
+                    setRepeatReport(null);
+                  }}
+                  className={`flex-1 px-2 py-1.5 rounded-md border text-xs font-bold cursor-pointer transition-colors ${
+                    repeatOpen ? 'border-[var(--color-primary)] text-black' : 'border-gray-300 text-gray-700 hover:border-[var(--color-primary)] hover:text-black'
+                  }`}
+                >
+                  Repetă
+                </button>
+              )}
+            </div>
+            {message && <p className="text-xs font-semibold text-red-700">{message.text}</p>}
+
+            {repeatOpen && wallKindOf(selectedOpening.wallId) === 'side' && (
+              <fieldset className="space-y-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2.5">
+                <legend className="sr-only">Repetă</legend>
+                {(
+                  [
+                    ['every', 'În fiecare travee'],
+                    ['everySecond', 'La fiecare a doua travee'],
+                    ['count', 'N bucăți, egal distanțate'],
+                  ] as const
+                ).map(([kind, label]) => (
+                  <label key={kind} className="flex items-center gap-2 text-xs font-semibold text-gray-800 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="repeat-pattern"
+                      checked={repeatKind === kind}
+                      onChange={() => setRepeatKind(kind)}
+                      className="accent-[var(--color-primary)]"
+                    />
+                    {label}
+                    {kind === 'count' && (
+                      <input
+                        type="number"
+                        aria-label="Număr de bucăți"
+                        min={2}
+                        max={REPEAT_MAX_COUNT}
+                        step={1}
+                        value={repeatCount}
+                        onFocus={() => setRepeatKind('count')}
+                        onChange={(e) => {
+                          const n = parseInt(e.target.value, 10);
+                          if (!isNaN(n)) setRepeatCount(Math.min(REPEAT_MAX_COUNT, Math.max(1, n)));
+                        }}
+                        className="w-14 ml-auto rounded border border-gray-300 bg-white px-2 py-0.5 text-right text-black"
+                      />
+                    )}
+                  </label>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const pattern: RepeatPattern = repeatKind === 'count' ? { kind: 'count', n: repeatCount } : { kind: repeatKind };
+                    const r = repeatOpening(selectedOpening.id, pattern);
+                    if (!r) return;
+                    const parts = [r.added === 1 ? '1 copie adăugată' : `${r.added} copii adăugate`];
+                    if (r.skipped > 0) parts.push(`${r.skipped} nu au încăput`);
+                    setRepeatReport(parts.join(' · '));
+                  }}
+                  className="w-full px-2 py-1.5 rounded-md bg-[var(--color-primary)] text-[var(--ui-accent-text)] text-xs font-bold cursor-pointer"
+                >
+                  Aplică
+                </button>
+                {repeatReport && <p className="text-xs font-semibold text-gray-700">{repeatReport}</p>}
+              </fieldset>
+            )}
 
             {doesNotFit(selectedOpening.id) && (
               <div className="flex items-center justify-between gap-2 rounded-md bg-red-50 border border-red-200 px-2.5 py-2">
