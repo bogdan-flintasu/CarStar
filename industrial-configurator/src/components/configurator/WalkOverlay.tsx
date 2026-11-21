@@ -132,8 +132,12 @@ function MiniMap({ plan, pose }: { plan: WalkPlan; pose: WalkPose | null }) {
         return <line key={i} x1={ax} y1={ay} x2={bx} y2={by} stroke={s.doorId ? '#f59e0b' : '#111827'} strokeWidth={Math.max(0.35, s.half * 2)} strokeLinecap="square" />;
       })}
       {plan.boxes.map((c, i) => {
-        const [cx, cy] = map((c.x0 + c.x1) / 2, (c.z0 + c.z1) / 2);
-        return <circle key={i} cx={cx} cy={cy} r={0.3} fill="#6b7280" />;
+        // Columns and props: their footprint, at least a visible dot.
+        const [ax, ay] = map(c.x0, c.z0);
+        const [bx, by] = map(c.x1, c.z1);
+        const w = Math.max(0.6, Math.abs(bx - ax));
+        const h = Math.max(0.6, Math.abs(by - ay));
+        return <rect key={i} x={(ax + bx) / 2 - w / 2} y={(ay + by) / 2 - h / 2} width={w} height={h} fill="#6b7280" />;
       })}
       {pose && (() => {
         const [px, py] = map(pose.x, pose.z);

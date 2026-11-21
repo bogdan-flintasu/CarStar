@@ -22,6 +22,8 @@ import {
   EYE_HEIGHT,
   floorHeightAt,
   moveWalker,
+  propObstacles,
+  walkInteriorProps,
   RUN_SPEED,
   WALK_SPEED,
   type P2,
@@ -79,7 +81,9 @@ export default function WalkRig({ layout }: { layout: HallLayout }) {
     () => openings.map((o) => ({ id: o.id, type: o.type, wallId: o.wallId, offsetX: o.offsetX, width: o.width, height: o.height })),
     [openings],
   );
-  const plan = useMemo(() => buildWalkPlan(layout, walkOpenings, open), [layout, walkOpenings, open]);
+  // The interior props WalkStaging draws are solid too (same props: same hall, same openings).
+  const obstacles = useMemo(() => propObstacles(walkInteriorProps(layout, walkOpenings)), [layout, walkOpenings]);
+  const plan = useMemo(() => buildWalkPlan(layout, walkOpenings, open, obstacles), [layout, walkOpenings, open, obstacles]);
 
   useEffect(() => {
     useWalkStore.getState().setPlan(phase === 'off' ? null : plan);
@@ -155,19 +159,23 @@ export default function WalkRig({ layout }: { layout: HallLayout }) {
   // Teleport requests from the overlay (buttons, mini-map).
   useEffect(() => {
     if (!teleport || teleport.n === seenTeleport.current) return;
+    // Asked during the entry glide: kept until walking starts (this effect runs again then).
+    if (phase !== 'walking') return;
     seenTeleport.current = teleport.n;
-    if (useWalkStore.getState().phase !== 'walking') return;
     const target = teleport.point;
     // Never into a wall: the point goes through the plan like a step.
     const settled = moveWalker(plan, target.position, [0, 0]).position;
     arriveAt({ ...target, position: settled }, TELEPORT_GLIDE, () => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teleport]);
+  }, [teleport, phase]);
 
-  // Keyboard and mouse.
+  // Keyboard and mouse: registered once per walk, so keys held through the entry glide keep working.
+  const active = phase !== 'off';
   useEffect(() => {
-    if (phase === 'off') return;
+    if (!active) return;
     const pressed = keys.current;
+    /** When the mouse was last released: an Esc that arrives just after the release only released it. */
+    let unlockedAt = -Infinity;
     const typing = (e: KeyboardEvent) => e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
     const onKeyDown = (e: KeyboardEvent) => {
       if (typing(e)) return;
@@ -178,8 +186,9 @@ export default function WalkRig({ layout }: { layout: HallLayout }) {
       } else if (e.code === 'KeyE') {
         const reachable = useWalkStore.getState().reachable;
         if (reachable) useWalkStore.getState().toggleDoor(reachable.id);
-      } else if (e.code === 'Escape' && document.pointerLockElement !== gl.domElement) {
-        // With the mouse captured, the browser takes this Esc to release it; the next one leaves.
+      } else if (e.code === 'Escape' && document.pointerLockElement !== gl.domElement && performance.now() - unlockedAt > 250) {
+        // With the mouse captured, the browser takes this Esc to release it (some browsers still deliver the keydown
+        // right after the release, hence the time check); the next one leaves.
         useWalkStore.getState().leave();
       }
     };
@@ -202,7 +211,11 @@ export default function WalkRig({ layout }: { layout: HallLayout }) {
         // Some embedded browsers refuse pointer lock: the arrow keys still turn.
       }
     };
-    const onLockChange = () => useWalkStore.getState().setLocked(document.pointerLockElement === gl.domElement);
+    const onLockChange = () => {
+      const locked = document.pointerLockElement === gl.domElement;
+      if (!locked && useWalkStore.getState().locked) unlockedAt = performance.now();
+      useWalkStore.getState().setLocked(locked);
+    };
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
     window.addEventListener('blur', onBlur);
@@ -218,7 +231,7 @@ export default function WalkRig({ layout }: { layout: HallLayout }) {
       document.removeEventListener('pointerlockchange', onLockChange);
       pressed.clear();
     };
-  }, [phase, gl, invalidate]);
+  }, [active, gl, invalidate]);
 
   // Wake the render loop when the touch controls change.
   useEffect(() => useWalkStore.subscribe((now, before) => (now.stick !== before.stick || now.look !== before.look) && invalidate()), [invalidate]);

@@ -12,9 +12,9 @@ import { useThree } from '@react-three/fiber';
 import { HemisphereLight, type Group } from 'three';
 import type { HallLayout } from '@/lib/hall';
 import { planSite } from '@/lib/hall/sitePlan';
-import { planInteriorProps, planProps } from '@/lib/hall/propPlan';
+import { planProps } from '@/lib/hall/propPlan';
 import { renderViewCameras, sunForView } from '@/lib/hall/renderViews';
-import { buildWalkPlan } from '@/lib/hall/walkPlan';
+import { walkInteriorProps } from '@/lib/hall/walkPlan';
 import { loadRenderSky } from '@/components/3d/stage/sky';
 import { buildSite, disposeSite } from '@/components/3d/stage/site';
 import { buildProps, disposeProps, loadPropAssets } from '@/components/3d/stage/props';
@@ -51,10 +51,9 @@ export default function WalkStaging({ layout }: { layout: HallLayout }) {
         return;
       }
       site = builtSite;
-      const walk = buildWalkPlan(layout, openings);
       const outdoor = buildProps(planProps(plan, []), assets, layout.groundY);
-      const keepClear = walk.teleports.map((t) => ({ x: t.position[0], z: t.position[1], r: 1.2 }));
-      const indoor = buildProps(planInteriorProps(layout, openings, keepClear), assets, layout.slab.topY);
+      // The same props the walk rig treats as solid (walkInteriorProps).
+      const indoor = buildProps(walkInteriorProps(layout, openings), assets, layout.slab.topY);
       props.push(outdoor, indoor);
       site.add(outdoor, indoor);
 
