@@ -16,6 +16,7 @@ vi.mock('@/lib/prisma', () => ({
     colorOption: { count: async () => 1, createMany: async () => ({ count: 0 }), findMany: async () => [] },
     configuration: { findUnique: async () => db.row },
     configurationImage: { findMany: async () => [] },
+    configurationArModel: { findMany: async () => [] },
     organization: {
       // The brand NOW: not the one frozen in the quote.
       findUnique: async () => ({

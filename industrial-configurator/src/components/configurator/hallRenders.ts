@@ -38,7 +38,7 @@ let pending: { key: string; promise: Promise<RenderedView[]> } | null = null;
 const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
 /** Waits until the hall is on screen, with the summary's state (cladding on, nothing selected) applied. */
-async function hallSettled(): Promise<void> {
+export async function hallSettled(): Promise<void> {
   const openings = useOpeningsStore.getState();
   openings.selectOpening(null);
   openings.setActiveTool(null);

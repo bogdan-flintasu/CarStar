@@ -48,6 +48,7 @@ vi.mock('@/lib/prisma', () => ({
       findUnique: async () => db.saved && { id: 'c', ...db.saved },
       delete: async () => ({}),
     },
+    configurationArModel: { findMany: async () => [] },
     configurationImage: {
       upsert: async ({ create }: { create: (typeof db.images)[number] }) => {
         db.images.push(create);

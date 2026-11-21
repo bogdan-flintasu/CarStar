@@ -80,3 +80,5 @@ export const loginLimiter = createRateLimiter(10, 15 * 60 * 1000); // 10 attempt
 export const emailLimiter = createRateLimiter(5, 10 * 60 * 1000); // 5 emails / 10 min
 export const configurationLimiter = createRateLimiter(30, 10 * 60 * 1000); // 30 saves / 10 min
 export const pdfLimiter = createRateLimiter(20, 10 * 60 * 1000); // 20 PDF quotes / 10 min
+export const arUploadLimiter = createRateLimiter(10, 10 * 60 * 1000); // 10 AR uploads / 10 min
+export const arViewLimiter = createRateLimiter(60, 10 * 60 * 1000); // 60 counted AR page opens / 10 min

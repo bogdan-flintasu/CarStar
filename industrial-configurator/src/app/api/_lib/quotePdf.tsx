@@ -33,6 +33,8 @@ export interface QuoteAssets {
   logo: { data: Buffer; format: 'png' | 'jpg' } | null;
   /** PNG of the QR code of the configuration link. */
   qr: Buffer;
+  /** The AR page of the configuration and the PNG of its QR code, when AR files were saved (docs/plans/ar.md). */
+  ar?: { link: string; qr: Buffer } | null;
 }
 
 const PAGE_PADDING = 40;
@@ -91,6 +93,9 @@ function styles(colors: QuoteModel['company']['colors']) {
     footerText: { flex: 1, fontSize: 7.5, color: colors.muted, gap: 3 },
     footerLink: { color: colors.text, textDecoration: 'none' },
     qr: { width: 48, height: 48, marginLeft: 12 },
+    arQr: { alignItems: 'center', marginLeft: 12 },
+    arQrImage: { width: 48, height: 48 },
+    arQrCaption: { fontSize: 6, color: colors.muted, marginTop: 2, width: 62, textAlign: 'center' },
   });
 }
 
@@ -237,6 +242,12 @@ function QuoteDocument({ model, assets }: { model: QuoteModel; assets: QuoteAsse
             </Text>
             <Text render={({ pageNumber, totalPages }) => `${model.offerNumber} · Pagina ${pageNumber} din ${totalPages}`} />
           </View>
+          {assets.ar && (
+            <Link src={assets.ar.link} style={s.arQr}>
+              <PdfImage src={{ data: assets.ar.qr, format: 'png' }} style={s.arQrImage} />
+              <Text style={s.arQrCaption}>Scanează pentru a vedea hala în AR</Text>
+            </Link>
+          )}
           <PdfImage src={{ data: assets.qr, format: 'png' }} style={s.qr} />
         </View>
       </Page>

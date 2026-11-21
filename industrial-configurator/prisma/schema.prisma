@@ -24,6 +24,24 @@ model Configuration {
   /// Branding frozen at save time (name, contact lines, colours, logo asset id + sha), so a rebrand never changes an old quote.
   brandingSnapshot Json?
   images    ConfigurationImage[]
+  arModels  ConfigurationArModel[]
+  /// How many times the AR page of this configuration was opened (a usage signal for the company).
+  arViews   Int      @default(0)
+}
+
+/// AR files of a configuration (exported from the 3D view in the customer's browser): one GLB (Android Scene Viewer,
+/// model-viewer) and one USDZ (iOS AR Quick Look). Uploaded once and frozen with the quote.
+/// Accessed only through src/app/api/_lib/arStore.ts, so the bytes can move to disk or S3 with the renders.
+model ConfigurationArModel {
+  id              String        @id @default(cuid())
+  configurationId String
+  configuration   Configuration @relation(fields: [configurationId], references: [id], onDelete: Cascade)
+  format          String        // glb | usdz (AR_FORMATS)
+  bytes           Bytes
+  size            Int
+  createdAt       DateTime      @default(now())
+
+  @@unique([configurationId, format])
 }
 
 /// Quote pictures of a configuration (the 3D renders made in the customer's browser), one per view.

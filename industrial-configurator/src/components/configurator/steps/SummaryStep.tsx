@@ -10,6 +10,7 @@ import { useOpeningsStore } from '@/stores/useOpeningsStore';
 import RenderGallery from '../RenderGallery';
 import { ensureHallRenders, useHallRenders, type RenderedView } from '../hallRenders';
 import { renderField } from '@/lib/validation/renders';
+import { ensureHallAr, isArCapableDevice } from '../hallAr';
 
 export default function SummaryStep() {
   const {
@@ -51,6 +52,10 @@ export default function SummaryStep() {
   const [saving, setSaving] = useState(false);
   const [pdfBusy, setPdfBusy] = useState(false);
   const [pdfError, setPdfError] = useState('');
+  const [arBusy, setArBusy] = useState(false);
+  const [arError, setArError] = useState('');
+  /** Desktop: the AR page's address and its QR code, to open it on a phone. */
+  const [arQr, setArQr] = useState<{ url: string; image: string } | null>(null);
 
   /**
    * Saves the configuration once, with its pictures (multipart upload), and returns its token. Pictures that could not
@@ -73,6 +78,8 @@ export default function SummaryStep() {
     if (!result.token) throw 0;
     setToken(result.token);
     setConfigLink(`${window.location.origin}/configuration/${result.token}`);
+    // The AR files go with the quote: export and upload them in the background (docs/plans/ar.md).
+    ensureHallAr(result.token).catch((err) => console.error('AR export failed:', err));
     return result.token;
   };
 
@@ -107,6 +114,28 @@ export default function SummaryStep() {
       setPdfError(errorFor(typeof err === 'number' ? err : 0));
     } finally {
       setPdfBusy(false);
+    }
+  };
+
+  /** "Vezi în AR": on a phone, opens the AR page; on a desktop, shows its QR code. */
+  const handleViewAr = async () => {
+    setArBusy(true);
+    setArError('');
+    try {
+      const saved = await saveConfiguration();
+      const ar = await ensureHallAr(saved);
+      const url = `${window.location.origin}${ar.pageUrl}`;
+      if (isArCapableDevice()) {
+        window.location.assign(url);
+        return;
+      }
+      const QRCode = (await import('qrcode')).default;
+      setArQr({ url, image: await QRCode.toDataURL(url, { errorCorrectionLevel: 'M', margin: 1, width: 360 }) });
+    } catch (err) {
+      console.error('Failed to open the hall in AR:', err);
+      setArError(errorFor(typeof err === 'number' ? err : 0));
+    } finally {
+      setArBusy(false);
     }
   };
 
@@ -329,6 +358,31 @@ export default function SummaryStep() {
             {pdfBusy ? 'Se pregătește oferta…' : 'Descarcă oferta PDF'}
           </button>
           {pdfError && <p role="alert" className="mt-2 text-xs text-red-500">{pdfError}</p>}
+        </div>
+
+        {/* AR: the hall on the table or full size on the plot, on a phone */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <h3 className="text-sm font-bold text-black mb-1">Vezi în AR</h3>
+          <p className="text-xs text-gray-500 mb-3">Hala pe masă, ca machetă, sau la mărime reală pe teren, cu telefonul.</p>
+          {arQr ? (
+            <div className="flex flex-col items-center text-center">
+              {/* eslint-disable-next-line @next/next/no-img-element -- a generated data: URL */}
+              <img src={arQr.image} alt="Cod QR pentru pagina AR" width={180} height={180} className="rounded-md border border-gray-200" />
+              <p className="mt-2 text-xs text-gray-600">Scanează codul cu telefonul pentru a vedea hala în AR.</p>
+              <a href={arQr.url} target="_blank" rel="noopener" className="mt-1 text-xs font-bold text-[var(--color-primary)] underline break-all">
+                Deschide pagina AR
+              </a>
+            </div>
+          ) : (
+            <button
+              onClick={handleViewAr}
+              disabled={arBusy}
+              className="w-full py-2.5 rounded-lg border border-[var(--color-primary)] text-[var(--color-primary)] text-sm font-bold cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-wait"
+            >
+              {arBusy ? 'Se pregătește modelul 3D…' : 'Vezi în AR'}
+            </button>
+          )}
+          {arError && <p role="alert" className="mt-2 text-xs text-red-500">{arError}</p>}
         </div>
 
         {/* Email form */}

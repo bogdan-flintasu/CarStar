@@ -1,7 +1,8 @@
 # Plan: AR presentation of the hall ("Vezi în AR")
 
-Status: **planned, not started.** Comes after the current feature round (docs/plans/next-features.md) and **before** the GPU
-render server (docs/plans/gpu-render-server.md), which reuses this plan's 3D export.
+Status: **stage 1 implemented (2026-11-21), device matrix not yet run.** Comes after the interior walk-through, stages
+1–2 (docs/plans/walkthrough.md), and **before** the GPU render server (docs/plans/gpu-render-server.md), which reuses
+this plan's 3D export.
 
 ## Goal
 
@@ -67,11 +68,50 @@ page, so the configurator's bundle does not grow.
 
 Count AR opens per company and per configuration: a sales argument and a usage signal for the company's dashboard.
 
+## Stage 1 as built
+
+- Exporter: `components/3d/ar/arScene.ts` (pure three.js, no DOM: copies the hall and openings groups, drops helpers,
+  invisible materials, `Bolts`/`Bolt`/`PurlinCleat`/`GirtCleat`, bakes instances, merges per material, origin at the
+  footprint centre on the ground) and `components/3d/ar/arExport.tsx` (canvas provider; scene in quote state only for
+  the synchronous copy; textures copied to canvases ≤ 1024 px; GLTFExporter + USDZExporter loaded on first use; USDZ
+  gets real back faces since Quick Look has no double-sided materials).
+- Upload: `configurator/hallAr.ts` exports and uploads in the background right after a configuration is saved, or on
+  "Vezi în AR". `POST /api/configurations/[token]/ar` (fields `glb`, `usdz`): magic-byte checks
+  (`lib/validation/arModels.ts`), size caps, rate limit, **once per configuration** (409 after) and **only within 24 h
+  of saving** (so an old link cannot be given a different model). Stored in `ConfigurationArModel` via
+  `api/_lib/arStore.ts`.
+- Serve: `GET /api/configurations/[token]/ar/hall.glb|hall.usdz` (a `[file]` segment rather than `ar.glb`, which
+  would clash with the upload route's folder). `GET /api/configurations/[token]` returns `ar: { glb, usdz, pageUrl }`
+  or null.
+- AR page `/configuration/[token]/ar`: model-viewer 4.4 (dynamic import, separate chunk), poster = front render, modes,
+  dimensions, "Cere oferta" (company email with the link, else phone, else the configuration page), QR on desktop.
+  "Machetă" = `ar-scale="auto"` (user pinches it down; Scene Viewer / Quick Look open at 1:1 and allow scaling);
+  "Mărime reală" = `ar-scale="fixed"` + `#allowsContentScaling=0` on the USDZ. The native viewers cannot be told to
+  open at a reduced scale, so the table model starts life-size and is scaled by hand.
+- Entry points: summary step card (phone → AR page; desktop → QR), configuration page button, PDF footer QR
+  ("Scanează pentru a vedea hala în AR", on every page when AR files exist).
+- Metrics: `Configuration.arViews`, incremented by `POST /api/configurations/[token]/ar/view` (rate-limited); visible
+  in the admin configurations list (not yet shown in the admin UI).
+
+Measured (desktop Chrome, 102 × 20 × 6 m, panels, foundation, one industrial door): 60 274 triangles, 10 meshes,
+GLB 4.2 MB, USDZ 11.4 MB. Unit test: steel + walls of the largest hall plus a 200-opening allowance < 300k.
+
+### Device matrix (to fill in)
+
+| Device | Result |
+|---|---|
+| iPhone, Safari, Quick Look | not tested |
+| Android with ARCore, Chrome, Scene Viewer / WebXR | not tested |
+| Android without ARCore (3D fallback) | not tested |
+| Desktop (QR code) | OK (Chrome, 2026-11-21) |
+
+Open: the 4G < 5 s target for a 30 m hall is not measured yet; the USDZ is ASCII USD and about 2.7× the GLB.
+
 ## Later (not in this plan)
 
 - Placing the hall at the plot's real GPS position (WebXR / geospatial anchors).
 - Animated doors in AR.
-- Interior walk-through: its own plan.
+- Interior walk-through: its own plan (docs/plans/walkthrough.md).
 
 ## Rough effort
 

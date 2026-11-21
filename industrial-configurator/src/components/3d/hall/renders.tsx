@@ -116,7 +116,7 @@ const glows = (material: Material): material is Glowing =>
  * Hides the editing helpers, switches off editing glows and shows the cladding; returns the function that puts
  * everything back.
  */
-function prepareScene(scene: Scene): () => void {
+export function prepareScene(scene: Scene): () => void {
   const changed: [Object3D, boolean][] = [];
   const dimmed = new Map<Glowing, number>();
   scene.traverse((object) => {
