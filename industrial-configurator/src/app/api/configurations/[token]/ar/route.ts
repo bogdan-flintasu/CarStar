@@ -15,7 +15,8 @@ const MAX_AR_UPLOAD_BYTES = MAX_AR_BYTES.glb + MAX_AR_BYTES.usdz + 16 * 1024;
 const AR_UPLOAD_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 // POST – The AR files of a saved configuration (public, like saving it): multipart/form-data with one `glb` and one
-// `usdz` file. Accepted once per configuration, within AR_UPLOAD_WINDOW_MS of saving it. 409 when it already has them.
+// `usdz` file. Accepted once per configuration, within AR_UPLOAD_WINDOW_MS of saving it: 409 when it already has
+// them, 410 when the window has closed (distinct, so a client never takes a closed window for files that exist).
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   if (!CONFIGURATION_TOKEN_PATTERN.test(token)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     const configuration = await prisma.configuration.findUnique({ where: { token }, select: { id: true, createdAt: true } });
     if (!configuration) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     if (Date.now() - configuration.createdAt.getTime() > AR_UPLOAD_WINDOW_MS) {
-      return NextResponse.json({ error: 'Upload window closed' }, { status: 409 });
+      return NextResponse.json({ error: 'Upload window closed' }, { status: 410 });
     }
 
     const body = await readBodyLimited(req, MAX_AR_UPLOAD_BYTES);

@@ -4,18 +4,15 @@
  * S3 later changes only this file.
  */
 import prisma from '@/lib/prisma';
-import { AR_FILE_NAMES, AR_FORMATS, isArFormat, type ArFormat, type ValidArFile } from '@/lib/validation/arModels';
+import { AR_FORMATS, isArFormat, type ArFormat, type ValidArFile } from '@/lib/validation/arModels';
+import { arFileUrl, arPageUrl } from '@/lib/arLinks';
+
+export { arFileUrl, arPageUrl };
 
 export interface ArUrls {
   glb: string;
   usdz: string;
 }
-
-/** Public URL of one AR file. The files never change once saved, so the URL can be cached for good. */
-export const arFileUrl = (token: string, format: ArFormat) => `/api/configurations/${token}/ar/${AR_FILE_NAMES[format]}`;
-
-/** Public page that shows the configuration in AR. */
-export const arPageUrl = (token: string) => `/configuration/${token}/ar`;
 
 /**
  * Stores both AR files of a configuration, once: false (and nothing written) when it already has AR files, so a quote's

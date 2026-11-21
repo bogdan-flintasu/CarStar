@@ -103,7 +103,7 @@ describe('POST /api/configurations/[token]/ar', () => {
     db.configuration = null;
     expect((await upload({ glb: glb(), usdz: usdz() })).status).toBe(404);
     db.configuration = { id: 'c1', createdAt: new Date(Date.now() - 2 * 24 * 3600 * 1000) };
-    expect((await upload({ glb: glb(), usdz: usdz() })).status).toBe(409);
+    expect((await upload({ glb: glb(), usdz: usdz() })).status).toBe(410);
   });
 
   it('rejects a malformed token without touching the database', async () => {

@@ -10,7 +10,7 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { configurationDataSchema, type ConfigurationData } from '@/lib/validation/configuration';
-import { isArCapableDevice } from '@/components/configurator/hallAr';
+import { isArCapableDevice } from '@/lib/arLinks';
 
 interface ArConfiguration {
   data: ConfigurationData;
@@ -89,7 +89,16 @@ export default function ArPage() {
   const hasAr = !!config?.ar;
   useEffect(() => {
     if (!hasAr) return;
-    fetch(`/api/configurations/${token}/ar/view`, { method: 'POST' }).catch(() => undefined);
+    // Counted once per browser session, not per reload.
+    const counted = `ar-view:${token}`;
+    let seen = false;
+    try {
+      seen = sessionStorage.getItem(counted) === '1';
+      sessionStorage.setItem(counted, '1');
+    } catch {
+      // Storage blocked (private mode): count it.
+    }
+    if (!seen) fetch(`/api/configurations/${token}/ar/view`, { method: 'POST' }).catch(() => undefined);
     import('@google/model-viewer')
       .then(() => setViewerReady(true))
       .catch((err) => {
@@ -147,8 +156,6 @@ export default function ArPage() {
     ['Suprafață', `${d.dimensions.length * d.dimensions.width} m²`],
     ['Acoperiș', roofText(d)],
   ];
-  // Quick Look reads its options from the USDZ link's fragment: no scaling at full size.
-  const iosSrc = mode === 'full' ? `${config.ar.usdz}#allowsContentScaling=0` : config.ar.usdz;
 
   return (
     <main className="min-h-screen text-white" style={{ ...background, ...accentVars }}>
@@ -190,11 +197,12 @@ export default function ArPage() {
             <model-viewer
               key={mode}
               src={config.ar.glb}
-              ios-src={iosSrc}
+              ios-src={config.ar.usdz}
               poster={config.poster ?? undefined}
               alt={`Hala ${d.dimensions.length} × ${d.dimensions.width} m`}
               ar
               ar-modes="webxr scene-viewer quick-look"
+              // fixed: model-viewer also adds #allowsContentScaling=0 to the USDZ for Quick Look.
               ar-scale={mode === 'full' ? 'fixed' : 'auto'}
               ar-placement="floor"
               camera-controls

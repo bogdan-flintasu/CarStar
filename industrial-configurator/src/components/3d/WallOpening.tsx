@@ -15,7 +15,7 @@ import { isFloorStanding, openingCentre } from './openings/openingMath';
 import { clipOpeningToWall, isMirrored } from './openings/wallShapeWithHoles';
 import { wallKindOf } from './openings/anchors';
 import { snap } from './openings/snapping';
-import { renderHiddenProps, renderPlainProps } from './hall/renders';
+import { doorHingeProps, renderHiddenProps, renderPlainProps } from './hall/renders';
 import { useAccentColor } from '@/components/configurator/UiThemeScope';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -158,7 +158,7 @@ function DoorLeaf({ id, type, pivot, children }: { id: string; type: 'door' | 'g
     invalidate();
   });
   return (
-    <group ref={hinge} position={pivot}>
+    <group ref={hinge} position={pivot} {...doorHingeProps}>
       <group position={[-pivot[0], -pivot[1], -pivot[2]]}>{children}</group>
     </group>
   );

@@ -78,7 +78,7 @@ Count AR opens per company and per configuration: a sales argument and a usage s
 - Upload: `configurator/hallAr.ts` exports and uploads in the background right after a configuration is saved, or on
   "Vezi în AR". `POST /api/configurations/[token]/ar` (fields `glb`, `usdz`): magic-byte checks
   (`lib/validation/arModels.ts`), size caps, rate limit, **once per configuration** (409 after) and **only within 24 h
-  of saving** (so an old link cannot be given a different model). Stored in `ConfigurationArModel` via
+  of saving** (410 after that, so an old link cannot be given a different model). Stored in `ConfigurationArModel` via
   `api/_lib/arStore.ts`.
 - Serve: `GET /api/configurations/[token]/ar/hall.glb|hall.usdz` (a `[file]` segment rather than `ar.glb`, which
   would clash with the upload route's folder). `GET /api/configurations/[token]` returns `ar: { glb, usdz, pageUrl }`
@@ -94,7 +94,9 @@ Count AR opens per company and per configuration: a sales argument and a usage s
   in the admin configurations list (not yet shown in the admin UI).
 
 Measured (desktop Chrome, 102 × 20 × 6 m, panels, foundation, one industrial door): 60 274 triangles, 10 meshes,
-GLB 4.2 MB, USDZ 11.4 MB. Unit test: steel + walls of the largest hall plus a 200-opening allowance < 300k.
+GLB 4.2 MB, USDZ 11.4 MB; 30 × 12 × 5 m: GLB 2.0 MB, USDZ 10.3 MB (the USDZ is mostly its PNG textures and
+ASCII geometry: the first thing to shrink for the 4G target). Unit test: steel + walls of the largest hall plus a
+200-opening allowance < 300k.
 
 ### Device matrix (to fill in)
 

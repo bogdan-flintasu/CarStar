@@ -5,7 +5,7 @@
 import { readFile } from 'fs/promises';
 import path from 'path';
 import QRCode from 'qrcode';
-import { arUrlsFor } from './arStore';
+import { arPageUrl, arUrlsFor } from './arStore';
 import prisma from '@/lib/prisma';
 import sharp from 'sharp';
 import { brandingFromSnapshot, getActiveBranding, type Branding } from '@/lib/branding';
@@ -93,7 +93,7 @@ export async function buildQuotePdfForToken(token: string, origin: string, now =
   });
   const qrPng = (text: string) => QRCode.toBuffer(text, { type: 'png', errorCorrectionLevel: 'M', margin: 1, width: 300 });
   // The AR page, when the configuration has AR files: a second QR code in the footer.
-  const arLink = (await arUrlsFor(row.id, token)) ? `${link}/ar` : null;
+  const arLink = (await arUrlsFor(row.id, token)) ? `${origin}${arPageUrl(token)}` : null;
   const assets: QuoteAssets = {
     renders: Object.fromEntries(renders.map((r) => [r.view, r.bytes])),
     logo: await readBrandLogo(branding),
