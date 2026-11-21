@@ -37,6 +37,9 @@ import SectionCut from '@/components/3d/hall/SectionCut';
 import { filterPickHits, sectionClipProps } from '@/components/3d/hall/sectionPick';
 import { layerProps } from '@/components/3d/hall/layers';
 import { useAccentColor, useUiTheme } from './UiThemeScope';
+import WalkRig from '@/components/3d/walk/WalkRig';
+import WalkStaging from '@/components/3d/walk/WalkStaging';
+import { selectWalking, useWalkStore } from '@/stores/useWalkStore';
 
 /** Pointer events skip what the user cannot see: hidden layers and the parts the section cut removed (T3d). */
 const pointerEvents = (store: Parameters<typeof createPointerEvents>[0]) => ({
@@ -100,7 +103,9 @@ export default function ConfiguratorEngine() {
   );
 
   // In step 2 (panels) the cladding is always shown, so the effect of the panel options is visible.
-  const claddingVisible = currentStep === 2 || wallsVisible;
+  // Walking (src/components/3d/walk): the hall as built, cladding on, no editing helpers.
+  const walking = useWalkStore(selectWalking);
+  const claddingVisible = walking || currentStep === 2 || wallsVisible;
   const gfx = getGraphicsSettings();
   // Adaptive quality (qualityController.tsx): starts at the tier's settings, lowered while frames are slow.
   const quality = useLiveQuality();
@@ -124,7 +129,7 @@ export default function ConfiguratorEngine() {
       <Sun layout={layout} intensity={0.7} shadowMapSize={quality.shadowMapSize} />
       <ambientLight intensity={0.5} />
       {/* Quote renders bring their own sky (src/components/3d/stage). */}
-      {gfx.enableSky && sky && (
+      {gfx.enableSky && sky && !walking && (
         <group {...renderHiddenProps}>
           <Sky distance={450000} sunPosition={[-5, 10, 5]} inclination={0} azimuth={0.25} />
         </group>
@@ -132,7 +137,9 @@ export default function ConfiguratorEngine() {
       {quality.environment && <Environment preset="city" />}
       <Ground layout={layout} textured={gfx.tier !== 'low'} />
 
-      <CameraRig layout={layout} enabled={!isDraggingOpening} frameKey={framingRequests} />
+      <CameraRig layout={layout} enabled={!isDraggingOpening} frameKey={framingRequests} suspended={walking} />
+      <WalkRig layout={layout} />
+      <WalkStaging layout={layout} />
 
       <group {...sectionClipProps}>
         <Hall
@@ -141,18 +148,18 @@ export default function ConfiguratorEngine() {
           detail={gfx.tier === 'low' ? 'light' : 'full'}
           holes={openings}
           colors={hexes}
-          onWallHover={placingOpening ? setHoveredWallId : undefined}
+          onWallHover={placingOpening && !walking ? setHoveredWallId : undefined}
           layers={layers}
         />
       </group>
 
-      {/* Editing helpers: never in the quote renders. */}
-      <group {...renderHiddenProps}>
+      {/* Editing helpers: never in the quote renders, nor while walking. */}
+      <group {...renderHiddenProps} visible={!walking}>
         <DimensionLines layout={layout} visible={!claddingVisible && !onFlatView} color={accent} />
         <FlatViewDimensions layout={layout} openings={openings} color={accent} />
         {/* Openings hide themselves with the cladding (same rule as above). */}
         <PlacementPreview layout={layout} />
-        <ComponentPicker layout={layout} claddingVisible={claddingVisible} />
+        {!walking && <ComponentPicker layout={layout} claddingVisible={claddingVisible} />}
         <ComponentHighlight layout={layout} />
         <SectionCut layout={layout} holes={openings} claddingVisible={claddingVisible} layers={layers} color={accent} />
       </group>

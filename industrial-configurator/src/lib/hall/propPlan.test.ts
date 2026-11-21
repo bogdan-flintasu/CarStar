@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { computeHallLayout } from './computeHallLayout';
 import { planSite, type SiteRect } from './sitePlan';
-import { planProps, propRect, seededRandom, sightWedge, type Prop } from './propPlan';
+import { COLUMN_DEPTH, FRAME_FLANGE_WIDTH } from './constants';
+import type { SiteOpening } from './sitePlan';
+import { wallPointToWorld } from './walls';
+import { planInteriorProps, planProps, propRect, seededRandom, sightWedge, type Prop } from './propPlan';
 import { renderViewCameras } from './renderViews';
 import type { HallParams } from './types';
 
@@ -100,5 +103,83 @@ describe('seededRandom', () => {
       expect(v).toBeGreaterThanOrEqual(0);
       expect(v).toBeLessThan(1);
     }
+  });
+});
+
+describe('planInteriorProps', () => {
+  const EPS = 1e-4;
+  const door: SiteOpening = { type: 'garageDoor', wallId: 'PereteFata', offsetX: 5, width: 4 };
+  const side: SiteOpening = { type: 'door', wallId: 'PereteSTG', offsetX: 6, width: 1 };
+  const openings = [door, side];
+  const keepClear = [{ x: 0, z: -15, r: 2 }];
+  const shrink = (r: SiteRect): SiteRect => ({ x0: r.x0 + EPS, x1: r.x1 - EPS, z0: r.z0 + EPS, z1: r.z1 - EPS });
+
+  const zonesOf = (layout: ReturnType<typeof computeHallLayout>) =>
+    openings.map((o) => {
+      const wall = Object.values(layout.walls).find((w) => w.id === o.wallId)!;
+      const depth = o.type === 'garageDoor' ? 6 : 2;
+      const a = wallPointToWorld(wall, o.offsetX - 0.5, 0);
+      const b = wallPointToWorld(wall, o.offsetX + o.width + 0.5, 0);
+      const c = wallPointToWorld(wall, o.offsetX, 0, -depth);
+      return { x0: Math.min(a[0], b[0], c[0]), x1: Math.max(a[0], b[0], c[0]), z0: Math.min(a[2], b[2], c[2]), z1: Math.max(a[2], b[2], c[2]) };
+    });
+
+  it('is deterministic', () => {
+    const layout = computeHallLayout(base);
+    expect(planInteriorProps(layout, openings, keepClear)).toEqual(planInteriorProps(layout, openings, keepClear));
+  });
+
+  it('stays inside, out of doorways, keep-clear circles, columns and each other', () => {
+    for (const size of [{}, { width: 20, length: 60, height: 8 }, { width: 12, length: 24, roofType: 'mono' as const, highSide: 'left' as const }]) {
+      const layout = computeHallLayout({ ...base, ...size });
+      const inner = layout.halfWidths.columnInner;
+      const props = planInteriorProps(layout, openings, size.length === 60 ? [] : keepClear);
+      const zones = zonesOf(layout);
+      expect(count(props, 'rack')).toBeGreaterThan(2);
+      expect(count(props, 'forklift')).toBe(1);
+      expect(count(props, 'pallets')).toBeGreaterThanOrEqual(1);
+      expect(count(props, 'worker')).toBeGreaterThanOrEqual(1);
+      props.forEach((p, i) => {
+        const r = shrink(propRect(p));
+        expect(r.x0).toBeGreaterThanOrEqual(-inner + 0.4 - 2 * EPS);
+        expect(r.x1).toBeLessThanOrEqual(inner - 0.4 + 2 * EPS);
+        expect(r.z0).toBeGreaterThanOrEqual(-layout.params.length + 0.4 - 2 * EPS);
+        expect(r.z1).toBeLessThanOrEqual(-0.4 + 2 * EPS);
+        for (const z of zones) expect(overlaps(r, z), `${p.kind} in a doorway`).toBe(false);
+        for (const c of layout.columns) {
+          expect(overlaps(r, { x0: c.x - COLUMN_DEPTH / 2, x1: c.x + COLUMN_DEPTH / 2, z0: c.z - FRAME_FLANGE_WIDTH / 2, z1: c.z + FRAME_FLANGE_WIDTH / 2 }), `${p.kind} on a column`).toBe(false);
+        }
+        if (size.length !== 60) {
+          const dx = Math.max(r.x0 - 0, 0, 0 - r.x1);
+          const dz = Math.max(r.z0 + 15, 0, -15 - r.z1);
+          expect(Math.hypot(dx, dz), `${p.kind} in a keep-clear circle`).toBeGreaterThanOrEqual(2);
+        }
+        for (const q of props.slice(i + 1)) expect(overlaps(r, shrink(propRect(q))), `${p.kind} on ${q.kind}`).toBe(false);
+      });
+    }
+  });
+
+  it('caps the rack height and keeps them on the side with fewer openings', () => {
+    const tall = computeHallLayout({ ...base, height: 12, width: 20, length: 40 });
+    const racks = planInteriorProps(tall, openings).filter((p) => p.kind === 'rack');
+    expect(racks.length).toBeGreaterThan(0);
+    for (const r of racks) expect(r.size!.h).toBe(6);
+    expect(racks.every((r) => r.x > 0)).toBe(true); // the left wall has a door
+    const low = computeHallLayout({ ...base, height: 4 });
+    for (const r of planInteriorProps(low, []).filter((p) => p.kind === 'rack')) expect(r.size!.h).toBeCloseTo(3.2);
+  });
+
+  it('keeps small halls sparse', () => {
+    for (const size of [{ width: 7, length: 20 }, { width: 12, length: 9 }]) {
+      const props = planInteriorProps(computeHallLayout({ ...base, ...size }), [door]);
+      expect(count(props, 'rack')).toBe(0);
+      expect(count(props, 'forklift')).toBe(0);
+      expect(count(props, 'worker')).toBeLessThanOrEqual(1);
+      expect(count(props, 'pallets')).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('skips the forklift without a garage door', () => {
+    expect(count(planInteriorProps(computeHallLayout(base), []), 'forklift')).toBe(0);
   });
 });

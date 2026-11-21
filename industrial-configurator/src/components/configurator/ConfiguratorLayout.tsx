@@ -15,6 +15,8 @@ import QualityToggle from './QualityToggle';
 import MovedOpeningsToast from './MovedOpeningsToast';
 import PlacementStatus from './PlacementStatus';
 import ComponentInfoCard from './ComponentInfoCard';
+import WalkOverlay from './WalkOverlay';
+import { selectWalking, useWalkStore } from '@/stores/useWalkStore';
 import ConfigHeader from './ConfigHeader';
 import ConfigFooter from './ConfigFooter';
 import DimensionsStep from './steps/DimensionsStep';
@@ -57,6 +59,15 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
     () => false,
   );
   const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(true);
+  const walking = useWalkStore(selectWalking);
+  // Walking on a phone: the whole screen for the view (the panel comes back with its own button afterwards).
+  useEffect(
+    () =>
+      useWalkStore.subscribe((now, before) => {
+        if (now.phase !== 'off' && before.phase === 'off') setIsMobilePanelOpen(false);
+      }),
+    [],
+  );
 
   // Desktop recommendation banner (dismissible, per-session)
   const [bannerDismissed, setBannerDismissed] = useState(false);
@@ -175,16 +186,21 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
             {children}
           </div>
 
-          <AdminModelBar />
-          <ViewToolbar />
-          <HistoryButtons />
-          <QualityToggle />
-          <MovedOpeningsToast />
-          <PlacementStatus />
-          <ComponentInfoCard />
+          <WalkOverlay />
+          {!walking && (
+            <>
+              <AdminModelBar />
+              <ViewToolbar />
+              <HistoryButtons />
+              <QualityToggle />
+              <MovedOpeningsToast />
+              <PlacementStatus />
+              <ComponentInfoCard />
+            </>
+          )}
 
           {/* Navigation Hint Overlay — Desktop (bottom-left) */}
-          <div className="hidden md:flex absolute bottom-6 left-6 max-w-[calc(100%-3rem)] bg-white/90 backdrop-blur-md px-4 py-3 rounded-xl border border-gray-200 shadow-sm pointer-events-none z-10 flex-col gap-1.5">
+          <div className={`${walking ? 'hidden' : 'hidden md:flex'} absolute bottom-6 left-6 max-w-[calc(100%-3rem)] bg-white/90 backdrop-blur-md px-4 py-3 rounded-xl border border-gray-200 shadow-sm pointer-events-none z-10 flex-col gap-1.5`}>
             <span className="text-[10px] font-bold text-gray-800 uppercase tracking-wider mb-0.5">Control 3D</span>
             <div className="flex items-center gap-4 text-xs font-medium text-gray-600">
               <span className="flex items-center gap-1.5">
@@ -217,7 +233,7 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
           </div>
 
           {/* Navigation Hint Overlay — Mobile (top-right, hidden when panel is open; the view toolbar is at the bottom) */}
-          {!isMobilePanelOpen && (
+          {!isMobilePanelOpen && !walking && (
             <div className="md:hidden absolute top-3 right-3 bg-white/90 backdrop-blur-md px-3 py-2 rounded-xl border border-gray-200 shadow-sm pointer-events-none z-10 flex flex-col gap-1">
               <span className="text-[9px] font-bold text-gray-800 uppercase tracking-wider">Control 3D</span>
               <div className="flex gap-3 text-[11px] font-medium text-gray-600">
@@ -232,7 +248,7 @@ export default function ConfiguratorLayout({ children }: { children: ReactNode }
           )}
 
           {/* Mobile Toggle Button (only visible on small screens when panel is closed) */}
-          {!isMobilePanelOpen && (
+          {!isMobilePanelOpen && !walking && (
             <button
               onClick={() => setIsMobilePanelOpen(true)}
               className="md:hidden absolute bottom-16 left-1/2 -translate-x-1/2 bg-[var(--color-primary)] text-[var(--ui-accent-text)] font-bold px-6 py-3 rounded-full shadow-lg z-20 flex items-center gap-2 whitespace-nowrap"
