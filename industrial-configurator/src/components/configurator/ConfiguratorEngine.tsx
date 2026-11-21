@@ -24,6 +24,7 @@ import QualityController from '@/components/3d/hall/qualityController';
 import { useLiveQuality } from '@/components/3d/hall/qualityStore';
 import { SnapshotProvider } from '@/components/3d/hall/snapshot';
 import { HallRenderProvider, renderHiddenProps } from '@/components/3d/hall/renders';
+import { ArExportProvider } from '@/components/3d/ar/arExport';
 import { useHallUrlParams } from '@/components/3d/hall/useHallUrlParams';
 import ComponentPicker from '@/components/3d/hall/ComponentPicker';
 import ComponentHighlight from '@/components/3d/hall/ComponentHighlight';
@@ -170,6 +171,7 @@ export default function ConfiguratorEngine() {
 
       <SnapshotProvider />
       <HallRenderProvider layout={layout} />
+      <ArExportProvider layout={layout} />
       <QualityController />
       {process.env.NODE_ENV !== 'production' && <HallStatsProbe layout={layout} />}
     </Canvas>

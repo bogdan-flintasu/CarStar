@@ -12,6 +12,7 @@
     "db:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@google/model-viewer": "4.4.0",
     "@headlessui/react": "^2.2.10",
     "@prisma/adapter-better-sqlite3": "^7.8.0",
     "@prisma/client": "^7.8.0",

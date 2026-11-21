@@ -15,6 +15,8 @@ interface SavedConfiguration {
   data: ConfigurationData;
   renders: GalleryImage[];
   pdfUrl: string;
+  /** The AR page, when AR files were saved. */
+  arPageUrl: string | null;
 }
 
 interface PublicBrand {
@@ -66,7 +68,7 @@ export default function ConfigurationTokenPage() {
       .then((saved) => {
         const parsed = configurationDataSchema.safeParse(saved.data);
         if (!parsed.success) throw new Error('Invalid configuration data');
-        setConfig({ data: parsed.data, renders: saved.renders ?? [], pdfUrl: saved.pdfUrl });
+        setConfig({ data: parsed.data, renders: saved.renders ?? [], pdfUrl: saved.pdfUrl, arPageUrl: saved.ar?.pageUrl ?? null });
       })
       .catch((err) => {
         console.error('Failed to load configuration:', err);
@@ -165,6 +167,14 @@ export default function ConfigurationTokenPage() {
           >
             Descarcă oferta PDF
           </a>
+          {config.arPageUrl && (
+            <Link
+              href={config.arPageUrl}
+              className="inline-flex justify-center items-center px-6 py-3 rounded-xl border border-[var(--brand-accent)] text-[var(--brand-accent)] font-bold text-sm hover:bg-white/10 transition-colors"
+            >
+              Vezi în AR
+            </Link>
+          )}
           <button
             type="button"
             onClick={openInConfigurator}

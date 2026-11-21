@@ -47,6 +47,9 @@ export const renderHiddenProps = { userData: { [RENDER_HIDDEN]: true } } as cons
 /** Set on a group whose materials glow only as editing feedback (selected, conflicting): renders switch the glow off. */
 export const RENDER_PLAIN = 'renderPlain';
 export const renderPlainProps = { userData: { [RENDER_PLAIN]: true } } as const;
+/** Set on a door leaf's hinge group (it turns while the user walks through the hall): renders draw every door shut. */
+export const DOOR_HINGE = 'doorHinge';
+export const doorHingeProps = { userData: { [DOOR_HINGE]: true } } as const;
 
 export interface HallRender {
   view: RenderView;
@@ -113,13 +116,16 @@ const glows = (material: Material): material is Glowing =>
   'emissiveIntensity' in material && typeof material.emissiveIntensity === 'number';
 
 /**
- * Hides the editing helpers, switches off editing glows and shows the cladding; returns the function that puts
- * everything back.
+ * Hides the editing helpers, switches off editing glows, shows the cladding and shuts every door (one may still be
+ * open, or closing, after a walk-through); returns the function that puts everything back. Used by the quote renders
+ * and the AR export (src/components/3d/ar/arExport.tsx).
  */
-function prepareScene(scene: Scene): () => void {
+export function prepareScene(scene: Scene): () => void {
   const changed: [Object3D, boolean][] = [];
   const dimmed = new Map<Glowing, number>();
+  const hinges: [Object3D, number, number][] = [];
   scene.traverse((object) => {
+    if (object.userData[DOOR_HINGE]) hinges.push([object, object.rotation.x, object.rotation.y]);
     if (object.userData[RENDER_HIDDEN] && object.visible) changed.push([object, true]);
     else if (object.name === 'Cladding' && !object.visible) changed.push([object, false]);
     if (object.userData[RENDER_PLAIN]) {
@@ -133,9 +139,11 @@ function prepareScene(scene: Scene): () => void {
   });
   for (const [object, wasVisible] of changed) object.visible = !wasVisible;
   for (const material of dimmed.keys()) material.emissiveIntensity = 0;
+  for (const [hinge] of hinges) hinge.rotation.set(0, 0, hinge.rotation.z);
   return () => {
     for (const [object, wasVisible] of changed) object.visible = wasVisible;
     for (const [material, intensity] of dimmed) material.emissiveIntensity = intensity;
+    for (const [hinge, x, y] of hinges) hinge.rotation.set(x, y, hinge.rotation.z);
   };
 }
 
