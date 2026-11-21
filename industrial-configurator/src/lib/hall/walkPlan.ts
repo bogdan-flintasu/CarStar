@@ -5,13 +5,15 @@
  *  - Every wall is a solid segment on the middle of its cladding, `thickness / 2` thick on each side.
  *  - A door or industrial door cuts a gap in its wall's segment while it is open; a closed one fills the gap with a
  *    segment that remembers which door it is (so walking into a personnel door can open it). Windows never cut a gap.
- *  - Columns are solid rectangles of the column section.
+ *  - Columns are solid rectangles of the column section, and so are the interior props (racks, forklift, pallets,
+ *    workers: `walkInteriorProps`), passed in as `obstacles`.
  *  - Outside, the walker stays inside a limit around the hall.
  *  - The floor is the slab inside the slab's outline and the terrain outside it, with a short ramp at the edge.
  *
  * Pure, no three.js: unit-tested in walkPlan.test.ts.
  */
 import { COLUMN_DEPTH, FRAME_FLANGE_WIDTH } from './constants';
+import { planInteriorProps, propRect, type Prop } from './propPlan';
 import type { HallLayout, LegacyWallId, WallDescriptor } from './types';
 import { wallPointToWorld } from './walls';
 
@@ -116,7 +118,12 @@ const isDoor = (o: WalkOpening): o is WalkOpening & { type: 'door' | 'garageDoor
  * Builds the walk plan of a hall. `open` says which doors are open (by opening id); a door missing from it is open,
  * so a freshly entered hall is never a closed box.
  */
-export function buildWalkPlan(layout: HallLayout, openings: readonly WalkOpening[], open: Readonly<Record<string, boolean>> = {}): WalkPlan {
+export function buildWalkPlan(
+  layout: HallLayout,
+  openings: readonly WalkOpening[],
+  open: Readonly<Record<string, boolean>> = {},
+  obstacles: readonly WalkBox[] = [],
+): WalkPlan {
   const segments: WalkSegment[] = [];
   const doors: WalkDoor[] = [];
 
@@ -148,12 +155,15 @@ export function buildWalkPlan(layout: HallLayout, openings: readonly WalkOpening
     if (end > from) segments.push({ a: wallPoint(wall, from), b: wallPoint(wall, end), half });
   }
 
-  const boxes: WalkBox[] = layout.columns.map((c) => ({
-    x0: c.x - COLUMN_DEPTH / 2,
-    x1: c.x + COLUMN_DEPTH / 2,
-    z0: c.z - FRAME_FLANGE_WIDTH / 2,
-    z1: c.z + FRAME_FLANGE_WIDTH / 2,
-  }));
+  const boxes: WalkBox[] = [
+    ...layout.columns.map((c) => ({
+      x0: c.x - COLUMN_DEPTH / 2,
+      x1: c.x + COLUMN_DEPTH / 2,
+      z0: c.z - FRAME_FLANGE_WIDTH / 2,
+      z1: c.z + FRAME_FLANGE_WIDTH / 2,
+    })),
+    ...obstacles,
+  ];
 
   const { min, max } = layout.bounds;
   const limit: WalkBox = { x0: min[0] - OUTSIDE_MARGIN, x1: max[0] + OUTSIDE_MARGIN, z0: min[2] - OUTSIDE_MARGIN, z1: max[2] + OUTSIDE_MARGIN };
@@ -207,6 +217,18 @@ export function buildWalkPlan(layout: HallLayout, openings: readonly WalkOpening
 
   return { segments, boxes, doors, limit, slab, floorY: layout.slab.topY, groundY: layout.groundY, inside, spawn, teleports };
 }
+
+/**
+ * The props inside the hall during a walk (drawn by WalkStaging, solid for the walker): deterministic for a hall, and
+ * clear of every spawn and teleport point.
+ */
+export function walkInteriorProps(layout: HallLayout, openings: readonly WalkOpening[]): Prop[] {
+  const keepClear = buildWalkPlan(layout, openings).teleports.map((t) => ({ x: t.position[0], z: t.position[1], r: 1.2 }));
+  return planInteriorProps(layout, openings, keepClear);
+}
+
+/** The ground the props cover, as walk-plan obstacles. */
+export const propObstacles = (props: readonly Prop[]): WalkBox[] => props.map(propRect);
 
 function dist(a: P2, b: P2): number {
   return Math.hypot(a[0] - b[0], a[1] - b[1]);

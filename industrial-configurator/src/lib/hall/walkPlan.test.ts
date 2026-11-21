@@ -2,7 +2,19 @@ import { describe, expect, it } from 'vitest';
 import { computeHallLayout } from './computeHallLayout';
 import type { HallParams } from './types';
 import { wallPointToWorld } from './walls';
-import { buildWalkPlan, doorInReach, floorHeightAt, isInside, moveWalker, WALKER_RADIUS, type P2, type WalkOpening, type WalkPlan } from './walkPlan';
+import {
+  buildWalkPlan,
+  doorInReach,
+  floorHeightAt,
+  isInside,
+  moveWalker,
+  propObstacles,
+  walkInteriorProps,
+  WALKER_RADIUS,
+  type P2,
+  type WalkOpening,
+  type WalkPlan,
+} from './walkPlan';
 
 const base: HallParams = { length: 24, width: 12, height: 5, foundation: true, panels: true, insulationMm: 80 };
 const layout = computeHallLayout(base);
@@ -149,5 +161,26 @@ describe('doorInReach', () => {
   it('ignores a door behind the walker or too far away', () => {
     expect(doorInReach(plan, [0, -1.5], 0)).toBeNull();
     expect(doorInReach(plan, [0, -10], Math.PI)).toBeNull();
+  });
+});
+
+describe('interior props are solid', () => {
+  const props = walkInteriorProps(layout, openings);
+  const racks = props.filter((p) => p.kind === 'rack');
+  const plan = buildWalkPlan(layout, openings, {}, propObstacles(props));
+
+  it('puts racks in a hall this size, and keeps every teleport point clear of them', () => {
+    expect(racks.length).toBeGreaterThan(0);
+    for (const t of plan.teleports) expect(moveWalker(plan, t.position, [0, 0]).position).toEqual(t.position);
+  });
+
+  it('stops the walker at a rack instead of walking through it', () => {
+    const rack = racks[0];
+    // From the hall's centre line straight across towards the rack's middle, and beyond it.
+    const from: P2 = [0, rack.z];
+    const to: P2 = [rack.x + Math.sign(rack.x) * 3, rack.z];
+    const end = walk(plan, from, to).p;
+    const face = rack.x - Math.sign(rack.x) * (rack.size!.d / 2 + WALKER_RADIUS);
+    expect(Math.abs(end[0])).toBeLessThanOrEqual(Math.abs(face) + 1e-6);
   });
 });
