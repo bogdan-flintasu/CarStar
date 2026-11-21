@@ -364,6 +364,48 @@ function building(prop: Prop, assets: PropAssets): Group {
   return group;
 }
 
+const RACK_BLUE = new MeshStandardMaterial({ color: '#1f5fa8', roughness: 0.55, metalness: 0.35 });
+const RACK_ORANGE = new MeshStandardMaterial({ color: '#e8761c', roughness: 0.55, metalness: 0.3 });
+
+/**
+ * A pallet rack bay, long side along +Z: blue uprights at both ends, orange beams at two or three levels, a few pallets
+ * on the levels. The boxes are the rack's own (freed by `disposeProps`); materials and pallets are shared.
+ */
+function rack(prop: Prop, assets: PropAssets): Group {
+  const { w, d, h } = prop.size!;
+  const group = new Group();
+  // The boxes live in their own child, so `disposeProps` frees them without touching the shared pallet geometry.
+  const frame = new Group();
+  frame.userData.ownsGeometry = true;
+  group.add(frame);
+  const post = 0.1;
+  const beamH = 0.14;
+  const levels = h > 4.5 ? 3 : 2;
+  const solid = (sx: number, sy: number, sz: number, x: number, y: number, z: number, material: MeshStandardMaterial) => {
+    const mesh = new Mesh(new BoxGeometry(sx, sy, sz), material);
+    mesh.position.set(x, y, z);
+    mesh.castShadow = mesh.receiveShadow = true;
+    frame.add(mesh);
+  };
+  for (const z of [-w / 2 + post / 2, w / 2 - post / 2]) {
+    for (const x of [-d / 2 + post / 2, d / 2 - post / 2]) solid(post, h, post, x, h / 2, z, RACK_BLUE);
+  }
+  const random = seededRandom(prop.variant * 131 + Math.round(prop.z * 100));
+  for (let level = 0; level < levels; level++) {
+    const y = ((level + 1) / levels) * (h - 0.3) - 0.1;
+    for (const x of [-d / 2 + post / 2, d / 2 - post / 2]) solid(post * 0.8, beamH, w - post, x, y, 0, RACK_ORANGE);
+    const slots = Math.max(1, Math.round(w / 1.3));
+    for (let i = 0; i < slots; i++) {
+      if (random() < 0.35) continue;
+      const pallet = assets.pallet.clone();
+      pallet.position.set(0, y + beamH / 2, -w / 2 + (w * (i + 0.5)) / slots);
+      pallet.scale.setScalar(Math.min(1, (w / slots) * 0.85 / SIZE.pallet.length));
+      group.add(pallet);
+    }
+  }
+  return group;
+}
+
 /** The props as one group (clones share the loaded geometry and materials; `disposeProps` frees only what was made here). */
 export function buildProps(props: readonly Prop[], assets: PropAssets, groundY: number): Group {
   const group = new Group();
@@ -415,6 +457,9 @@ export function buildProps(props: readonly Prop[], assets: PropAssets, groundY: 
       }
       case 'building':
         object = building(prop, assets);
+        break;
+      case 'rack':
+        object = rack(prop, assets);
         break;
     }
     const holder = new Group();

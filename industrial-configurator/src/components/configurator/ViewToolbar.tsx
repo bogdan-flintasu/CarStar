@@ -15,6 +15,7 @@ import {
   CAMERA_VIEW_LABELS,
   type CameraView,
 } from '@/lib/hall/cameraViews';
+import { useWalkStore } from '@/stores/useWalkStore';
 import { useViewStore } from '@/stores/useViewStore';
 import { SECTION_LABELS, SECTION_MODES, sectionAxis, sectionCoordinate } from '@/components/3d/hall/section';
 import { allLayersVisible, HALL_LAYERS, LAYER_LABELS } from '@/components/3d/hall/layers';
@@ -356,6 +357,17 @@ export default function ViewToolbar() {
         >
           <LayersPanel />
         </PopoverButton>
+        <span className="hidden md:block h-px bg-gray-200 my-0.5" />
+        <span className="md:hidden w-px bg-gray-200 mx-px" />
+        <button
+          type="button"
+          title="Plimbă-te prin interiorul halei, la înălțimea ochilor"
+          onClick={() => useWalkStore.getState().enter()}
+          className={`${button(false)} !justify-center md:!justify-between`}
+        >
+          <span className="md:hidden">Intră</span>
+          <span className="hidden md:inline">Intră în hală</span>
+        </button>
       </div>
     </div>
   );

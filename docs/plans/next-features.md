@@ -193,7 +193,7 @@ test the full flow: place, copy, mirror, resize smaller and larger, undo.
 
 - AR presentation: docs/plans/ar.md (next).
 - GPU render server: docs/plans/gpu-render-server.md (after AR).
-- Interior walk-through view: its own plan, later.
+- Interior walk-through view: its own plan, later (docs/plans/walkthrough.md).
 - Reading colours and logo from a company's website: later; needs the legal check noted in the AR/branding discussion
   (one public page fetch, colours are free to use, a prospect's logo only in private, expiring demos).
 - Embed-script controls (set view or theme from the host page): with the phase 2 integration script.

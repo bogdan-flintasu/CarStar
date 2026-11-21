@@ -25,6 +25,8 @@ interface CameraRigProps {
   enabled?: boolean;
   /** Change it to frame the hall again in the 3D view. */
   frameKey?: unknown;
+  /** The walk-through owns the camera (src/components/3d/walk/WalkRig.tsx): the rig neither moves nor follows it. */
+  suspended?: boolean;
 }
 
 /** Exponential glide towards the hall's centre: time constant 1 / FOLLOW_RATE seconds. */
@@ -71,7 +73,7 @@ function setOrthoFrustum(camera: OrthographicCamera, width: number, height: numb
   camera.bottom = -height / 2;
 }
 
-export default function CameraRig({ layout, enabled = true, frameKey }: CameraRigProps) {
+export default function CameraRig({ layout, enabled = true, frameKey, suspended = false }: CameraRigProps) {
   const invalidate = useThree((state) => state.invalidate);
   const set = useThree((state) => state.set);
   const get = useThree((state) => state.get);
@@ -199,6 +201,7 @@ export default function CameraRig({ layout, enabled = true, frameKey }: CameraRi
   }, [controls, centre]);
 
   useFrame(({ camera, controls: current, size }, delta) => {
+    if (suspended) return;
     const orbit = current as unknown as Orbit | null;
     // Right after a projection switch the controls are rebuilt for the new camera: wait for them.
     if (!orbit || orbit.object !== camera) {
@@ -299,5 +302,5 @@ export default function CameraRig({ layout, enabled = true, frameKey }: CameraRi
     }
   });
 
-  return <OrbitControls makeDefault enabled={enabled} maxPolarAngle={Math.PI / 2} enablePan />;
+  return <OrbitControls makeDefault enabled={enabled && !suspended} maxPolarAngle={Math.PI / 2} enablePan />;
 }

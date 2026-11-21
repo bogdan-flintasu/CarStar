@@ -1,9 +1,11 @@
 'use client';
 
 import { useRef, useCallback, useMemo, useEffect, useLayoutEffect, useState } from 'react';
-import { ThreeEvent, useThree } from '@react-three/fiber';
+import type { ReactNode } from 'react';
+import { ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useOpeningsStore, resizeOpening } from '@/stores/useOpeningsStore';
+import { isDoorOpen, useWalkStore } from '@/stores/useWalkStore';
 import type { Opening } from '@/stores/useOpeningsStore';
 import { wallPointToWorld } from '@/lib/hall';
 import type { WallDescriptor } from '@/lib/hall';
@@ -118,6 +120,48 @@ export function openingParts(type: OpeningType, w: number, h: number, t: number)
     }
   }
   return { frame, leaf, glass, grooves, hardware };
+}
+
+// ─── Door leaf (walk-through) ──────────────────────────────────────────────────
+/** Seconds for a door to open or close. */
+const DOOR_TIME = { door: 0.7, garageDoor: 2.2 } as const;
+
+/**
+ * Where a leaf turns: an industrial door's sections roll up and in, under the top of the hole (about its top edge);
+ * a personnel door swings in on its hinge edge. Both turn towards the inside (local -Z).
+ */
+function leafPivot(type: 'door' | 'garageDoor', leaf: Box | undefined): [number, number, number] {
+  if (!leaf) return [0, 0, 0];
+  const [x, y, z] = leaf.position;
+  const [w, h] = leaf.size;
+  return type === 'garageDoor' ? [x, y + h / 2, z] : [x - w / 2, y, z];
+}
+
+/**
+ * The moving part of a door. Closed outside the walk-through; inside it, follows the walk store's door state.
+ */
+function DoorLeaf({ id, type, pivot, children }: { id: string; type: 'door' | 'garageDoor'; pivot: [number, number, number]; children: ReactNode }) {
+  const hinge = useRef<THREE.Group>(null);
+  const progress = useRef(0);
+  const invalidate = useThree((state) => state.invalidate);
+  const open = useWalkStore((s) => isDoorOpen(s, id));
+  useEffect(() => invalidate(), [open, invalidate]);
+  useFrame((_, delta) => {
+    const target = open ? 1 : 0;
+    if (progress.current === target || !hinge.current) return;
+    const step = Math.min(delta, 1 / 20) / DOOR_TIME[type];
+    progress.current = target > progress.current ? Math.min(target, progress.current + step) : Math.max(target, progress.current - step);
+    const e = progress.current < 0.5 ? 2 * progress.current ** 2 : 1 - (-2 * progress.current + 2) ** 2 / 2;
+    // +X turns the leaf's lower edge inwards; +Y turns its free edge inwards.
+    if (type === 'garageDoor') hinge.current.rotation.x = (e * Math.PI) / 2;
+    else hinge.current.rotation.y = (e * Math.PI) / 2;
+    invalidate();
+  });
+  return (
+    <group ref={hinge} position={pivot}>
+      <group position={[-pivot[0], -pivot[1], -pivot[2]]}>{children}</group>
+    </group>
+  );
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -339,6 +383,8 @@ export default function WallOpening({
   const handleClick = useCallback(
     (e: ThreeEvent<MouseEvent>) => {
       e.stopPropagation();
+      // Walking: clicks capture the mouse for looking around, they never select.
+      if (useWalkStore.getState().phase !== 'off') return;
       selectOpening(opening.id);
     },
     [opening.id, selectOpening],
@@ -375,9 +421,15 @@ export default function WallOpening({
         )}
 
         {boxes(parts.frame, materials.frame, true)}
-        {boxes(parts.leaf, materials.leaf, true)}
-        {boxes(parts.grooves, materials.groove)}
-        {boxes(parts.hardware, materials.hardware)}
+        {opening.type === 'window' ? (
+          boxes(parts.hardware, materials.hardware)
+        ) : (
+          <DoorLeaf id={opening.id} type={opening.type} pivot={leafPivot(opening.type, parts.leaf[0])}>
+            {boxes(parts.leaf, materials.leaf, true)}
+            {boxes(parts.grooves, materials.groove)}
+            {boxes(parts.hardware, materials.hardware)}
+          </DoorLeaf>
+        )}
         {parts.glass.map((b) => (
           <mesh key={b.key} position={b.position} material={materials.glass} renderOrder={1}>
             <boxGeometry args={b.size} />
